@@ -75,13 +75,23 @@ def run_pairs(dir_path: Path, out_path: Path, window_ms: float, k: int) -> None:
         out_packets = load_data(out_file)
         in_packets = load_data(in_file)
 
-        # Merge and sort by relative time inside each file; combine for windowing
         merged = [p for p in out_packets if p.get("payload")] + [
             p for p in in_packets if p.get("payload")
         ]
-        merged.sort(
-            key=lambda p: (p["time_rel_ms"] if p["time_rel_ms"] is not None else 0.0)
+
+        # Sort by absolute capture time (shared reference), not per-file relative time
+        merged.sort(key=lambda p: (p["time_sec"] if p["time_sec"] is not None else 0.0))
+
+        # Recompute a global relative time base for the merged stream
+        t0 = next(
+            (p["time_sec"] for p in merged if p.get("time_sec") is not None), None
         )
+        if t0 is not None:
+            for p in merged:
+                if p.get("time_sec") is not None:
+                    p["time_rel_ms"] = (p["time_sec"] - t0) * 1000.0
+                else:
+                    p["time_rel_ms"] = None
 
         segments = segment_responses(merged, window_ms=window_ms, k=k)
 

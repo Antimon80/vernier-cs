@@ -19,18 +19,21 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "json_files"
 OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol"
 
-MODE = {
+ALIAS = {
     "405nm": "fluorescence_405nm",
     "500nm": "fluorescence_500nm",
+    "time": "time_resolved",
+    "full": "full_spectrum",
+    "event": "event_triggered",
 }
 
 IN = "in"
 OUT = "out"
 
 
-def mode_alias(mode: str) -> str:
+def alias(mode: str) -> str:
     """Normalize shorthand mode names to canonical dataset directory names."""
-    return MODE.get(mode, mode)
+    return ALIAS.get(mode, mode)
 
 
 def run_pattern(direction: str) -> str:
@@ -122,9 +125,27 @@ def load_change_mode(end: str, start: str, direction: str = OUT) -> List[Path]:
     'start' is the previous mode, 'end' is the resulting mode.
     Direction matters and is preserved.
     """
-    end = mode_alias(end)
-    start = mode_alias(start)
+    end = alias(end)
+    start = alias(start)
     path = LOAD_DIR / "change_mode" / end / start
+    return list_runs(path, run_pattern(direction))
+
+def load_change_acquisition(mode: str, end: str, start: str, direction: str = OUT) -> List[Path]:
+    """
+    Load all capture files for a directed acquisition-mode transition.
+
+    Folder layout:
+      change_acquisition/<mode>/<end>/<start>/out_*.json
+
+    - 'mode'  : operating mode (absorbance, transmittance, intensity, ...)
+    - 'start' : previous acquisition state (full, init, event, ...)
+    - 'end'   : resulting acquisition state (time_resolved, full, ...)
+    """
+    mode = alias(mode)
+    end = alias(end)
+    start = alias(start)
+
+    path = LOAD_DIR / "change_acquisition" / mode / end / start
     return list_runs(path, run_pattern(direction))
 
 
@@ -132,13 +153,19 @@ def output_path_init() -> Path:
     return OUTPUT_DIR / "trace_mask" / "init.txt"
 
 
-def output_path_change(end: str, start: str) -> Path:
+def output_path_mode_change(end: str, start: str) -> Path:
     return OUTPUT_DIR / "trace_mask" / f"change_{end}_from_{start}.txt"
 
 
 def output_path_diff(a_end: str, a_start: str, b_end: str, b_start: str) -> Path:
     name = f"diff_{a_end}_from_{a_start}__vs__{b_end}_from_{b_start}.txt"
     return OUTPUT_DIR / "trace_diff" / name
+
+def output_path_acq_change(mode: str, end: str, start: str) -> Path:
+    mode = alias(mode)
+    end = alias(end)
+    start = alias(start)
+    return OUTPUT_DIR / "trace_mask" / f"acq_{mode}_{end}_from_{start}.txt"
 
 def write_output(text: str, path: Path) -> None:
     """Write UTF-8 text to a file, creating parent directories if needed."""

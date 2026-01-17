@@ -13,7 +13,6 @@
 - Log-Daten: 
   - docs\wireshark\spectrovis\capture_files
     - Der Name es Unterverzeichnisses bezieht sich beim Wechsel des Betriebsmodus auf den Endzustand
-    - Das Unterverzeichnis `absorbance` im Ordner `change_mode` enthält die files für den Zustandswechsel in **beide** Richtungen
   - docs\wireshark\spectrovis\json_files\init
   - docs\wireshark\spectrovis\json_files\change_mode
     - Der Name des übergeordneten Ordners bezieht sich auf den Endzustand
