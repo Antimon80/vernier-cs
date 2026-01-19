@@ -1,6 +1,6 @@
 [
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -8,16 +8,16 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.220584000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.220584000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.220584000Z",
+          "frame.time": "2026-01-18T22:27:05.065857000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.065857000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.065857000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.000306000",
-          "frame.time_relative": "13.991878000",
+          "frame.time_delta": "0.000245000",
+          "frame.time_relative": "15.261429000",
           "frame.number": "23",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -29,10 +29,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81054c3c79a0",
+          "usb.irp_id": "0xffff8085c6ce09a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -40,8 +40,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -52,12 +52,12 @@
           "usb.response_in": "24",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "00:00:00:fc:00:00:00:07:00:00:00:c0:95:0a:a1:78:db:19:00:60:b0:b4:6f:00:00:00:00:a0:b2:b4:6f:00:00:00:00:ec:da:19:00:70:e2:19:00:80:46:ad:6f:00:00:00:00:2c:db:19:00:ae:35:97:6f:07:00:00:00:04"
+        "usbhid.data": "00:00:00:fc:00:00:00:07:00:00:00:15:d8:a8:fb:78:db:19:00:60:b0:08:71:00:00:00:00:a0:b2:08:71:00:00:00:00:ec:da:19:00:70:e2:19:00:80:46:01:71:00:00:00:00:2c:db:19:00:ae:35:eb:70:07:00:00:00:04"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -65,17 +65,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.221624000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.221624000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.221624000Z",
+          "frame.time": "2026-01-18T22:27:05.066534000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.066534000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.066534000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.000220000",
-          "frame.time_delta_displayed": "0.001040000",
-          "frame.time_relative": "13.992918000",
+          "frame.time_delta": "0.000225000",
+          "frame.time_delta_displayed": "0.000677000",
+          "frame.time_relative": "15.262106000",
           "frame.number": "25",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -87,10 +87,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81053a3f19a0",
+          "usb.irp_id": "0xffff8085c67d29a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -98,8 +98,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -110,12 +110,12 @@
           "usb.response_in": "26",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "00:00:00:a8:da:19:00:f9:f6:01:77:00:00:00:00:8f:fa:4d:9d:1f:00:00:00:20:00:00:00:0f:00:00:00:80:da:19:00:c7:4d:c5:74:00:db:19:00:70:1b:06:77:9e:20:07:77:b8:f8:85:04:00:00:f4:00:00:00:00:00:00"
+        "usbhid.data": "00:00:00:a8:da:19:00:f9:f6:49:77:00:00:00:00:95:eb:9a:c2:1f:00:00:00:20:00:00:00:0f:00:00:00:80:da:19:00:c7:4d:b1:76:00:db:19:00:70:1b:4e:77:9e:20:4f:77:48:28:f1:06:00:00:09:01:00:00:00:00:00"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -123,17 +123,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.222611000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.222611000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.222611000Z",
+          "frame.time": "2026-01-18T22:27:05.067528000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.067528000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.067528000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.000234000",
-          "frame.time_delta_displayed": "0.000987000",
-          "frame.time_relative": "13.993905000",
+          "frame.time_delta": "0.000200000",
+          "frame.time_delta_displayed": "0.000994000",
+          "frame.time_relative": "15.263100000",
           "frame.number": "27",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -145,10 +145,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81053c0329a0",
+          "usb.irp_id": "0xffff8085b57db9a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -156,8 +156,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -168,12 +168,12 @@
           "usb.response_in": "28",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "01:00:00:85:10:98:6f:00:00:00:00:00:00:00:00:41:00:00:00:00:00:00:00:00:00:00:00:34:08:00:00:41:00:00:00:41:00:00:00:00:00:00:00:a8:da:19:00:f9:f6:01:77:00:00:00:00:8f:fa:4d:9d:1f:00:00:00:20"
+        "usbhid.data": "01:00:00:85:10:ec:70:00:00:00:00:00:00:00:00:41:00:00:00:00:00:00:00:00:00:00:00:2c:08:00:00:41:00:00:00:41:00:00:00:00:00:00:00:a8:da:19:00:f9:f6:49:77:00:00:00:00:95:eb:9a:c2:1f:00:00:00:20"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -181,17 +181,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.224800000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.224800000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.224800000Z",
+          "frame.time": "2026-01-18T22:27:05.069637000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.069637000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.069637000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.000291000",
-          "frame.time_delta_displayed": "0.002189000",
-          "frame.time_relative": "13.996094000",
+          "frame.time_delta": "0.000224000",
+          "frame.time_delta_displayed": "0.002109000",
+          "frame.time_relative": "15.265209000",
           "frame.number": "31",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -203,10 +203,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81052dcf59a0",
+          "usb.irp_id": "0xffff8085c67f59a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -214,8 +214,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -226,12 +226,12 @@
           "usb.response_in": "32",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "02:00:00:f8:47:f4:00:b7:0b:07:77:00:00:00:00:00:00:f4:00:f0:1b:23:03:c1:01:00:00:08:0e:00:00:00:00:00:00:02:00:00:00:03:00:00:00:00:00:00:00:00:0e:00:00:00:00:01:10:54:d9:19:00:f9:f6:01:77:00"
+        "usbhid.data": "02:00:00:f8:47:09:01:b7:0b:4f:77:00:00:00:00:00:00:09:01:d8:e7:f4:06:c1:01:00:00:08:0e:00:00:00:00:00:00:02:00:00:00:03:00:00:00:00:00:00:00:00:0e:00:00:00:00:02:18:54:d9:19:00:f9:f6:49:77:00"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -239,17 +239,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.297967000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.297967000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.297967000Z",
+          "frame.time": "2026-01-18T22:27:05.170903000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.170903000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.170903000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.004618000",
-          "frame.time_delta_displayed": "0.073167000",
-          "frame.time_relative": "14.069261000",
+          "frame.time_delta": "0.032473000",
+          "frame.time_delta_displayed": "0.101266000",
+          "frame.time_relative": "15.366475000",
           "frame.number": "145",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -261,10 +261,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff810532eec9a0",
+          "usb.irp_id": "0xffff8085b7ecc9a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -272,8 +272,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -284,12 +284,12 @@
           "usb.response_in": "146",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "ab:00:00:d0:da:19:00:d8:b0:b4:6f:c0:da:19:00:60:b0:b4:6f:30:08:00:00:b8:fb:a9:6f:b8:c0:82:04:2c:00:00:00:b8:19:82:04:50:5a:f9:00:80:4e:f9:00:01:e2:19:00:00:00:00:00:04:00:00:00:fe:ff:ff:ff:f4"
+        "usbhid.data": "04:1e:00:00:00:00:00:20:00:00:00:02:00:00:00:00:00:00:00:20:00:00:00:64:00:00:00:d0:df:19:00:f9:f6:49:77:00:00:00:00:ed:ee:9a:c2:1f:00:00:00:20:00:00:00:0f:00:00:00:a8:df:19:00:00:00:09:01:28"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -297,17 +297,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.308493000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.308493000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.308493000Z",
+          "frame.time": "2026-01-18T22:27:05.193367000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.193367000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.193367000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.009130000",
-          "frame.time_delta_displayed": "0.010526000",
-          "frame.time_relative": "14.079787000",
+          "frame.time_delta": "0.021035000",
+          "frame.time_delta_displayed": "0.022464000",
+          "frame.time_relative": "15.388939000",
           "frame.number": "149",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -319,10 +319,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81051ba359a0",
+          "usb.irp_id": "0xffff8085c351b9a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -330,8 +330,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -342,12 +342,12 @@
           "usb.response_in": "150",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "04:1e:00:00:00:00:00:20:00:00:00:02:00:00:00:00:00:00:00:20:00:00:00:64:00:00:00:d0:df:19:00:f9:f6:01:77:00:00:00:00:f7:ff:4d:9d:1f:00:00:00:20:00:00:00:0f:00:00:00:a8:df:19:00:00:00:f4:00:28"
+        "usbhid.data": "04:32:00:00:00:00:00:f0:2a:f1:06:2c:df:19:00:c4:5f:eb:70:f0:2a:f1:06:2d:dc:a8:fb:78:b2:08:71:f7:08:00:00:4d:60:eb:70:00:00:00:00:bf:02:00:00:00:06:95:00:48:f7:66:04:95:00:00:00:00:00:00:00:30"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -355,17 +355,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.331068000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.331068000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.331068000Z",
+          "frame.time": "2026-01-18T22:27:05.227910000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.227910000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.227910000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.020697000",
-          "frame.time_delta_displayed": "0.022575000",
-          "frame.time_relative": "14.102362000",
+          "frame.time_delta": "0.032573000",
+          "frame.time_delta_displayed": "0.034543000",
+          "frame.time_relative": "15.423482000",
           "frame.number": "153",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -377,10 +377,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff810530adc9a0",
+          "usb.irp_id": "0xffff8085c43d99a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -388,8 +388,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -400,12 +400,12 @@
           "usb.response_in": "154",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "04:32:00:00:00:00:00:30:f9:85:04:2c:df:19:00:c4:5f:97:6f:30:f9:85:04:f8:91:0a:a1:78:b2:b4:6f:f7:08:00:00:4d:60:97:6f:00:00:00:00:0d:03:00:00:33:01:05:06:70:ca:71:04:05:06:00:00:00:00:00:00:e8"
+        "usbhid.data": "40:00:00:60:b9:13:07:00:00:09:01:74:df:19:00:5d:dd:a8:fb:2f:00:00:00:34:df:19:00:64:00:00:00:a7:00:14:01:90:72:76:04:14:01:00:00:00:00:00:00:40:7c:13:07:60:b9:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -413,18 +413,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.355961000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.355961000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.355961000Z",
+          "frame.time": "2026-01-18T22:27:05.418408000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.418408000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.418408000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.022529000",
-          "frame.time_delta_displayed": "0.024893000",
-          "frame.time_relative": "14.127255000",
-          "frame.number": "157",
+          "frame.time_delta": "0.017076000",
+          "frame.time_delta_displayed": "0.190498000",
+          "frame.time_relative": "15.613980000",
+          "frame.number": "267",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -435,10 +435,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105336db9a0",
+          "usb.irp_id": "0xffff8085c6cd39a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -446,8 +446,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -455,15 +455,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "158",
+          "usb.response_in": "268",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:c0:65:43:03:00:00:f4:00:74:df:19:00:88:90:0a:a1:2f:00:00:00:34:df:19:00:64:00:00:00:96:00:d7:00:78:e5:91:04:d7:00:00:00:00:00:00:00:00:36:43:03:c0:65:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:38:b5:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:01:01:90:72:76:04:01:01:00:00:00:00:00:00:40:7c:13:07:38:b5:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -471,18 +471,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.536627000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.536627000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.536627000Z",
+          "frame.time": "2026-01-18T22:27:05.611270000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.611270000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.611270000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.005664000",
-          "frame.time_delta_displayed": "0.180666000",
-          "frame.time_relative": "14.307921000",
-          "frame.number": "271",
+          "frame.time_delta": "0.017876000",
+          "frame.time_delta_displayed": "0.192862000",
+          "frame.time_relative": "15.806842000",
+          "frame.number": "381",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -493,10 +493,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff810534ad39a0",
+          "usb.irp_id": "0xffff8085c6cc99a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -504,8 +504,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -513,15 +513,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "272",
+          "usb.response_in": "382",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:40:62:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:c7:00:78:e5:91:04:c7:00:00:00:00:00:00:00:00:36:43:03:40:62:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:30:b7:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:0a:01:90:72:76:04:0a:01:00:00:00:00:00:00:40:7c:13:07:30:b7:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -529,18 +529,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.718496000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.718496000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.718496000Z",
+          "frame.time": "2026-01-18T22:27:05.804488000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.804488000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.804488000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006655000",
-          "frame.time_delta_displayed": "0.181869000",
-          "frame.time_relative": "14.489790000",
-          "frame.number": "385",
+          "frame.time_delta": "0.018103000",
+          "frame.time_delta_displayed": "0.193218000",
+          "frame.time_relative": "16.000060000",
+          "frame.number": "495",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -551,10 +551,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff810532eec9a0",
+          "usb.irp_id": "0xffff8085c4cd29a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -562,8 +562,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -571,15 +571,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "386",
+          "usb.response_in": "496",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:10:67:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:dd:00:78:e5:91:04:dd:00:00:00:00:00:00:00:00:36:43:03:10:67:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:30:b7:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:0a:01:90:72:76:04:0a:01:00:00:00:00:00:00:40:7c:13:07:30:b7:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -587,18 +587,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:03.900873000Z",
-          "frame.time_utc": "2026-01-16T09:13:03.900873000Z",
-          "frame.time_epoch": "2026-01-16T09:13:03.900873000Z",
+          "frame.time": "2026-01-18T22:27:05.996949000Z",
+          "frame.time_utc": "2026-01-18T22:27:05.996949000Z",
+          "frame.time_epoch": "2026-01-18T22:27:05.996949000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006424000",
-          "frame.time_delta_displayed": "0.182377000",
-          "frame.time_relative": "14.672167000",
-          "frame.number": "499",
+          "frame.time_delta": "0.017582000",
+          "frame.time_delta_displayed": "0.192461000",
+          "frame.time_relative": "16.192521000",
+          "frame.number": "609",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -609,10 +609,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386cc9a0",
+          "usb.irp_id": "0xffff8085c3fdd9a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -620,8 +620,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -629,15 +629,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "500",
+          "usb.response_in": "610",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:c0:65:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:d7:00:78:e5:91:04:d7:00:00:00:00:00:00:00:00:36:43:03:c0:65:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:c0:b6:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:08:01:90:72:76:04:08:01:00:00:00:00:00:00:40:7c:13:07:c0:b6:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -645,18 +645,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:04.082065000Z",
-          "frame.time_utc": "2026-01-16T09:13:04.082065000Z",
-          "frame.time_epoch": "2026-01-16T09:13:04.082065000Z",
+          "frame.time": "2026-01-18T22:27:06.186911000Z",
+          "frame.time_utc": "2026-01-18T22:27:06.186911000Z",
+          "frame.time_epoch": "2026-01-18T22:27:06.186911000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006570000",
-          "frame.time_delta_displayed": "0.181192000",
-          "frame.time_relative": "14.853359000",
-          "frame.number": "613",
+          "frame.time_delta": "0.015529000",
+          "frame.time_delta_displayed": "0.189962000",
+          "frame.time_relative": "16.382483000",
+          "frame.number": "723",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -667,10 +667,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81052660b9a0",
+          "usb.irp_id": "0xffff8085c4cc99a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -678,8 +678,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -687,15 +687,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "614",
+          "usb.response_in": "724",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:c0:65:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:d7:00:78:e5:91:04:d7:00:00:00:00:00:00:00:00:36:43:03:c0:65:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:38:b5:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:01:01:90:72:76:04:01:01:00:00:00:00:00:00:40:7c:13:07:38:b5:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -703,18 +703,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:04.267798000Z",
-          "frame.time_utc": "2026-01-16T09:13:04.267798000Z",
-          "frame.time_epoch": "2026-01-16T09:13:04.267798000Z",
+          "frame.time": "2026-01-18T22:27:06.379269000Z",
+          "frame.time_utc": "2026-01-18T22:27:06.379269000Z",
+          "frame.time_epoch": "2026-01-18T22:27:06.379269000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.010317000",
-          "frame.time_delta_displayed": "0.185733000",
-          "frame.time_relative": "15.039092000",
-          "frame.number": "727",
+          "frame.time_delta": "0.017916000",
+          "frame.time_delta_displayed": "0.192358000",
+          "frame.time_relative": "16.574841000",
+          "frame.number": "837",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -725,10 +725,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81052f08a9e0",
+          "usb.irp_id": "0xffff8085c4de49a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -736,8 +736,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -745,15 +745,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "728",
+          "usb.response_in": "838",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:08:62:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:c6:00:78:e5:91:04:c6:00:00:00:00:00:00:00:00:36:43:03:08:62:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:98:b9:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:15:01:90:72:76:04:15:01:00:00:00:00:00:00:40:7c:13:07:98:b9:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -761,18 +761,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:04.450625000Z",
-          "frame.time_utc": "2026-01-16T09:13:04.450625000Z",
-          "frame.time_epoch": "2026-01-16T09:13:04.450625000Z",
+          "frame.time": "2026-01-18T22:27:06.570595000Z",
+          "frame.time_utc": "2026-01-18T22:27:06.570595000Z",
+          "frame.time_epoch": "2026-01-18T22:27:06.570595000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.007659000",
-          "frame.time_delta_displayed": "0.182827000",
-          "frame.time_relative": "15.221919000",
-          "frame.number": "841",
+          "frame.time_delta": "0.017209000",
+          "frame.time_delta_displayed": "0.191326000",
+          "frame.time_relative": "16.766167000",
+          "frame.number": "951",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -783,10 +783,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105359ea9a0",
+          "usb.irp_id": "0xffff8085c289f9a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -794,8 +794,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -803,15 +803,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "842",
+          "usb.response_in": "952",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:c0:65:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:d7:00:78:e5:91:04:d7:00:00:00:00:00:00:00:00:36:43:03:c0:65:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:38:b5:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:01:01:90:72:76:04:01:01:00:00:00:00:00:00:40:7c:13:07:38:b5:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -819,18 +819,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:04.632642000Z",
-          "frame.time_utc": "2026-01-16T09:13:04.632642000Z",
-          "frame.time_epoch": "2026-01-16T09:13:04.632642000Z",
+          "frame.time": "2026-01-18T22:27:06.762148000Z",
+          "frame.time_utc": "2026-01-18T22:27:06.762148000Z",
+          "frame.time_epoch": "2026-01-18T22:27:06.762148000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.007220000",
-          "frame.time_delta_displayed": "0.182017000",
-          "frame.time_relative": "15.403936000",
-          "frame.number": "955",
+          "frame.time_delta": "0.017765000",
+          "frame.time_delta_displayed": "0.191553000",
+          "frame.time_relative": "16.957720000",
+          "frame.number": "1065",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -841,10 +841,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085b5b809a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -852,8 +852,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -861,15 +861,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "956",
+          "usb.response_in": "1066",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:08:62:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:c6:00:78:e5:91:04:c6:00:00:00:00:00:00:00:00:36:43:03:08:62:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:38:b5:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:01:01:90:72:76:04:01:01:00:00:00:00:00:00:40:7c:13:07:38:b5:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -877,18 +877,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:04.817400000Z",
-          "frame.time_utc": "2026-01-16T09:13:04.817400000Z",
-          "frame.time_epoch": "2026-01-16T09:13:04.817400000Z",
+          "frame.time": "2026-01-18T22:27:06.956036000Z",
+          "frame.time_utc": "2026-01-18T22:27:06.956036000Z",
+          "frame.time_epoch": "2026-01-18T22:27:06.956036000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.009906000",
-          "frame.time_delta_displayed": "0.184758000",
-          "frame.time_relative": "15.588694000",
-          "frame.number": "1069",
+          "frame.time_delta": "0.018610000",
+          "frame.time_delta_displayed": "0.193888000",
+          "frame.time_relative": "17.151608000",
+          "frame.number": "1179",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -899,10 +899,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085bec9c9a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -910,8 +910,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -919,15 +919,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1070",
+          "usb.response_in": "1180",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:80:67:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:df:00:78:e5:91:04:df:00:00:00:00:00:00:00:00:36:43:03:80:67:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:60:b9:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:14:01:90:72:76:04:14:01:00:00:00:00:00:00:40:7c:13:07:60:b9:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -935,18 +935,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.000483000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.000483000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.000483000Z",
+          "frame.time": "2026-01-18T22:27:07.149559000Z",
+          "frame.time_utc": "2026-01-18T22:27:07.149559000Z",
+          "frame.time_epoch": "2026-01-18T22:27:07.149559000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.007971000",
-          "frame.time_delta_displayed": "0.183083000",
-          "frame.time_relative": "15.771777000",
-          "frame.number": "1183",
+          "frame.time_delta": "0.018166000",
+          "frame.time_delta_displayed": "0.193523000",
+          "frame.time_relative": "17.345131000",
+          "frame.number": "1293",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -957,10 +957,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085c36509a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -968,8 +968,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -977,15 +977,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1184",
+          "usb.response_in": "1294",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:38:64:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:d0:00:78:e5:91:04:d0:00:00:00:00:00:00:00:00:36:43:03:38:64:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:c0:b6:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a7:00:08:01:90:72:76:04:08:01:00:00:00:00:00:00:40:7c:13:07:c0:b6:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -993,18 +993,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.180818000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.180818000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.180818000Z",
+          "frame.time": "2026-01-18T22:27:07.324640000Z",
+          "frame.time_utc": "2026-01-18T22:27:07.324640000Z",
+          "frame.time_epoch": "2026-01-18T22:27:07.324640000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.005482000",
-          "frame.time_delta_displayed": "0.180335000",
-          "frame.time_relative": "15.952112000",
-          "frame.number": "1297",
+          "frame.time_delta": "0.000311000",
+          "frame.time_delta_displayed": "0.175081000",
+          "frame.time_relative": "17.520212000",
+          "frame.number": "1407",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1015,10 +1015,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1026,8 +1026,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1035,15 +1035,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1298",
+          "usb.response_in": "1408",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:c0:65:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:96:00:d7:00:78:e5:91:04:d7:00:00:00:00:00:00:00:00:36:43:03:c0:65:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "04:0f:00:00:00:00:00:00:2f:f1:06:9c:de:19:00:c4:5f:eb:70:00:2f:f1:06:9d:dd:a8:fb:78:b2:08:71:f7:08:00:00:4d:60:eb:70:00:00:00:00:bf:02:00:00:00:06:81:00:48:f7:66:04:81:00:00:00:00:00:00:00:30"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1051,17 +1051,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.355638000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.355638000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.355638000Z",
+          "frame.time": "2026-01-18T22:27:07.368902000Z",
+          "frame.time_utc": "2026-01-18T22:27:07.368902000Z",
+          "frame.time_epoch": "2026-01-18T22:27:07.368902000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.000236000",
-          "frame.time_delta_displayed": "0.174820000",
-          "frame.time_relative": "16.126932000",
+          "frame.time_delta": "0.042504000",
+          "frame.time_delta_displayed": "0.044262000",
+          "frame.time_relative": "17.564474000",
           "frame.number": "1411",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -1073,10 +1073,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1084,8 +1084,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1096,12 +1096,12 @@
           "usb.response_in": "1412",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "04:0f:00:00:00:00:00:f0:fc:85:04:9c:de:19:00:c4:5f:97:6f:f0:fc:85:04:48:90:0a:a1:78:b2:b4:6f:f7:08:00:00:4d:60:97:6f:00:00:00:00:0d:03:00:00:33:01:13:06:70:ca:71:04:13:06:00:00:00:00:00:00:e8"
+        "usbhid.data": "40:00:00:30:b7:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:0a:01:90:72:76:04:0a:01:00:00:00:00:00:00:40:7c:13:07:30:b7:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1109,18 +1109,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.388421000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.388421000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.388421000Z",
+          "frame.time": "2026-01-18T22:27:07.490870000Z",
+          "frame.time_utc": "2026-01-18T22:27:07.490870000Z",
+          "frame.time_epoch": "2026-01-18T22:27:07.490870000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.029947000",
-          "frame.time_delta_displayed": "0.032783000",
-          "frame.time_relative": "16.159715000",
-          "frame.number": "1415",
+          "frame.time_delta": "0.016497000",
+          "frame.time_delta_displayed": "0.121968000",
+          "frame.time_relative": "17.686442000",
+          "frame.number": "1525",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1131,10 +1131,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1142,8 +1142,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1151,15 +1151,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1416",
+          "usb.response_in": "1526",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:78:62:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:c8:00:78:e5:91:04:c8:00:00:00:00:00:00:00:00:36:43:03:78:62:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:60:b9:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:14:01:90:72:76:04:14:01:00:00:00:00:00:00:40:7c:13:07:60:b9:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1167,18 +1167,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.500769000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.500769000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.500769000Z",
+          "frame.time": "2026-01-18T22:27:07.609869000Z",
+          "frame.time_utc": "2026-01-18T22:27:07.609869000Z",
+          "frame.time_epoch": "2026-01-18T22:27:07.609869000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006492000",
-          "frame.time_delta_displayed": "0.112348000",
-          "frame.time_relative": "16.272063000",
-          "frame.number": "1529",
+          "frame.time_delta": "0.014524000",
+          "frame.time_delta_displayed": "0.118999000",
+          "frame.time_relative": "17.805441000",
+          "frame.number": "1639",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1189,10 +1189,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1200,8 +1200,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1209,15 +1209,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1530",
+          "usb.response_in": "1640",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:80:67:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:df:00:78:e5:91:04:df:00:00:00:00:00:00:00:00:36:43:03:80:67:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:60:b9:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:14:01:90:72:76:04:14:01:00:00:00:00:00:00:40:7c:13:07:60:b9:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1225,18 +1225,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.612964000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.612964000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.612964000Z",
+          "frame.time": "2026-01-18T22:27:07.731071000Z",
+          "frame.time_utc": "2026-01-18T22:27:07.731071000Z",
+          "frame.time_epoch": "2026-01-18T22:27:07.731071000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.005983000",
-          "frame.time_delta_displayed": "0.112195000",
-          "frame.time_relative": "16.384258000",
-          "frame.number": "1643",
+          "frame.time_delta": "0.016696000",
+          "frame.time_delta_displayed": "0.121202000",
+          "frame.time_relative": "17.926643000",
+          "frame.number": "1753",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1247,10 +1247,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1258,8 +1258,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1267,15 +1267,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1644",
+          "usb.response_in": "1754",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:08:62:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:c6:00:78:e5:91:04:c6:00:00:00:00:00:00:00:00:36:43:03:08:62:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:70:b5:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:02:01:90:72:76:04:02:01:00:00:00:00:00:00:40:7c:13:07:70:b5:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1283,18 +1283,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.723877000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.723877000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.723877000Z",
+          "frame.time": "2026-01-18T22:27:07.854745000Z",
+          "frame.time_utc": "2026-01-18T22:27:07.854745000Z",
+          "frame.time_epoch": "2026-01-18T22:27:07.854745000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006465000",
-          "frame.time_delta_displayed": "0.110913000",
-          "frame.time_relative": "16.495171000",
-          "frame.number": "1757",
+          "frame.time_delta": "0.018396000",
+          "frame.time_delta_displayed": "0.123674000",
+          "frame.time_relative": "18.050317000",
+          "frame.number": "1867",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1305,10 +1305,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1316,8 +1316,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1325,15 +1325,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1758",
+          "usb.response_in": "1868",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:38:64:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:d0:00:78:e5:91:04:d0:00:00:00:00:00:00:00:00:36:43:03:38:64:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:70:b5:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:02:01:90:72:76:04:02:01:00:00:00:00:00:00:40:7c:13:07:70:b5:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1341,18 +1341,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.835575000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.835575000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.835575000Z",
+          "frame.time": "2026-01-18T22:27:07.980661000Z",
+          "frame.time_utc": "2026-01-18T22:27:07.980661000Z",
+          "frame.time_epoch": "2026-01-18T22:27:07.980661000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006611000",
-          "frame.time_delta_displayed": "0.111698000",
-          "frame.time_relative": "16.606869000",
-          "frame.number": "1871",
+          "frame.time_delta": "0.021420000",
+          "frame.time_delta_displayed": "0.125916000",
+          "frame.time_relative": "18.176233000",
+          "frame.number": "1981",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1363,10 +1363,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1374,8 +1374,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1383,15 +1383,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1872",
+          "usb.response_in": "1982",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:80:67:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:df:00:78:e5:91:04:df:00:00:00:00:00:00:00:00:36:43:03:80:67:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:60:b9:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:14:01:90:72:76:04:14:01:00:00:00:00:00:00:40:7c:13:07:60:b9:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1399,18 +1399,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:05.947340000Z",
-          "frame.time_utc": "2026-01-16T09:13:05.947340000Z",
-          "frame.time_epoch": "2026-01-16T09:13:05.947340000Z",
+          "frame.time": "2026-01-18T22:27:08.101097000Z",
+          "frame.time_utc": "2026-01-18T22:27:08.101097000Z",
+          "frame.time_epoch": "2026-01-18T22:27:08.101097000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006861000",
-          "frame.time_delta_displayed": "0.111765000",
-          "frame.time_relative": "16.718634000",
-          "frame.number": "1985",
+          "frame.time_delta": "0.015716000",
+          "frame.time_delta_displayed": "0.120436000",
+          "frame.time_relative": "18.296669000",
+          "frame.number": "2095",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1421,10 +1421,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1432,8 +1432,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1441,15 +1441,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "1986",
+          "usb.response_in": "2096",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:68:66:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:da:00:78:e5:91:04:da:00:00:00:00:00:00:00:00:36:43:03:68:66:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:18:b6:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:05:01:90:72:76:04:05:01:00:00:00:00:00:00:40:7c:13:07:18:b6:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1457,18 +1457,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.060346000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.060346000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.060346000Z",
+          "frame.time": "2026-01-18T22:27:08.222998000Z",
+          "frame.time_utc": "2026-01-18T22:27:08.222998000Z",
+          "frame.time_epoch": "2026-01-18T22:27:08.222998000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.007375000",
-          "frame.time_delta_displayed": "0.113006000",
-          "frame.time_relative": "16.831640000",
-          "frame.number": "2099",
+          "frame.time_delta": "0.016622000",
+          "frame.time_delta_displayed": "0.121901000",
+          "frame.time_relative": "18.418570000",
+          "frame.number": "2209",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1479,10 +1479,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1490,8 +1490,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1499,15 +1499,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "2100",
+          "usb.response_in": "2210",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:f0:60:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:c1:00:78:e5:91:04:c1:00:00:00:00:00:00:00:00:36:43:03:f0:60:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:70:b5:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:02:01:90:72:76:04:02:01:00:00:00:00:00:00:40:7c:13:07:70:b5:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1515,18 +1515,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.174089000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.174089000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.174089000Z",
+          "frame.time": "2026-01-18T22:27:08.345521000Z",
+          "frame.time_utc": "2026-01-18T22:27:08.345521000Z",
+          "frame.time_epoch": "2026-01-18T22:27:08.345521000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.008131000",
-          "frame.time_delta_displayed": "0.113743000",
-          "frame.time_relative": "16.945383000",
-          "frame.number": "2213",
+          "frame.time_delta": "0.017218000",
+          "frame.time_delta_displayed": "0.122523000",
+          "frame.time_relative": "18.541093000",
+          "frame.number": "2323",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1537,10 +1537,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1548,8 +1548,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1557,15 +1557,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "2214",
+          "usb.response_in": "2324",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:e8:62:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:ca:00:78:e5:91:04:ca:00:00:00:00:00:00:00:00:36:43:03:e8:62:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:70:b5:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:02:01:90:72:76:04:02:01:00:00:00:00:00:00:40:7c:13:07:70:b5:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1573,18 +1573,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.286108000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.286108000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.286108000Z",
+          "frame.time": "2026-01-18T22:27:08.464481000Z",
+          "frame.time_utc": "2026-01-18T22:27:08.464481000Z",
+          "frame.time_epoch": "2026-01-18T22:27:08.464481000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006710000",
-          "frame.time_delta_displayed": "0.112019000",
-          "frame.time_relative": "17.057402000",
-          "frame.number": "2327",
+          "frame.time_delta": "0.014185000",
+          "frame.time_delta_displayed": "0.118960000",
+          "frame.time_relative": "18.660053000",
+          "frame.number": "2437",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1595,10 +1595,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1606,8 +1606,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1615,15 +1615,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "2328",
+          "usb.response_in": "2438",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:40:62:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:c7:00:78:e5:91:04:c7:00:00:00:00:00:00:00:00:36:43:03:40:62:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "40:00:00:c0:b6:13:07:00:00:09:01:e4:de:19:00:cd:de:a8:fb:2f:00:00:00:a4:de:19:00:64:00:00:00:a5:00:08:01:90:72:76:04:08:01:00:00:00:00:00:00:40:7c:13:07:c0:b6:13:07:80:72:76:04:00:00:09:01:2f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1631,18 +1631,18 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.399216000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.399216000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.399216000Z",
+          "frame.time": "2026-01-18T22:27:08.875462000Z",
+          "frame.time_utc": "2026-01-18T22:27:08.875462000Z",
+          "frame.time_epoch": "2026-01-18T22:27:08.875462000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.006411000",
-          "frame.time_delta_displayed": "0.113108000",
-          "frame.time_relative": "17.170510000",
-          "frame.number": "2441",
+          "frame.time_delta": "0.306096000",
+          "frame.time_delta_displayed": "0.410981000",
+          "frame.time_relative": "19.071034000",
+          "frame.number": "2551",
           "frame.len": "91",
           "frame.cap_len": "91",
           "frame.marked": "0",
@@ -1653,10 +1653,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1664,8 +1664,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1673,15 +1673,15 @@
           },
           "usb.transfer_type": "0x01",
           "usb.data_len": "64",
-          "usb.response_in": "2442",
+          "usb.response_in": "2552",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "40:00:00:90:63:43:03:00:00:f4:00:e4:de:19:00:18:93:0a:a1:2f:00:00:00:a4:de:19:00:64:00:00:00:94:00:cd:00:78:e5:91:04:cd:00:00:00:00:00:00:00:00:36:43:03:90:63:43:03:68:e5:91:04:00:00:f4:00:2f"
+        "usbhid.data": "41:00:00:64:00:00:00:ab:05:c2:00:48:f7:66:04:c2:00:00:00:00:00:00:00:30:15:f1:06:78:34:f1:06:38:f7:66:04:00:00:09:01:13:00:00:00:28:ea:19:00:aa:ec:49:77:00:00:00:00:15:db:9a:c2:c8:60:68:04:01"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1689,17 +1689,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.803062000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.803062000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.803062000Z",
+          "frame.time": "2026-01-18T22:27:08.912605000Z",
+          "frame.time_utc": "2026-01-18T22:27:08.912605000Z",
+          "frame.time_epoch": "2026-01-18T22:27:08.912605000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.297101000",
-          "frame.time_delta_displayed": "0.403846000",
-          "frame.time_relative": "17.574356000",
+          "frame.time_delta": "0.035204000",
+          "frame.time_delta_displayed": "0.037143000",
+          "frame.time_relative": "19.108177000",
           "frame.number": "2555",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -1711,10 +1711,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1722,8 +1722,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1734,12 +1734,12 @@
           "usb.response_in": "2556",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "41:00:00:64:00:00:00:e1:00:4b:06:70:ca:71:04:4b:06:00:00:00:00:00:00:e8:07:85:04:98:04:86:04:60:ca:71:04:00:00:f4:00:13:00:00:00:28:ea:19:00:aa:ec:01:77:00:00:00:00:0f:ca:4d:9d:e0:c6:79:04:01"
+        "usbhid.data": "42:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:c0:f2:fc:ff:ff:ff:ff:ff:00:00:00:00:ac:e9:19:00:04:37:04:4b:94:ea:19:00:e0:9b:b3:76:4a:21:c7:8d:fe:ff:ff:ff:14:ea:19:00:4f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1747,17 +1747,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.826081000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.826081000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.826081000Z",
+          "frame.time": "2026-01-18T22:27:08.944815000Z",
+          "frame.time_utc": "2026-01-18T22:27:08.944815000Z",
+          "frame.time_epoch": "2026-01-18T22:27:08.944815000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.020642000",
-          "frame.time_delta_displayed": "0.023019000",
-          "frame.time_relative": "17.597375000",
+          "frame.time_delta": "0.030313000",
+          "frame.time_delta_displayed": "0.032210000",
+          "frame.time_relative": "19.140387000",
           "frame.number": "2559",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -1769,10 +1769,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1780,8 +1780,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1792,12 +1792,12 @@
           "usb.response_in": "2560",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "42:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:c0:f2:fc:ff:ff:ff:ff:ff:00:00:00:00:ac:e9:19:00:11:58:12:ab:94:ea:19:00:e0:9b:c7:74:87:fd:6c:60:fe:ff:ff:ff:14:ea:19:00:4f"
+        "usbhid.data": "43:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:c0:f2:fc:ff:ff:ff:ff:ff:00:00:00:00:ac:e9:19:00:04:37:04:4b:94:ea:19:00:e0:9b:b3:76:4a:21:c7:8d:fe:ff:ff:ff:14:ea:19:00:4f"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1805,17 +1805,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.857673000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.857673000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.857673000Z",
+          "frame.time": "2026-01-18T22:27:08.977155000Z",
+          "frame.time_utc": "2026-01-18T22:27:08.977155000Z",
+          "frame.time_epoch": "2026-01-18T22:27:08.977155000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.029292000",
-          "frame.time_delta_displayed": "0.031592000",
-          "frame.time_relative": "17.628967000",
+          "frame.time_delta": "0.030631000",
+          "frame.time_delta_displayed": "0.032340000",
+          "frame.time_relative": "19.172727000",
           "frame.number": "2563",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -1827,10 +1827,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff8105386099a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1838,8 +1838,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1850,12 +1850,12 @@
           "usb.response_in": "2564",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "43:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:c0:f2:fc:ff:ff:ff:ff:ff:00:00:00:00:ac:e9:19:00:11:58:12:ab:94:ea:19:00:e0:9b:c7:74:87:fd:6c:60:fe:ff:ff:ff:14:ea:19:00:4f"
+        "usbhid.data": "41:01:00:cd:0e:b3:76:3e:f6:1c:fb:28:08:00:00:00:00:00:00:20:d7:0c:77:24:00:00:00:01:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:c0:f2:fc:ff:ff"
       }
     }
   },
   {
-    "_index": "packets-2026-01-16",
+    "_index": "packets-2026-01-18",
     "_score": null,
     "_source": {
       "layers": {
@@ -1863,17 +1863,17 @@
           "frame.section_number": "1",
           "frame.interface_id": "0",
           "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
+            "frame.interface_name": "\\\\.\\USBPcap1",
+            "frame.interface_description": "USBPcap1"
           },
           "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.889057000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.889057000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.889057000Z",
+          "frame.time": "2026-01-18T22:27:09.041442000Z",
+          "frame.time_utc": "2026-01-18T22:27:09.041442000Z",
+          "frame.time_epoch": "2026-01-18T22:27:09.041442000Z",
           "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.029770000",
-          "frame.time_delta_displayed": "0.031384000",
-          "frame.time_relative": "17.660351000",
+          "frame.time_delta": "0.062144000",
+          "frame.time_delta_displayed": "0.064287000",
+          "frame.time_relative": "19.237014000",
           "frame.number": "2567",
           "frame.len": "91",
           "frame.cap_len": "91",
@@ -1885,10 +1885,10 @@
         "usb": {
           "usb.src": "host",
           "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
+          "usb.dst": "1.5.1",
+          "usb.addr": "1.5.1",
           "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81054d9e09a0",
+          "usb.irp_id": "0xffff8085abad19a0",
           "usb.usbd_status": "0x00000000",
           "usb.function": "0x0009",
           "usb.irp_info": "0x00",
@@ -1896,8 +1896,8 @@
             "usb.irp_info.reserved": "0x00",
             "usb.irp_info.direction": "0x00"
           },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
+          "usb.bus_id": "1",
+          "usb.device_address": "5",
           "usb.endpoint_address": "0x01",
           "usb.endpoint_address_tree": {
             "usb.endpoint_address.direction": "0",
@@ -1908,65 +1908,7 @@
           "usb.response_in": "2568",
           "usb.bInterfaceClass": "0x03"
         },
-        "usbhid.data": "41:01:00:cd:0e:c7:74:f3:2a:a3:14:30:08:00:00:00:00:00:00:20:d7:0e:75:24:00:00:00:01:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:c0:f2:fc:ff:ff"
-      }
-    }
-  },
-  {
-    "_index": "packets-2026-01-16",
-    "_score": null,
-    "_source": {
-      "layers": {
-        "frame": {
-          "frame.section_number": "1",
-          "frame.interface_id": "0",
-          "frame.interface_id_tree": {
-            "frame.interface_name": "\\\\.\\USBPcap2",
-            "frame.interface_description": "USBPcap2"
-          },
-          "frame.encap_type": "152",
-          "frame.time": "2026-01-16T09:13:06.953090000Z",
-          "frame.time_utc": "2026-01-16T09:13:06.953090000Z",
-          "frame.time_epoch": "2026-01-16T09:13:06.953090000Z",
-          "frame.offset_shift": "0.000000000",
-          "frame.time_delta": "0.061810000",
-          "frame.time_delta_displayed": "0.064033000",
-          "frame.time_relative": "17.724384000",
-          "frame.number": "2571",
-          "frame.len": "91",
-          "frame.cap_len": "91",
-          "frame.marked": "0",
-          "frame.ignored": "0",
-          "frame.protocols": "usb:usbhid",
-          "frame.encoding": "0"
-        },
-        "usb": {
-          "usb.src": "host",
-          "usb.addr": "host",
-          "usb.dst": "2.3.1",
-          "usb.addr": "2.3.1",
-          "usb.usbpcap_header_len": "27",
-          "usb.irp_id": "0xffff81054d9e09a0",
-          "usb.usbd_status": "0x00000000",
-          "usb.function": "0x0009",
-          "usb.irp_info": "0x00",
-          "usb.irp_info_tree": {
-            "usb.irp_info.reserved": "0x00",
-            "usb.irp_info.direction": "0x00"
-          },
-          "usb.bus_id": "2",
-          "usb.device_address": "3",
-          "usb.endpoint_address": "0x01",
-          "usb.endpoint_address_tree": {
-            "usb.endpoint_address.direction": "0",
-            "usb.endpoint_address.number": "1"
-          },
-          "usb.transfer_type": "0x01",
-          "usb.data_len": "64",
-          "usb.response_in": "2572",
-          "usb.bInterfaceClass": "0x03"
-        },
-        "usbhid.data": "40:00:00:7c:92:05:77:09:23:07:77:00:00:00:00:08:ea:19:00:00:00:00:00:00:00:00:00:08:ea:19:00:08:ea:19:00:00:00:f4:00:2c:ea:19:00:b0:0e:c7:74:00:00:00:00:cd:0e:c7:74:db:2a:a3:14:08:47:8e:04:00"
+        "usbhid.data": "40:00:00:7c:92:4d:77:09:23:4f:77:00:00:00:00:08:ea:19:00:00:00:00:00:00:00:00:00:08:ea:19:00:08:ea:19:00:00:00:09:01:2c:ea:19:00:b0:0e:b3:76:00:00:00:00:cd:0e:b3:76:16:f6:1c:fb:a0:cc:f3:06:00"
       }
     }
   }

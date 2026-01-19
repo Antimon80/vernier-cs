@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import argparse
 
-from protocol_tools import mask_payloads_across_logs, format_masked_blocks
+from protocol_tools import mask_payloads_across_logs, format_blocks
 from dataset import (
     load_init,
     load_change_mode,
@@ -24,7 +24,7 @@ from dataset import (
 def run_init() -> None:
     payloads = load_payload_runs(load_init())
     masked = mask_payloads_across_logs(payloads)
-    text = format_masked_blocks(masked)
+    text = format_blocks(masked)
     out_path = output_path_init()
     write_output(text, out_path)
     print(f"[ok] written {out_path}")
@@ -33,7 +33,7 @@ def run_init() -> None:
 def run_mode_change(end: str, start: str) -> None:
     payloads = load_payload_runs(load_change_mode(end=end, start=start))
     masked = mask_payloads_across_logs(payloads)
-    text = format_masked_blocks(masked)
+    text = format_blocks(masked)
     out_path = output_path_mode_change(end, start)
     write_output(text, out_path)
     print(f"[ok] written {out_path}")
@@ -44,7 +44,7 @@ def run_acq_change(mode: str, end: str, start: str) -> None:
         load_change_acquisition(mode=mode, end=end, start=start)
     )
     masked = mask_payloads_across_logs(payloads)
-    text = format_masked_blocks(masked)
+    text = format_blocks(masked)
     out_path = output_path_acq_change(mode, end, start)
     write_output(text, out_path)
     print(f"[ok] written {out_path}")

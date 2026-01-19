@@ -1,61 +1,21 @@
 # Modus und Parameter der Datenerfassung
 
 ## change_acquisition
-### absorbance
-#### event (Endzustand)
-##### init (Anfangszustand)
 - Spektrometer ist angeschlossen, LoggerPro ist gestartet
 - Die Betriebsart des Spektrometers ist nach der Initialisierung default auf `Absorbanz`
-- Die Default-Einstellung für die Betriebsart sind gesetzt
-- Der Modus der Datenerfassung wird ausgehend vom Zustand nach der Initialisierung auf `Ereignisse mit Tastatureingabe` geändert
-- Die Default-Wellenlänge ereignisgesteuerten Modus ist immer eine andere (ca. 418 - 425 nm)
-##### full
-- Spektrometer ist angeschlossen, LoggerPro ist gestartet
-- Der Modus der Datenerfassung wird ausgehnd vom Zustand nach der Initialisierung im Betriebsmodus `Absorbanz` auf `Ereignisse mit Tastatureingabe` geändert
-- Der Modus der Datenerfassung wird wieder auf `Vollspektrum` geändert
-- Vom Modus `Vollspektrum` wird wieder zu `Ereignisse mit Tastatureingabe` gewechselt
-##### time_resolved
-- Es werden keine Pakete geschickt
-- Hardwareseitig ist `zeitgesteuert` und `Ereignisse mit Tastatureingabe` der gleiche Datenerfassungsmodus
-
-#### full (Endzustand)
-##### time_resolved (Anfangszustand)
-- Spektrometer ist angeschlossen, LoggerPro ist gestartet
-- Der Modus der Datenerfassung wird ausgehnd vom Zustand nach der Initialisierung im Betriebsmodus `Absorbanz` auf `zeitgesteuert` geändert
-- Der Modus der Datenerfassung wird wieder auf `Vollspektrum` geändert
-##### event
-- Spektrometer ist angeschlossen, LoggerPro ist gestartet
-- Der Modus der Datenerfassung wird ausgehnd vom Zustand nach der Initialisierung im Betriebsmodus `Absorbanz` auf `Ereignisse mit Tastatureingabe` geändert
-- Der Modus der Datenerfassung wird wieder auf `Vollspektrum` geändert
-
-#### time_resolved (Endzustand)
-##### init (Anfangszustand)
-- Spektrometer ist angeschlossen, LoggerPro ist gestartet
-- Die Betriebsart des Spektrometers ist nach der Initialisierung default auf `Absorbanz`
-- Die Default-Einstellung für die Betriebsart sind gesetzt
-- Der Modus der Datenerfassung wird ausgehend vom Zustand nach der Initialisierung auf `zeitgesteuert` geändert
-- Die Default-Wellenlänge im zeitgesteuerten Modus ist immer eine andere (ca. 418 - 425 nm)
-##### full
-- Spektrometer ist angeschlossen, LoggerPro ist gestartet
-- Der Modus der Datenerfassung wird ausgehnd vom Zustand nach der Initialisierung im Betriebsmodus `Absorbanz` auf `zeitgesteuert` geändert
-- Der Modus der Datenerfassung wird wieder auf `Vollspektrum` geändert
-- Vom Modus `Vollspektrum` wird wieder zu `zeitgesteuert` gewechselt
-##### event
-- Es werden keine Pakete geschickt
-- Hardwareseitig ist `zeitgesteuert` und `Ereignisse mit Tastatureingabe` der gleiche Datenerfassungsmodus
-
-### fluorescence_405nm
-#### time_resolved (Endzustand)
-##### full (Anfangszustand)
-- Nach Wechsel in den zeitgesteuerten Modus werden kontinuierlich Pakete verschickt (Polling)
-
-## acquisition_param
-### absorbance
-#### full
-#### event
-#### time_resolved
+- Die Default-Einstellungen für die Betriebsart sind gesetzt und werden nicht verändert
+- Der Datenerfassungsmodus ist default auf `Vollspektrum` gesetzt
+- Betriebsmodus `Absorbanz`:
+  - Der Modus der Datenerfassung wird ausgehend vom Zustand nach der Initialisierung auf `Ereignisse mit Tastatureingabe` bzw. `Zeitgesteuert` geändert
+  - Der Modus der Datenerfassung wird wieder zurück auf `Vollspektrum` geändert
+  - Der Modus der Datenerfassung wird erneut auf `Ereignisse mit Tastatureingabe` bzw. `Zeitgesteuert` geändert
+- Übrige Betriebsmodi:
+  - Zunächst wird der Betriebsmodus geändert
+  - Dann wird der Modus der Datenerfassung von `Vollspektrum` auf `Ereignisse mit Tastatureingabe` bzw. `Zeitgesteuert` geändert
+  - Der Modus der Datenerfassung wird wieder zurück auf `Vollspektrum` geändert
 
 ## Allgemeine Beobachtungen
+- Die Default-Wellenlänge nach dem Wechsel in die Betriebsmodi `Zeitgesteuert` bzw. `Ereignisse mit Tastatureingabe` ist immer eine andere (ca. 418 - 425 nm)
 - Keine Pakete werden gesendet für:
   - Änderung der Dauer der Zeiterfassung
   - Umstellen auf `fortlaufende Datenerfassung`

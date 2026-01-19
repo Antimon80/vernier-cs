@@ -16,8 +16,8 @@ from typing import List
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "json_files"
-OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol"
+LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "01" / "json_files"
+OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "01"
 
 ALIAS = {
     "405nm": "fluorescence_405nm",
@@ -166,6 +166,21 @@ def output_path_acq_change(mode: str, end: str, start: str) -> Path:
     end = alias(end)
     start = alias(start)
     return OUTPUT_DIR / "trace_mask" / f"acq_{mode}_{end}_from_{start}.txt"
+
+def output_path_init_dump() -> Path:
+    return OUTPUT_DIR / "trace_dump" / "init.txt"
+
+
+def output_path_mode_change_dump(end: str, start: str) -> Path:
+    return OUTPUT_DIR / "trace_dump" / f"change_{end}_from_{start}.txt"
+
+
+def output_path_acq_change_dump(mode: str, end: str, start: str) -> Path:
+    mode = alias(mode)
+    end = alias(end)
+    start = alias(start)
+    return OUTPUT_DIR / "trace_dump" / f"acq_{mode}_{end}_from_{start}.txt"
+
 
 def write_output(text: str, path: Path) -> None:
     """Write UTF-8 text to a file, creating parent directories if needed."""

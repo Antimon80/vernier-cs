@@ -1,0 +1,48 @@
+runs=5 packets(aligned)=6
+
+packet 0:
+ bytes:
+   @0x07: run1=4f run2=14 run3=12 run4=08 run5=12
+   @0x08: run1=03 run2=00 run3=00 run4=00 run5=00
+   @0x09: run1=1f run2=0f run3=0c run4=03 run5=10
+   @0x0a: run1=04 run2=00 run3=00 run4=00 run5=00
+   @0x0b: run1=b8 run2=88 run3=58 run4=48 run5=60
+   @0x0c: run1=91 run2=2c run3=76 run4=77 run5=2c
+   @0x0d: run1=73 run2=87 run3=79 run4=79 run5=87
+   @0x0f: run1=1f run2=0f run3=0c run4=03 run5=10
+   @0x10: run1=04 run2=00 run3=00 run4=00 run5=00
+   @0x17: run1=c8 run2=08 run3=40 run4=d8 run5=c8
+   @0x18: run1=27 run2=f9 run3=47 run4=46 run5=6e
+   @0x19: run1=7c run2=72 run3=78 run4=14 run5=72
+   @0x1a: run1=04 run2=04 run3=04 run4=07 run5=04
+   @0x1b: run1=98 run2=88 run3=48 run4=78 run5=70
+   @0x1c: run1=cd run2=fb run3=49 run4=47 run5=71
+   @0x1d: run1=7c run2=72 run3=78 run4=14 run5=72
+   @0x1e: run1=04 run2=04 run3=04 run4=07 run5=04
+   @0x1f: run1=a8 run2=78 run3=48 run4=38 run5=50
+   @0x20: run1=91 run2=2c run3=76 run4=77 run5=2c
+   @0x21: run1=73 run2=87 run3=79 run4=79 run5=87
+   @0x3b: run1=58 run2=e0 run3=e0 run4=d8 run5=78
+   @0x3c: run1=a6 run2=f8 run3=f8 run4=c9 run5=d9
+   @0x3d: run1=14 run2=78 run3=78 run4=7a run5=7a
+   @0x3e: run1=07 run2=04 run3=04 run4=04 run5=04
+
+packet 1:
+ bytes:
+   @0x27: run1=03 run2=05 run3=06 run4=05 run5=05
+   @0x28: run1=6a run2=1a run3=b5 run4=a6 run5=85
+   @0x29: run1=03 run2=05 run3=05 run4=05 run5=05
+   @0x2a: run1=9a run2=a0 run3=22 run4=c9 run5=ab
+
+packet 2:
+ bytes:
+   @0x27: run1=03 run2=05 run3=06 run4=05 run5=05
+   @0x28: run1=6a run2=1a run3=b5 run4=a6 run5=85
+   @0x29: run1=03 run2=05 run3=05 run4=05 run5=05
+   @0x2a: run1=9a run2=a0 run3=22 run4=c9 run5=ab
+
+packet 4:
+ bytes:
+   @0x3b: run1=b0 run2=70 run3=c0 run4=c8 run5=38
+   @0x3c: run1=8e run2=35 run3=66 run4=6e run5=f2
+   @0x3d: run1=78 run2=73 run3=72 run4=72 run5=72
