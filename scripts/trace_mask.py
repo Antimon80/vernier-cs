@@ -13,10 +13,14 @@ from dataset import (
     load_init,
     load_change_mode,
     load_change_acquisition,
+    load_calibration,
+    load_measurement,
     load_payload_runs,
     output_path_init,
     output_path_mode_change,
     output_path_acq_change,
+    output_path_calibration,
+    output_path_measurement,
     write_output,
 )
 
@@ -46,6 +50,24 @@ def run_acq_change(mode: str, end: str, start: str) -> None:
     masked = mask_payloads_across_logs(payloads)
     text = format_blocks(masked)
     out_path = output_path_acq_change(mode, end, start)
+    write_output(text, out_path)
+    print(f"[ok] written {out_path}")
+
+
+def run_calibration(mode: str) -> None:
+    payloads = load_payload_runs(load_calibration(mode=mode))
+    masked = mask_payloads_across_logs(payloads)
+    text = format_blocks(masked)
+    out_path = output_path_calibration(mode)
+    write_output(text, out_path)
+    print(f"[ok] written {out_path}")
+
+
+def run_measurement(mode: str, acq: str) -> None:
+    payloads = load_payload_runs(load_measurement(mode=mode, acq=acq))
+    masked = mask_payloads_across_logs(payloads)
+    text = format_blocks(masked)
+    out_path = output_path_measurement(mode, acq)
     write_output(text, out_path)
     print(f"[ok] written {out_path}")
 
@@ -82,6 +104,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_acq.set_defaults(cmd="chng_acq")
 
+    p_cal = sub.add_parser(
+        "cal",
+        help="Mask the calibration of the spectrophotometer inside an operating mode.",
+    )
+    p_cal.add_argument(
+        "--mode", required=True, help="Operation mode (absorbance or transmittance)."
+    )
+    p_cal.set_defaults(cmd="cal")
+
+    p_meas = sub.add_parser(
+        "meas", help="Mask a measurement inside an operation and acquisition mode."
+    )
+    p_meas.add_argument(
+        "--mode", required=True, help="Operation mode (e. g. absorbance)."
+    )
+    p_meas.add_argument(
+        "--acq", required=True, help="Acquisition mode (e. g. full_spectrum)."
+    )
+    p_meas.set_defaults(cmd="meas")
+
     return parser
 
 
@@ -93,6 +135,10 @@ def main() -> None:
         run_mode_change(end=args.end, start=args.start)
     elif args.cmd == "chng_acq":
         run_acq_change(mode=args.mode, end=args.end, start=args.start)
+    elif args.cmd == "cal":
+        run_calibration(mode=args.mode)
+    elif args.cmd == "meas":
+        run_measurement(mode=args.mode, acq=args.acq)
     else:
         raise RuntimeError(f"Unknown command: {args.cmd}")
 

@@ -1,7 +1,0 @@
-packet 1: report_id=42
-  [stable vs variable across runs]
-    offset 0x27: A=07  B=??
-
-packet 2: report_id=43
-  [stable vs variable across runs]
-    offset 0x27: A=07  B=??

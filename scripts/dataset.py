@@ -16,8 +16,8 @@ from typing import List
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "01" / "json_files"
-OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "01"
+LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "03" / "json_files"
+OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "03"
 
 ALIAS = {
     "405nm": "fluorescence_405nm",
@@ -130,7 +130,10 @@ def load_change_mode(end: str, start: str, direction: str = OUT) -> List[Path]:
     path = LOAD_DIR / "change_mode" / end / start
     return list_runs(path, run_pattern(direction))
 
-def load_change_acquisition(mode: str, end: str, start: str, direction: str = OUT) -> List[Path]:
+
+def load_change_acquisition(
+    mode: str, end: str, start: str, direction: str = OUT
+) -> List[Path]:
     """
     Load all capture files for a directed acquisition-mode transition.
 
@@ -149,6 +152,18 @@ def load_change_acquisition(mode: str, end: str, start: str, direction: str = OU
     return list_runs(path, run_pattern(direction))
 
 
+def load_calibration(mode: str, direction: str = OUT) -> List[Path]:
+    path = LOAD_DIR / "calibration" / mode
+    return list_runs(path, run_pattern(direction))
+
+
+def load_measurement(mode: str, acq: str, direction: str = OUT) -> List[Path]:
+    mode = alias(mode)
+    acq = alias(acq)
+    path = LOAD_DIR / "measurement" / mode / acq
+    return list_runs(path, run_pattern(direction))
+
+
 def output_path_init() -> Path:
     return OUTPUT_DIR / "trace_mask" / "init.txt"
 
@@ -161,11 +176,21 @@ def output_path_diff(a_end: str, a_start: str, b_end: str, b_start: str) -> Path
     name = f"diff_{a_end}_from_{a_start}__vs__{b_end}_from_{b_start}.txt"
     return OUTPUT_DIR / "trace_diff" / name
 
+
 def output_path_acq_change(mode: str, end: str, start: str) -> Path:
     mode = alias(mode)
     end = alias(end)
     start = alias(start)
     return OUTPUT_DIR / "trace_mask" / f"acq_{mode}_{end}_from_{start}.txt"
+
+
+def output_path_calibration(mode: str) -> Path:
+    return OUTPUT_DIR / "trace_mask" / f"calibration_{mode}.txt"
+
+
+def output_path_measurement(mode: str, acq: str) -> Path:
+    return OUTPUT_DIR / "trace_mask" / f"measurement_{mode}_{acq}.txt"
+
 
 def output_path_init_dump() -> Path:
     return OUTPUT_DIR / "trace_dump" / "init.txt"
@@ -180,6 +205,14 @@ def output_path_acq_change_dump(mode: str, end: str, start: str) -> Path:
     end = alias(end)
     start = alias(start)
     return OUTPUT_DIR / "trace_dump" / f"acq_{mode}_{end}_from_{start}.txt"
+
+
+def output_path_calibration_dump(mode: str) -> Path:
+    return OUTPUT_DIR / "trace_dump" / f"calibration_{mode}.txt"
+
+
+def output_path_measurement_dump(mode: str, acq: str) -> Path:
+    return OUTPUT_DIR / "trace_dump" / f"measurement_{mode}_{acq}.txt"
 
 
 def write_output(text: str, path: Path) -> None:
