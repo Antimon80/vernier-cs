@@ -92,16 +92,3 @@ def format_raw_blocks(payloads_by_run: list[list[str]]) -> str:
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"
-
-def iter_mask_tokens(mask_block: str) -> List[str]:
-    """
-    Convert a formatted mask block back into a flat token list.
-    Tokens are like '41', '0f', '??'.
-    """
-    tokens: List[str] = []
-    for line in mask_block.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        tokens.extend(line.split())
-    return tokens

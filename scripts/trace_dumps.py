@@ -14,12 +14,18 @@ from dataset import (
     load_change_acquisition,
     load_calibration,
     load_measurement,
+    load_acquisition_params,
+    load_recalibration,
+    load_close,
     load_payload_runs,
     output_path_init_dump,
     output_path_mode_change_dump,
     output_path_acq_change_dump,
     output_path_calibration_dump,
     output_path_measurement_dump,
+    output_path_acq_params_dump,
+    output_path_recal_dump,
+    output_path_close_dump,
     write_output,
 )
 
@@ -66,6 +72,30 @@ def run_measurement(mode: str, acq: str) -> None:
     print(f"[ok] written {out_path}")
 
 
+def run_acq_params(mode: str, acq: str) -> None:
+    payloads = load_payload_runs(load_acquisition_params(mode=mode, acq=acq))
+    text = format_raw_blocks(payloads)
+    out_path = output_path_acq_params_dump(mode, acq)
+    write_output(text, out_path)
+    print(f"[ok] written {out_path}")
+
+
+def run_recalibration(mode: str, acq: str) -> None:
+    payloads = load_payload_runs(load_recalibration(mode=mode, acq=acq))
+    text = format_raw_blocks(payloads)
+    out_path = output_path_recal_dump(mode, acq)
+    write_output(text, out_path)
+    print(f"[ok] written {out_path}")
+
+
+def run_close() -> None:
+    payloads = load_payload_runs(load_close())
+    text = format_raw_blocks(payloads)
+    out_path = output_path_close_dump()
+    write_output(text, out_path)
+    print(f"[ok] written {out_path}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="trace_dumps",
@@ -96,6 +126,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_meas.add_argument("--acq", required=True)
     p_meas.set_defaults(cmd="meas")
 
+    p_acq_param = sub.add_parser("acq_param")
+    p_acq_param.add_argument("--mode", required=True)
+    p_acq_param.add_argument("--acq", required=True)
+    p_acq_param.set_defaults(cmd="acq_param")
+
+    p_recal = sub.add_parser("recal")
+    p_recal.add_argument("--mode", required=True)
+    p_recal.add_argument("--acq", required=True)
+    p_recal.set_defaults(cmd="recal")
+
+    p_close = sub.add_parser("close")
+    p_close.set_defaults(cmd="close")
+
     return parser
 
 
@@ -111,6 +154,12 @@ def main() -> None:
         run_calibration(mode=args.mode)
     elif args.cmd == "meas":
         run_measurement(mode=args.mode, acq=args.acq)
+    elif args.cmd == "acq_param":
+        run_acq_params(mode=args.mode, acq=args.acq)
+    elif args.cmd == "recal":
+        run_recalibration(mode=args.mode, acq=args.acq)
+    elif args.cmd == "close":
+        run_close()
     else:
         raise RuntimeError(args.cmd)
 

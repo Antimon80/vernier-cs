@@ -164,6 +164,25 @@ def load_measurement(mode: str, acq: str, direction: str = OUT) -> List[Path]:
     return list_runs(path, run_pattern(direction))
 
 
+def load_acquisition_params(mode: str, acq: str, direction: str = OUT) -> List[Path]:
+    mode = alias(mode)
+    acq = alias(acq)
+    path = LOAD_DIR / "acquisition_param" / mode / acq
+    return list_runs(path, run_pattern(direction))
+
+
+def load_recalibration(mode: str, acq: str, direction: str = OUT) -> List[Path]:
+    mode = alias(mode)
+    acq = alias(acq)
+    path = LOAD_DIR / "recalibration" / mode / acq
+    return list_runs(path, run_pattern(direction))
+
+
+def load_close(direction: str = OUT) -> List[Path]:
+    path = LOAD_DIR / "close"
+    return list_runs(path, run_pattern(direction))
+
+
 def output_path_init() -> Path:
     return OUTPUT_DIR / "trace_mask" / "init.txt"
 
@@ -192,6 +211,18 @@ def output_path_measurement(mode: str, acq: str) -> Path:
     return OUTPUT_DIR / "trace_mask" / f"measurement_{mode}_{acq}.txt"
 
 
+def output_path_acquisition_params(mode: str, acq: str) -> Path:
+    return OUTPUT_DIR / "trace_mask" / f"acq_param_{mode}_{acq}.txt"
+
+
+def output_path_recalibration(mode: str, acq: str) -> Path:
+    return OUTPUT_DIR / "trace_mask" / f"recal_{mode}_{acq}.txt"
+
+
+def output_path_close() -> Path:
+    return OUTPUT_DIR / "trace_mask" / "close.txt"
+
+
 def output_path_init_dump() -> Path:
     return OUTPUT_DIR / "trace_dump" / "init.txt"
 
@@ -213,6 +244,18 @@ def output_path_calibration_dump(mode: str) -> Path:
 
 def output_path_measurement_dump(mode: str, acq: str) -> Path:
     return OUTPUT_DIR / "trace_dump" / f"measurement_{mode}_{acq}.txt"
+
+
+def output_path_acq_params_dump(mode: str, acq: str) -> Path:
+    return OUTPUT_DIR / "trace_dump" / f"acq_param_{mode}_{acq}.txt"
+
+
+def output_path_recal_dump(mode: str, acq: str) -> Path:
+    return OUTPUT_DIR / "trace_dump" / f"recal_{mode}_{acq}.txt"
+
+
+def output_path_close_dump() -> Path:
+    return OUTPUT_DIR / "trace_dump" / "close.txt"
 
 
 def write_output(text: str, path: Path) -> None:
