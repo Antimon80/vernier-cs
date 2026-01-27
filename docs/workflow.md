@@ -2,46 +2,86 @@
 
 Um zu Reksontruieren, welche Bytes im HID-Payload spezifisch für eine Session sind, wurde der folgende Workflow mit Hilfe von Wireshark getrackt:
 
-1. Das Spektrometer ist angschlossen, LoggerPro wird gestartet &rarr; `Initialisierung` &rarr; `init\out_1`
-2. Im default gesetzten Betriebsmodus `Absorbanz` wird das Gerät kalibriert &rarr; `calibration\absorbance\out_1`
-3. Im default gesetzten Datenerfassungsmodus `Vollspektrum` wird eine Messung gestartet &rarr; `measurement\absorbance\full_spectrum\out_1`
-4. Der Datenerfassungsmodus wird auf `zeitgesteuert` gewechselt; dabei wird default eine Wellenlänge gesetzt, bei der die Daten erfasst werden (wurde nicht notiert, wahrscheinlich 413.9 nm) &rarr; `change_acquisition\absorbance\time_resolved\full_spectrum\out_1` (die letzten 5 Pakete sind Pings)
-5. Es wird eine Messung gestartet &rarr; `measurement\absorbance\time_resolved\out_1`(die ersten 5 Pakete sind Pings)
-6. Der Datenerfassungsmodus wird auf `Vollspektrum` geändert &rarr; `change_acquisition\absorbance\full_spectrum\time_resolved\out_1` (die ersten 5 Pakete sind Pings)
-7. Es wird eine Messung gestartet &rarr; `measurement\absorbance\full_spectrum\out_2`
-8. Der Datenerfassungsmodus wird auf `ereignisgsteuert` geändert, der Betriebsmodus ist immer noch `Absorbanz`; default wird dabei eine Wellenlänge von 413.9 nm zur Datenerfassung gesetzt &rarr; `change_acquisition\absorbance\event_triggered\full_spectrum\out_1` (die letzten 5 Pakete sind Pings)
-9. Eine Messung wird gestartet &rarr; `measurement\absorbance\event_triggered\out_1` (die erten 5 Pakte sind Pings)
-10. Die Wellenlänge zur Datenerfassung wird auf 520.3 nm geändert &rarr; `acquisition_param\absorbance\event_triggered\out_1` (die letzten 5 Pakete sind Pings)
-11. Eine Messung wird gestartet &rarr; `measurement\absorbance\event_triggered\out_2` (die erten 5 Pakte sind Pings)
-12. Der Datenerfassungmodus wird auf `Vollspektrum` geändert, Betriebsmodus ist immer noch `Absorbanz` &rarr; `change_acquisition\absorbance\full_spectrum\event_triggered\out_1`
-13. Eine Messung wird gestartet &rarr; `measurement\absorbance\full_spectrum\out_3`
-14. Der Betriebsmodus wird auf `Fluoreszenz 405 nm` geändert &rarr; `change_mode\fluorescence_405nm\absorbance\out_1`
-15. Im Datenerfassungsmodus `Vollspektrum` wird eine Messung gestartet &rarr; `measurement\fluorescence_405nm\full_spectrum\out_1`
-16. Der Datenerfassungsmodus wird zu `zeitgesteuert` geändert &rarr; die Wellenlänge zur Datenerfassung wird default auf 394.1 nm gesetzt &rarr; `change_acquisition\fluorescence_405nm\time_resolved\full_spectrum\out_1` (die letzten 5 Pakete sind Pings)
-17. Es wird eine Messung gestartet &rarr; `measurement\fluorescence_405nm\time_resolved\out_1`
-18. Der Datenerfassungsmodus wird auf `Vollspektrum` geändert &rarr; `change_acquisition\fluorescence_405nm\full_spectrum\time_resolved\out_1`
-19. Es wird eine Messung gestartet &rarr; `measurement\fluorescence_405nm\full_spectrum\out_2`
-20. Der Betriebsmodus wird auf `Absorbanz` geändert &rarr; `change_mode\absorbance\fluorescence_405nm\out_1`
-21. Es wird eine Messung gestartet &rarr; `measurement\absorbance\full_spectrum\out_4`
-22. Das Gerät wird rekalibriert &rarr; Erfassungszeit ist 122 ms &rarr; `recalibration\absorbance\out_1`
-23. Im Betriebsmodus `Absorbanz` und Datenerfassungsmodus `Vollspektrum` wird eine Messung gestartet &rarr; `measurement\absorbance\full_spectrum\out_5`
-24. Der Datenerfassungsmodus wird zu `zeitgesteuert` geändert &rarr; 413.9 nm Wellenlänge &rarr; `change_acquisition\absorbance\time_resolved_full_spectrum\out_2` (die letzten 4 Pakete sind Pings)
-25. Es wird eine Messung gestartet &rarr; `measurement\absorbance\time_resolved\out_2`
-26. Die Wellenlänge zur Datenerfassung wird auf 520.3 nm geändert &rarr; `acquisition_param\absorbance\time_resolved\out_1`
-27. Es wird eine Messung gestartet &rarr; `measurement\absorbance\time_resoveld\out_3` (die ersten 5 Pakete sind Pings)
-28. Der Betriebsmodus wird zu `Fluoreszenz 405 nm` geändert, der Datenerfassungsmodus ist immer noch `zeitgesteuert` &rarr; `change_mode\fluorescence_405nm\absorbance\out_2` (die ersten und die letzten 5 Pakete sind Pings)
-29. Es wird eine Messung gestartet; dabei hat sich die zuvor eingestellt Erfassungszeit von 10 s auf 200 s geändert &rarr; `measurement\fluorescence_405nm\time_resolved\out_2` (die ersten 5 Pakete sind Pings)
-30. Der Betriebsmodus wird zu `Absorbanz` geändert &rarr; `change_mode\absorbance\fluorescence_405nm\out_2`
-31. Es wird eine Messung gestartet &rarr; `measurement\absorbance\time_resolved\out_3` (die ersten 5 Pakete sind Pings)
-32. Der Datenerfassungsmodus wird zu `Vollspektrum` geändert &rarr; `change_acquisition\absorbance\full_spectrum\time_resolved\out_2`
-33. Es wird eine Messung gestartet &rarr; `measurement\absorbance\full_spectrum\out_6`
-34. Das Gerät wird rekalibriert &rarr; `recalibration\absorbance\out_2`
-35. Im Betriebsmodus `Absorbanz` und Datenerfassungsmodus `Vollspektrum` wird eine Messung gestartet &rarr; `measurement\absorbance\full_spectrum\out_7`
-36. Der Datenerfassungsmodus wird zu `ereignisgesteuert` geändert; default wird zur Datenerfassung jetzt eine Wellenlänge von 887.4 nm gesetzt &rarr; `change_acquisition\absorbance\event_triggered\full_spectrum\out_2` (die letzten 5 Pakete sind Pings)
-37. Es wird eine Messung gestartet &rarr; `measurement\absorbance\event_triggered\out_3`
-38. Die Wellenlänge zur Datenerfassung wird auf 520.3 nm geändert &rarr; `acquisition_param\absorbance\event_triggered\out_2`
-39. Es wird eine Messung gestartet &rarr; `measurement\absorbance\event_triggered\out_4`
-40. LoggerPro wird geschlossen &rarr; `close\out_1`
+| Nr. | Beschreibung                                                                                      | Verzeichnis                                                               | Bemerkungen |
+| --- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------- |
+| 1   | Das Spektrometer ist angeschlossen, Logger Pro wird gestartet &rarr; das Gerät wird initialisiert | `init\out_1`                                                              | ---         |
+| 2   | Der Betriebsmodus wird auf `Fluoreszenz 505 nm` geändert                                          | `change_mode\flourescence_500nm\absorbance\out_1`                         | ---         |
+| 3   | Eine Messung wird gestartet                                                                       | `measurement\fluorescence_500nm\full_spectrum\out_1`                      | ---         |
+| 4   | Der Datenerfassungsmodus wird auf `zeitgesteuert` geändert &rarr; Wellenlänge zur Datenerfassung ist 502.2 nm                                       | `change_acquisition\fluorescence_500nm\time_resolved\full_spectrum\out_1` | die letzten 5 Pakete sind Pings         |
+| 5   | Es wird eine Messung gestartet                                                                    | `measurement\fluorescence_500nm\time_resolved\out_1`                      | die ersten 5 Pakete sind Pings         |
+| 6   | Die Wellenlänge zur Datenerfassung wird auf 520.3 nm geändert                                          | `acquisition_param\fluorescence_500nm\time_resolved\out_1`                | die ersten und die letzten 5 Pakete sind Pings         |
+| 7   | Eine Messung wird gestartet                                                                       | `measurement\fluorescence_500nm\time_resolved\out_2`                      | die ersten 5 Pakete sind Pings         |
+| 8   | Der Datenerfassungsmodus wird auf `Vollspektrum` geändert                                         | `change_acquisition\fluorescence_500nm\full_spectrum\time_resolved\out_1`       | ---         |
+| 9   | Der Betriebsmodus wird auf `Transmission` geändert                                                | `change_mode\transmittance\fluorescence_500nm\out_1`                       | ---         |
+| 10  | Das Gerät wird kalibriert &rarr; `Integrationszeit der Abtastung` (entspricht der `Erfassungszeit`) wird auf 114 ms gesetzt                                                                         | `calibration\transmittance\out_1`                                         | ---         |
+| 11  | Eine Messung wird gestartet                                                                       | `measurement\transmittance\full_spectrum\out_1`                           | ---         |
+| 12 | Der Betriebsmodus wird auf `Intensität` geändert | `change_mode\intensity\transmittance\out_1` | --- |
+| 13 | Eine Messung wird gestartet | `measurement\intensity\full_spectrum\out_1` | --- |
+| 14 | Der Datenerfassungsmodus wird zu `ereignisgesteuert` geändert &rarr; Wellenlänge zur Datenerfassung wird auf 864.5 nm gesetzt | `change_acquisition\intensity\event_triggered\full_spectrum\out_1` | die letzten 5 Pakete sind Pings |
+| 15 | Eine Messung wird gestartet | `measurement\intensity\event_triggered\out_1` | die ersten 5 Pakete sind Pings |
+| 16 | Die Wellenlänge zur Datenerfassung wird auf 520.3 nm geändert | `acquisitiom_param\intensity\event_triggered\out_1` | die ersten 5 und die letzten 4 Pakete sind Pings |
+| 17 | Eine Messung wird gestartet | `measurement\intensity\event_triggered\out_1` | die ersten 5 Pakete sind Pings |
+| 18 | Der Betriebsmodus wird auf `Transmission` geändert; der Datenerfassungsmodus ist immer noch `ereignisgesteuert` | `change_mode\transmittance\intensity\out_1` | die ersten und die letzten 5 Pakete sind Pings |
+| 19 | Das Gerät wird rekalibriert | `recalibration\transmittance\out_1` | die letzten 5 Pakete sind Pings |
+| 20 | Eine Messung wird gestartet | `measurement\transmittance\event_triggered\out_1` | --- |
+| 21 | Der Datenerfassungsmodus wird auf `Vollspektrum` geändert | `change_acquisition\transmittance\full_spectrum\event_triggered\out_1` | die ersten 5 Pakete sind Pings |
+| 22 | Eine Messung wird gestartet | `measurement\transmittance\full_spectrum\out_2` | --- |
+| 33 | Das Gerät wird rekalibriert | `recalibration\transmittance\out_2`| --- |
+| 34 | Eine Messung wird gestartet | `measurement\transmittance\full_spectrum\out_3` | --- |
+| 35 | Der Betriebsmodus wird auf `Absorbanz` geändert | `change_mode\absorbance\transmittance\out_1` | --- |
+| 36 | Eine Messung wird gestartet | `measurement\absorbance\full_spectrum\out_1` | --- |
+| 37 | Das Gerät wird rekalibriert | `recalibration\absorbance\out_1` | --- |
+| 38 | Eine Messung wird gestartet | `measurement\absorbance\full_spectrum\out_2` | --- |
+| 39 | Der Betriebsmodus wird auf `Fluoreszenz 500 nm` geändert | `change_mode\fluorescence_500nm\absorbance\out_2` | --- |
+| 40 | LoggerPro wird geschlossen | `close\out_1` | --- |
+
+
+
+Um zu Reksontruieren, welche Bytes im HID-Payload spezifisch für eine Session sind, wurde der folgende Workflow mit Hilfe von Wireshark getrackt:
+
+| Nr. | Beschreibung                                                                                                                                                                               | Verzeichnis                                                               | Bemerkungen                                   |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- | --------------------------------------------- |
+| 1   | Das Spektrometer ist angeschlossen, LoggerPro wird gestartet und das Gerät wird initialisiert                                                                                              | `init\out_1`                                                              | ---                                           |
+| 2   | Im default gesetzten Betriebsmodus `Absorbanz` wird das Gerät kalibriert                                                                                                                   | `calibration\absorbance\out_1`                                            | ---                                           |
+| 3   | Im default gesetzten Datenerfassungsmodus `Vollspektrum` wird eine Messung gestartet                                                                                                       | `measurement\absorbance\full_spectrum\out_1`                              | ---                                           |
+| 4   | Der Datenerfassungsmodus wird auf `zeitgesteuert` gewechselt; dabei wird default eine Wellenlänge gesetzt, bei der die Daten erfasst werden (wurde nicht notiert, wahrscheinlich 413.9 nm) | `change_acquisition\absorbance\time_resolved\full_spectrum\out_1`         | (die letzten 5 Pakete sind Pings)             |
+| 5   | Es wird eine Messung gestartet                                                                                                                                                             | `measurement\absorbance\time_resolved\out_1`                              | die ersten 5 Pakete sind Pings                |
+| 6   | Der Datenerfassungsmodus wird auf `Vollspektrum` geändert                                                                                                                                  | `change_acquisition\absorbance\full_spectrum\time_resolved\out_1`         | die letzten 5 Pakete sind Pings               |
+| 7   | Es wird eine Messung gestartet                                                                                                                                                             | `measurement\absorbance\full_spectrum\out_2`                              | ---                                           |
+| 8   | Der Datenerfassungsmodus wird auf `ereignisgsteuert` geändert, der Betriebsmodus ist immer noch `Absorbanz`; default wird dabei eine Wellenlänge von 413.9 nm zur Datenerfassung gesetzt   | `change_acquisition\absorbance\event_triggered\full_spectrum\out_1`       | die letzten 5 Pakete sind Pings               |
+| 9   | Eine Messung wird gestartet                                                                                                                                                                | `measurement\absorbance\event_triggered\out_1`                            | die ersten 5 Pakete sind Pings                |
+| 10  | Die Wellenlänge zur Datenerfassung wird auf 520.3 nm geändert                                                                                                                              | `acquisition_param\absorbance\event_triggered\out_1`                      | die letzten 5 Pakete sind Pings               |
+| 11  | Eine Messung wird gestartet                                                                                                                                                                | `measurement\absorbance\event_triggered\out_2`                            | die ersten 5 Pakete sind Pings                |
+| 12  | Der Datenerfassungmodus wird auf `Vollspektrum` geändert, Betriebsmodus ist immer noch `Absorbanz`                                                                                         | `change_acquisition\absorbance\full_spectrum\event_triggered\out_1`       | ---                                           |
+| 13  | Eine Messung wird gestartet                                                                                                                                                                | `measurement\absorbance\full_spectrum\out_3`                              | ---                                           |
+| 14  | Der Betriebsmodus wird auf `Fluoreszenz 405 nm` geändert                                                                                                                                   | `change_mode\fluorescence_405nm\absorbance\out_1`                         | ---                                           |
+| 15  | Im Datenerfassungsmodus `Vollspektrum` wird eine Messung gestartet                                                                                                                         | `measurement\fluorescence_405nm\full_spectrum\out_1`                      | ---                                           |
+| 16  | Der Datenerfassungsmodus wird zu `zeitgesteuert` geändert &rarr; die Wellenlänge zur Datenerfassung wird default auf 394.1 nm gesetzt                                                      | `change_acquisition\fluorescence_405nm\time_resolved\full_spectrum\out_1` | die letzten 5 Pakete sind Pings               |
+| 17  | Es wird eine Messung gestartet                                                                                                                                                             | `measurement\fluorescence_405nm\time_resolved\out_1`                      | ---                                           |
+| 18  | Der Datenerfassungsmodus wird auf `Vollspektrum` geändert                                                                                                                                  | `change_acquisition\fluorescence_405nm\full_spectrum\time_resolved\out_1` | ---                                           |
+| 19  | Es wird eine Messung gestartet                                                                                                                                                             | `measurement\fluorescence_405nm\full_spectrum\out_2`                      | ---                                           |
+| 20  | Der Betriebsmodus wird auf `Absorbanz` geändert                                                                                                                                            | `change_mode\absorbance\fluorescence_405nm\out_1`                         | ---                                           |
+| 21  | Eine Messung wird gestartet                                                                                                                                                                | `measurement\absorbance\full_spectrum\out_4`                              | ---                                           |
+| 22  | Das Gerät wird rekalibriert &rarr; Erfassungszeit ist 122 ms                                                                                                                               | `recalibration\absorbance\out_1`                                          | ---                                           |
+| 23  | Im Betriebsmodus `Absorbanz` und Datenerfassungsmodus `Vollspektrum` wird eine Messung gestartet                                                                                           | `measurement\absorbance\full_spectrum\out_5`                              | ---                                           |
+| 24  | Der Datenerfassungsmodus wird zu `zeitgesteuert` geändert                                                                                                                                  | `change_acquisition\absorbance\time_resolved_full_spectrum\out_2`         | die letzten 4 Pakete sind Pings               |
+| 25  | Es wird eine Messung gestartet                                                                                                                                                             | `measurement\absorbance\time_resolved\out_2`                              | ---                                           |
+| 26  | Die Wellenlänge zur Datenerfassung wird auf 520.3 nm geändert                                                                                                                              | `acquisition_param\absorbance\time_resolved\out_1`                        | ---                                           |
+| 27  | Eine Messung wird gestartet                                                                                                                                                                | `measurement\absorbance\time_resoveld\out_3`                              | die ersten 5 Pakete sind Pings                |
+| 28  | Der Betriebsmodus wird zu `Fluoreszenz 405 nm` geändert, der Datenerfassungsmodus ist immer noch `zeitgesteuert`                                                                           | `change_mode\fluorescence_405nm\absorbance\out_2`                         | die ersten und die letzten 5 Pakte sind Pings |
+| 29  | Es wird eine Messung gestartet; dabei hat sich die zuvor eingestellt Erfassungszeit von 10 s auf 200 s geändert                                                                            | `measurement\fluorescence_405nm\time_resolved\out_2`                      | die ersten 5 Pakete sind Pings                |
+| 30  | Der Betriebsmodus wird zu `Absorbanz` geändert                                                                                                                                             | `change_mode\absorbance\fluorescence_405nm\out_2`                         | ---                                           |
+| 31  | Es wird ene Messung gestartet                                                                                                                                                              | `measurement\absorbance\time_resolved\out_3`                              | die ersten 5 Pakete sind Pings                |
+| 32  | Der Datenerfassungsmodus wird zu `Vollspektrum` geändert                                                                                                                                   | `change_acquisition\absorbance\full_spectrum\time_resolved\out_2`         | ---                                           |
+| 33  | Es wird eine Messung gestartet                                                                                                                                                             | `measurement\absorbance\full_spectrum\out_6`                              | ---                                           |
+| 34  | Das Gerät wird rekalibriert                                                                                                                                                                | `recalibration\absorbance\out_2`                                          | ---                                           |
+| 35  | Im Betriebsmodus `Absorbanz` und Datenerfassungsmodus `Vollspektrum` wird eine Messung gestartet                                                                                           | `measurement\absorbance\full_spectrum\out_7`                              | ---                                           |
+| 36  | Der Datenerfassungsmodus wird zu `ereignisgesteuert` geändert; default wird zur Datenerfassung jetzt eine Wellenlänge von 887.4 nm gesetzt                                                 | `change_acquisition\absorbance\event_triggered\full_spectrum\out_2`       | die letzten 5 Pakete sind Pings               |
+| 37  | Es wird eine Messung gestartet                                                                                                                                                             | `measurement\absorbance\event_triggered\out_3`                            | ---                                           |
+| 38  | Die Wellenlänge zur Datenerfassung wird auf 520.3 nm geändert                                                                                                                              | `acquisition_param\absorbance\event_triggered\out_2`                      | ---                                           |
+| 39  | Es wird eine Messung gestartet                                                                                                                                                             | `measurement\absorbance\event_triggered\out_4`                            | ---                                           |
+| 40  | LoggerPro wird geschlossen                                                                                                                                                                 | `close\out_1`                                                             | ---                                           |
+ 
 
 ## Allgemeine Beobachtungen
 - Sobald das Gerät einmal kalibriert ist, setzt im zeit- und ereignisgesteuerten Datenerfassungsmodus eine Art Ping-Pong-Mechanismus ein, d. h. die App sendet kontinuierlich Pakete mit dem Opcode `40`

@@ -16,8 +16,8 @@ from typing import List
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "03" / "json_files"
-OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "03"
+LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "04" / "json_files"
+OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "04"
 
 ALIAS = {
     "405nm": "fluorescence_405nm",
@@ -157,6 +157,13 @@ def load_calibration(mode: str, direction: str = OUT) -> List[Path]:
     return list_runs(path, run_pattern(direction))
 
 
+def load_experiment(mode: str, acq: str, direction: str = OUT) -> List[Path]:
+    mode = alias(mode)
+    acq = alias(acq)
+    path = LOAD_DIR / "set_experiment" / mode / acq
+    return list_runs(path, run_pattern(direction))
+
+
 def load_measurement(mode: str, acq: str, direction: str = OUT) -> List[Path]:
     mode = alias(mode)
     acq = alias(acq)
@@ -207,6 +214,10 @@ def output_path_calibration(mode: str) -> Path:
     return OUTPUT_DIR / "trace_mask" / f"calibration_{mode}.txt"
 
 
+def output_path_experiment(mode: str, acq: str) -> Path:
+    return OUTPUT_DIR / "trace_mask" / f"experiment_{mode}_{acq}.txt"
+
+
 def output_path_measurement(mode: str, acq: str) -> Path:
     return OUTPUT_DIR / "trace_mask" / f"measurement_{mode}_{acq}.txt"
 
@@ -240,6 +251,10 @@ def output_path_acq_change_dump(mode: str, end: str, start: str) -> Path:
 
 def output_path_calibration_dump(mode: str) -> Path:
     return OUTPUT_DIR / "trace_dump" / f"calibration_{mode}.txt"
+
+
+def output_path_experiment_dump(mode: str, acq: str) -> Path:
+    return OUTPUT_DIR / "trace_dump" / f"experiment_{mode}_{acq}.txt"
 
 
 def output_path_measurement_dump(mode: str, acq: str) -> Path:

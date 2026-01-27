@@ -9,26 +9,7 @@ from __future__ import annotations
 import argparse
 
 from protocol_tools import mask_payloads_across_logs, format_blocks
-from dataset import (
-    load_init,
-    load_change_mode,
-    load_change_acquisition,
-    load_acquisition_params,
-    load_calibration,
-    load_recalibration,
-    load_measurement,
-    load_close,
-    load_payload_runs,
-    output_path_init,
-    output_path_mode_change,
-    output_path_acq_change,
-    output_path_acquisition_params,
-    output_path_calibration,
-    output_path_recalibration,
-    output_path_measurement,
-    output_path_close,
-    write_output,
-)
+from dataset import *
 
 
 def run_init() -> None:
@@ -74,6 +55,15 @@ def run_calibration(mode: str) -> None:
     masked = mask_payloads_across_logs(payloads)
     text = format_blocks(masked)
     out_path = output_path_calibration(mode)
+    write_output(text, out_path)
+    print(f"[ok] written {out_path}")
+
+
+def run_experiment(mode: str, acq: str) -> None:
+    payloads = load_payload_runs(load_experiment(mode=mode, acq=acq))
+    masked = mask_payloads_across_logs(payloads)
+    text = format_blocks(masked)
+    out_path = output_path_experiment(mode, acq)
     write_output(text, out_path)
     print(f"[ok] written {out_path}")
 
@@ -130,6 +120,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_cal.add_argument("--mode")
     p_cal.set_defaults(cmd="cal")
 
+    p_exp = sub.add_parser("exp")
+    p_exp.add_argument("--mode")
+    p_exp.add_argument("--acq")
+    p_exp.set_defaults(cmd="exp")
+
     p_meas = sub.add_parser("meas")
     p_meas.add_argument("--mode", required=True)
     p_meas.add_argument("--acq")
@@ -161,6 +156,8 @@ def main() -> None:
         run_acq_change(mode=args.mode, end=args.end, start=args.start)
     elif args.cmd == "cal":
         run_calibration(mode=args.mode)
+    elif args.cmd == "exp":
+        run_experiment(mode=args.mode, acq=args.acq)
     elif args.cmd == "recal":
         run_recalibration(mode=args.mode, acq=args.acq)
     elif args.cmd == "meas":

@@ -11,10 +11,10 @@
   - `Unkalibrierte Messwerte`: erfasst Rohdaten als Counts
 - Details siehe: [init_mode.md](init_mode.md)
 - Log-Daten: 
-  - docs\wireshark\spectrovis\capture_files\init
+  - docs\wireshark\spectrovis\01\capture_files\init
     - Der Name es Unterverzeichnisses bezieht sich beim Wechsel des Betriebsmodus auf den Endzustand
-  - docs\wireshark\spectrovis\json_files\init
-  - docs\wireshark\spectrovis\json_files\change_mode
+  - docs\wireshark\spectrovis\01\json_files\init
+  - docs\wireshark\spectrovis\01\json_files\change_mode
     - Der Name des übergeordneten Ordners bezieht sich auf den Endzustand
     - Der Name des Unterverzeichnisses bezieht sich auf den Ausgangszustand
 
@@ -25,10 +25,10 @@
   - `Ereignisse mit Tastatureingabe`: manuelle Erfassung einzelner Datenpunkte bei bestimmten Wellenlängen
 - Details siehe [acquisition.md](acquisition.md)
 - Log-Daten:
-  - docs\wireshark\spectrovis\capture_files\change_acquisition
+  - docs\wireshark\spectrovis\01\capture_files\change_acquisition
     - Der Name des ersten Unterverzeichnisses bezieht sich auf den Betriebsmodus, in dem die Zustandswechsel getrackt wurden
     - Der Name des zweiten Unterverzeichnisses bezieht sich beim Wechsel des Datenerfassungsmodus auf den Endzustand
-  - docs\wireshark\spectrovis\json_files\change_acquisition
+  - docs\wireshark\spectrovis\01\json_files\change_acquisition
     - Der Name des ersten Unterverzeichnisses bezieht sich auf den Betriebsmodus, in dem die Zustandswechsel getrackt wurden
     - Der Name des zweiten Unterverzeichnisses bezieht sich beim Wechel des Datenerfassungsmodus auf den Endzustand
     - Der Name des dritten Unververzeichnisses bezieht sich beim Wechsel des Datenerfassungsmodus auf den Anfangszustand
@@ -38,11 +38,15 @@
 - Details siehe: [cal_meas.md](cal_meas.md)
 - Log-Daten:
   - Kalibration:
-    - docs\wireshark\spectrovis\capture_files\calibration
-    - docs\wireshark\spectrovis\json_files\calibration
-    - docs\wireshark\spectrovis\json_files\recalibration
+    - docs\wireshark\spectrovis\01\capture_files\calibration
+    - docs\wireshark\spectrovis\01\json_files\calibration
+    - docs\wireshark\spectrovis\01\json_files\recalibration
     - Der Name des Unterverzeichnisses bezieht sich auf den Betriebsmodus, in dem das Gerät kalibriert wird.
   - Datenerfassung:
+
+## Workflows
+- Zur Rekonstruktion des Kommunikationsprotokolls werden verschiedene Workflows mit Wireshark getrackt. Detaillierte Beschreibungen siehe [workflow.md](workflow.md)
+- Die zugehörigen Log-Daten sind in den nummerierten Unterordnern `02` und `03` in `docs\wireshark\spectrovis\` enthalten. Der Unterordner `04` enthält Mitschnitte einer Gerätesteuerung mit der neuen App `SpectralAnalysis` von Vernier.
 
 ## Fehlerfälle
 - Bei der Testreihe zur Rekalibration des Geräts wird zwischenzeitlich die App `MS Teams` parallel zu LoggerPro und Wireshark geöffnet

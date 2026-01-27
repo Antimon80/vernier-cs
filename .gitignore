@@ -1,0 +1,36 @@
+# --- VS Code ---
+.vscode/
+*.code-workspace
+
+# --- Visual Studio / Build ---
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# --- Betriebssystem-spezifische Dateien ---
+.DS_Store  # macOS
+Thumbs.db  # Windows
+desktop.ini  # Windows
+ehthumbs.db  # Windows
+
+# --- LaTeX ---
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.gz
+
+# --- Word & PowerPoint (nur Backup- und temporäre Dateien ignorieren) ---
+~$*.docx
+~$*.pptx
+~$*.xlsx
+*.tmp

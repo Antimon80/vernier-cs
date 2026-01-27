@@ -1,0 +1,123 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+' ===== UI boundary =====
+interface IBackendService {
+  +Discover(): List<DeviceId>
+  +Open(id: DeviceId, opt: ConnectOptions)
+  +Close()
+
+  +GetCapabilities(): List<DeviceCapability>
+  +ApplySettings(s: DeviceSettings)
+  +StartSampling(req: Command)
+  +StopSampling()
+  +StartRecording(req: Command)
+  +StopRecording()
+}
+
+class BackendService {
+  -active: Device?
+  -profiles: GoDirectProfileRegistry
+  -maxDevices: int
+
+  -CreateDevice(id: DeviceId): Device
+  -DetectFamily(id: DeviceId): DeviceFamily
+  -DetectGoDirectProfile(id: DeviceId): GoDirectProfile
+}
+
+IBackendService <|.. BackendService
+
+' ===== Core device wrapper =====
+class Device {
+  +Id: DeviceId
+  +Family: DeviceFamily
+  +State: DeviceState
+  +Model: GoDirectDevicd
+
+  -transport: ITransport
+  -driver: IDeviceDriver
+
+  +Open()
+  +Close()
+  +GetCapabilities(): List<DeviceCapability>
+  +ApplySettings(s: DeviceSettings)
+  +StartSampling(req: Command)
+  +StopSampling()
+  +StartRecording(req: Command)
+  +StopRecording()
+}
+
+BackendService o-- Device
+
+enum DeviceFamily { 
+    GoDirect 
+    LabQuest 
+    }
+enum GoDirectDevice { 
+    Unknown 
+    SpectroVis 
+    UvVis 
+    Emission 
+    }
+enum DeviceState { 
+    Closed 
+    Open 
+    Initialized 
+    Idle 
+    Sampling 
+    Faulted }
+
+' ===== Transport axis =====
+interface ITransport {
+  +Open(id: DeviceId)
+  +Close()
+  +Write(buf: byte[])
+  +Read(len: int, timeoutMs: int): byte[]
+}
+
+class HidTransport
+class WinUsbTransport
+ITransport <|.. HidTransport
+ITransport <|.. WinUsbTransport
+
+Device o-- ITransport
+
+' ===== Behavior axis =====
+interface IDeviceDriver {
+  +Initialize()
+  +GetCapabilities(): List<DeviceCapability>
+  +ApplySettings(s: DeviceSettings)
+  +StartSampling(req: Command)
+  +StopSampling()
+  +StartRecording(req: Command)
+  +StopRecording()
+}
+
+class GoDirectDriver {
+  -profile: GoDirectProfile
+}
+class LabQuestDriver
+
+IDeviceDriver <|.. GoDirectDriver
+IDeviceDriver <|.. LabQuestDriver
+
+Device o-- IDeviceDriver
+
+' ===== GoDirect model detection =====
+class GoDirectProfile {
+  +Model: GoDirectDevice
+  +DisplayName: string
+  +DefaultSettings: DeviceSettings
+  +SafeSettings: DeviceSettings
+}
+
+GoDirectDriver o-- GoDirectProfile
+
+' ===== Identity (single object) =====
+class DeviceId {
+  +Vid: ushort
+  +Pid: ushort
+  +Serial: string
+}
+
+@enduml
