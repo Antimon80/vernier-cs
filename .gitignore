@@ -2,7 +2,7 @@
 .vscode/
 *.code-workspace
 
-# --- Visual Studio / Build ---
+# --- Visual Studio / .NET ---
 .vs/
 bin/
 obj/
@@ -10,6 +10,19 @@ obj/
 *.suo
 *.userosscache
 *.sln.docstates
+*.user
+*.suo
+*.userosscache
+*.rsuser
+publish/
+*.nupkg
+*.snupkg
+
+# --- Test results ---
+TestResults/
+*.trx
+coverage/
+coverage.*
 
 # --- Betriebssystem-spezifische Dateien ---
 .DS_Store  # macOS
