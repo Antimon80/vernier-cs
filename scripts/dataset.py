@@ -16,8 +16,8 @@ from typing import List
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "04" / "json_files"
-OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "04"
+LOAD_DIR = PROJECT_ROOT / "docs" / "wireshark" / "spectrovis" / "01" / "json_files"
+OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "01"
 
 ALIAS = {
     "405nm": "fluorescence_405nm",
