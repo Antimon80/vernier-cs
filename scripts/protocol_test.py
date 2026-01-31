@@ -5,19 +5,28 @@ VID = 0x08F7
 PID = 0x0009
 
 OUT_FRAMES = [
-    bytes.fromhex("41 00 00 64 00 00 00 a4 00 b5 00 b8 3e 75 04 b5 00 00 00 00 00 00 00 78 11 13 07 00 2e 13 07 a8 3e 75 04 00 00 0d 01 13 00 00 00 a0 ea 19 00 aa ec 49 77 00 00 00 00 fb c3 c4 bc 00 00 00 00 00"),
-    bytes.fromhex("42 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c0 f2 fc ff ff ff ff ff 00 00 00 00 24 ea 19 00 05 1a 06 de 0c eb 19 00 e0 9b b3 76 65 1a fb fe fe ff ff ff 8c ea 19 00 4f"),
-    bytes.fromhex("43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c0 f2 fc ff ff ff ff ff 00 00 00 00 24 ea 19 00 05 1a 06 de 0c eb 19 00 e0 9b b3 76 65 1a fb fe fe ff ff ff 8c ea 19 00 4f"),
-    bytes.fromhex("40 00 00 7c 92 4d 77 09 23 4f 77 00 00 00 00 80 ea 19 00 00 00 00 00 00 00 00 00 80 ea 19 00 80 ea 19 00 00 00 0d 01 a4 ea 19 00 b0 0e b3 76 00 00 00 00 cd 0e b3 76 b1 cd 20 88 b8 0a 0c 07 00"),
+    bytes.fromhex(
+        "41 00 00 64 00 00 00 96 00 68 00 e8 1a 63 04 68 00 00 00 00 00 00 00 10 ee 07 03 90 fe 07 03 d8 1a 63 04 00 00 0f 01 13 00 00 00 e8 e8 19 00 aa ec 18 77 00 00 00 00 be 49 04 ca e0 0d 64 04 01"
+    ),
+    bytes.fromhex(
+        "42 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c0 f2 fc ff ff ff ff ff 00 00 00 00 6c e8 19 00 11 4c 10 cb 54 e9 19 00 e0 9b e8 74 24 67 1c 40 fe ff ff ff d4 e8 19 00 4f"
+    ),
+    bytes.fromhex(
+        "43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c0 f2 fc ff ff ff ff ff 00 00 00 00 6c e8 19 00 11 4c 10 cb 54 e9 19 00 e0 9b e8 74 24 67 1c 40 fe ff ff ff d4 e8 19 00 4f"
+    ),
+    bytes.fromhex(
+        "41 01 00 cd 0e e8 74 90 b2 f2 34 34 08 00 00 00 00 00 00 20 d7 18 76 24 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c0 f2 fc ff ff"
+    ),
+    bytes.fromhex(
+        "40 00 00 7c 92 1c 77 09 23 1e 77 00 00 00 00 c8 e8 19 00 00 00 00 00 00 00 00 00 c8 e8 19 00 c8 e8 19 00 00 00 0f 01 ec e8 19 00 b0 0e e8 74 00 00 00 00 cd 0e e8 74 b8 b2 f2 34 a0 1d 07 03 00"
+    ),
+    bytes.fromhex(
+        "04 0f 00 00 00 00 00 20 00 00 00 02 00 00 00 00 00 00 00 20 00 00 00 00 00 00 00 80 e8 19 00 f9 f6 18 77 00 00 00 00 d6 49 04 ca 1f 00 00 00 20 00 00 00 0f 00 00 00 58 e8 19 00 00 00 0f 01 d8"
+    ),
 ]
 
 # expected number of IN packets AFTER each OUT
-EXPECTED_IN = [
-    1,
-    1,
-    1,
-    56
-]
+EXPECTED_IN = [1, 1, 1, 1, 56, 1]
 
 READ_TIMEOUT_MS = 200  # per read() call
 STEP_TIMEOUT_MS = 20000  # max time per step to collect expected IN packets

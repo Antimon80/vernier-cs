@@ -1,0 +1,67 @@
+--- step 00 expected=1 got=1 ---
+00.0000 IN   00 00 e6 03 24 04 02 04 fa 03 d4 03 23 04 07 04 23 04 f6 03 0e 04 f1 03 e3 03 12 04 0d 04 10 04 2e 04 ec 03 01 04 de 03 e1 03 ec 03 27 04 00 04 f1 03 2e 04 d1 03 f7 03 de 03 f6 03 09 04 04 04
+--- step 01 expected=1 got=1 ---
+01.0000 IN   00 00 e6 03 24 04 02 04 fa 03 d4 03 23 04 07 04 23 04 f6 03 0e 04 f1 03 e3 03 12 04 0d 04 10 04 2e 04 ec 03 01 04 de 03 e1 03 ec 03 27 04 00 04 f1 03 2e 04 d1 03 f7 03 de 03 f6 03 09 04 04 04
+--- step 02 expected=1 got=1 ---
+02.0000 IN   00 00 e6 03 24 04 02 04 fa 03 d4 03 23 04 07 04 23 04 f6 03 0e 04 f1 03 e3 03 12 04 0d 04 10 04 2e 04 ec 03 01 04 de 03 e1 03 ec 03 27 04 00 04 f1 03 2e 04 d1 03 f7 03 de 03 f6 03 09 04 04 04
+--- step 03 expected=1 got=1 ---
+03.0000 IN   00 00 e6 03 24 04 02 04 fa 03 d4 03 23 04 07 04 23 04 f6 03 0e 04 f1 03 e3 03 12 04 0d 04 10 04 2e 04 ec 03 01 04 de 03 e1 03 ec 03 27 04 00 04 f1 03 2e 04 d1 03 f7 03 de 03 f6 03 09 04 04 04
+--- step 04 expected=56 got=56 ---
+04.0000 IN   58 0e da 0d ab 0d 18 0e 6d 0e 80 0e 9b 0e b4 0d d5 0d 68 0e 6c 0d f4 0d bd 0e c3 0d 3d 0e 7d 0d a4 0e d2 0d f2 0d 1f 0e 49 0e 40 0e 20 0e 61 0e b9 0d c6 0d 17 0f 5d 0e 82 0f 23 0d c1 0d 68 0e
+04.0001 IN   4b 0d 3b 0e 00 0e 1f 0e f3 0d a8 0d c5 0d f0 0e c5 0e e9 0d 61 0e bf 0e e7 0d 1c 0d 68 0e 8e 0e 49 0e ca 0d 4f 0f 92 0d 28 0e 7b 0e 6d 0d 05 0e 45 0d 54 0e 02 0e 69 0e 4a 0e 95 0e f3 0d 5b 0e
+04.0002 IN   01 0e e7 0d 95 0d b8 0d d4 0f 7d 0d 33 0e 42 0e c6 0d 88 0d 98 0e 37 0e 80 0e 60 0e 13 0e ac 0e e7 0e b3 0e 68 0e 0a 0e a6 0d f9 0d 57 0e ae 0d 18 0e 25 0f 47 0d 66 0d aa 0d 94 0e c4 0d 3b 0e
+04.0003 IN   ef 0d 01 0e 61 0e 4b 0e 2b 0e 0c 0e 63 0e 64 0e 4a 0e d5 0e ed 0d d6 0d 6d 0e 04 0f 42 0e 29 0e e8 0d 66 0e 57 0e cb 0d a6 0e d4 0d 6e 0d cb 0d 3d 0e 2c 0e 1b 0e 01 0e 6e 0e a9 0e fb 0d 81 0e
+04.0004 IN   bb 0d 37 0e 17 0e b3 0e 18 0f cd 0d 20 0e 75 0d f4 0d ac 0e 4e 0e 5a 0f 22 0f 4b 0e 0c 0e 50 0e 4e 0e 72 0e ec 0d df 0e 87 0e 2b 0e 50 0d 14 0e 06 0e 2d 0e 23 0e 9e 0e 78 0e d0 0d 24 0e 95 0d
+04.0005 IN   56 0e ac 0e e8 0e 02 0d fb 0d e5 0d d8 0d f6 0d be 0d 5d 0e 10 0e 8a 0e f5 0d 0a 0e c6 0d d7 0d cf 0d 60 0e e0 0e df 0d 8c 0e 63 0e 65 0e 14 0e d0 0d 45 0e 8c 0e 9f 0e 86 0e e7 0d b4 0e 94 0e
+04.0006 IN   d8 0d 04 0e 47 0d ff 0d cb 0e 37 0e e4 0e ec 0d da 0d 37 0e ac 0d 25 0e db 0e 1c 0e 7c 0e ec 0d ab 0e 2f 0d 73 0e b5 0e 6e 0e 39 0e af 0d 1c 0e 3d 0f d4 0d 43 0d 0c 0e 6b 0e 7f 0d 64 0e b1 0e
+04.0007 IN   4c 0d 28 0f e7 0d 1e 0f b3 0e 6a 0e 6d 0e 4e 0e fb 0d 01 0e 8f 0d c6 0e 4b 0e 3b 0e a0 0d 79 0e 4b 0e 22 0e 20 0e 9d 0d 61 0d 4c 0e 3f 0e 3c 0e 81 0e ec 0d ab 0d 75 0d 23 0e 14 0e 97 0e c0 0d
+04.0008 IN   ca 0d b3 0e ad 0d c1 0d c7 0d 3a 0e f8 0d 6b 0e d6 0d 84 0e b2 0d 02 0e e9 0d b0 0d 17 0e f2 0d 2c 0e 53 0e eb 0d 2c 0f ee 0e 38 0e b8 0d bd 0d a7 0e ef 0d 7b 0e 04 0e 26 0e 6d 0e de 0d ba 0d
+04.0009 IN   17 0e 60 0e 87 0d 41 0e 4b 0e 24 0e 84 0f 40 0d 7e 0e 7c 0e 5e 0e bb 0d 97 0e 63 0e 37 0e 6f 0e de 0e ad 0d da 0d 13 0e 2d 0e 65 0e 55 0e 2a 0e 2e 0e de 0e 7d 0d ee 0d 91 0d 72 0e db 0d 56 0e
+04.0010 IN   3d 0e cf 0d 4b 0e be 0d 12 0e 60 0e 5c 0e e1 0d fd 0d a6 0d 67 0e fb 0d 2e 0e ef 0d 8e 0d d5 0d c6 0e ea 0e 86 0e 14 0e a7 0e 16 0e 8d 0e 68 0e 9b 0e 50 0e 90 0e d2 0d c8 0d b0 0e 0f 0e eb 0d
+04.0011 IN   08 0e bc 0e 6e 0e fa 0e ab 0e 91 0e 57 0e 85 0d 24 0f e6 0d 50 0e 0f 0f 6a 0e db 0d 21 0f e2 0d eb 0e c1 0c 46 0e 9e 0e a7 0d 7c 0e 77 0e b4 0d 0d 0e a3 0e 0b 0f c7 0d 57 0e fe 0d d0 0e 20 0e
+04.0012 IN   67 0e ab 0e a0 0e 62 0e a6 0e 1d 0e 0e 0e a2 0e 21 0f 99 0e 07 0f 9e 0e b0 0e 57 0e a8 0d 91 0e a8 0e 45 0e 96 0d c6 0e 03 0e b7 0e 9d 0e 25 0e a3 0d 33 0e d6 0d 30 0e 90 0e 93 0e 00 0e af 0e
+04.0013 IN   9c 0e 7e 0e f1 0e e6 0d 5c 0e a2 0e 18 0e cd 0e d7 0d 2d 0e 77 10 fb 0c f8 0e ae 0e 1f 0e 74 0e 79 0e 1c 0f 86 0d 88 0e d5 0e cb 0e 2f 0e c8 0d 95 0e 35 0e 9b 0d 34 0e 72 0e fd 0d 0a 0e c3 0e
+04.0014 IN   89 0e be 0d 43 0e af 0e 9c 0e 47 0f 4e 0e fd 0d 07 0e ba 0d 5b 0e f0 0d f4 0e b8 0d c2 0e a9 0e 16 0e 05 0e c8 0d 51 0e 00 0e b6 0d 0b 0e 2d 0e b5 0e 8f 0e 8a 0e 42 0e f4 0d 37 0f 55 0e ff 0d
+04.0015 IN   a8 0e fd 0d 9f 0e 24 0f 14 0e f9 0e 65 0e 87 0d cc 0f cf 0e 6f 0e 34 0e ef 0d 3f 0e 8c 0f 9d 0e 7f 0e c2 0e 19 0e 3d 0e 98 0e 25 0e 62 0e d6 0e bd 0e 91 0e 20 0e 5a 0e 46 0e 8d 0e 94 0e 21 0e
+04.0016 IN   0d 0e ba 0e 13 0e 34 0e 6e 0e c1 0d 50 0e 61 0e e3 0d 35 0e ab 0e 94 0d c7 0e a3 0e 86 0e c7 0d ea 0d ad 0e 5f 0e 15 0e 72 0e 8e 0e 64 0e b6 0e 55 0e 7b 0d 16 0e 83 0e f2 0e 51 0e 09 0f fc 0d
+04.0017 IN   f5 0d b4 0e d5 0e 6c 0e 05 0e 94 0e 02 0e 50 0e 55 0e 92 0e 5f 0e 3a 0e 1a 0e b1 0d 15 0e 8c 0e 81 0e 36 0e 31 0e c9 0d fd 0d 78 0e fd 0e 51 0f c3 0e 94 0e 95 0e 77 0e 53 0e 30 0e cf 0e 6b 0e
+04.0018 IN   f4 0d e6 0d 6a 0d d3 0d a3 0e cd 0e f9 0e af 0e 90 0e bf 0e cf 0e b2 0d 2f 0e e3 0e 0d 0f 16 0e c4 0e e3 0e a5 0e 3a 0e 64 0d b7 0e 52 0e c1 0e 24 0f 5b 0e 15 0e a5 0e a0 0e 54 0e 63 0e d8 0d
+04.0019 IN   93 0e eb 0d 07 0e 7f 0e 3c 0e 32 0e 33 0e 37 0e 24 0f fe 0d 29 0e 80 0e 04 0e d4 0e a3 0e d6 0e 01 0f 63 0d fb 0e 1f 0e 6d 0e 20 0f bb 0e 4f 0e 0b 0f e9 0e dc 0e f9 0e 74 0e 34 0e 97 0e 47 0e
+04.0020 IN   e2 0d 32 0e ff 0d 7b 0e bb 0e 3a 0e f4 0d 75 0e 1b 0f 9b 0e 99 0e 24 0e 97 0e 88 0e c4 0e 22 0e b3 0d 81 0e 43 0e e2 0d 7e 0e 04 0e 17 0f c2 0e 90 0e 43 0e a1 0e 99 0e e9 0d 9b 0e 88 0d b6 0d
+04.0021 IN   73 0e 69 0e bb 0e 10 0f a9 0e 88 0e 5c 0e 34 0e 11 0f 2b 0f bb 0d ad 0d 77 0e 0e 0f 81 0e e9 0e 61 0e ad 0f 68 0d 7e 0e 84 0e d0 0e 78 0e cc 0d 46 0e fb 0e a4 0d ec 0e 59 0e 24 0e b2 0e a6 0e
+04.0022 IN   da 0e e0 0d 9f 0e 5c 0e 24 0f 9a 0e a2 0e f5 0e c1 0e 7e 0e 5f 0f 55 0e 55 0e 2d 0e fd 0d f0 0d 5f 0e 34 0e 1d 0f 03 0f 1a 0e 02 0f c0 0e d0 0d b5 0e 4e 0f 16 0f 57 0f db 0d 2d 0f 30 0f 65 0d
+04.0023 IN   d4 0e 1d 0e 0a 0f e7 0e 63 0e bf 0e 85 0d bc 0e b4 0e f3 0d 8c 0e 3a 0f 03 0e c5 0e 20 0f 83 0e 36 0e 92 0e 33 0e 1b 0e b0 0e 03 0f 98 0e 61 0e fd 0d 9f 0e 6e 0e 92 0e 10 0e ce 0e fa 0d ba 0e
+04.0024 IN   07 0f 43 0e bd 0d db 0e 8f 0e 1d 0e 71 0e 01 0e 65 0e 31 0e c1 0d bd 0e 8a 0e d9 0e c7 0d 65 0e 5e 0e 72 0e 28 0f bf 0d 1c 0f f4 0d fd 0d eb 0e 23 0e 43 0e 29 0f 1f 0f 76 0e 6a 0e 65 0e e3 0d
+04.0025 IN   93 0e fb 0d da 0e f8 0d 3d 0e ae 0e 44 0e 37 0f fb 0e 2f 0e c6 0e 18 0e 30 0e 73 0e a0 0e 37 0e 6e 0e e8 0e 92 0d ab 0d 6b 0d 43 10 2a 0d 0d 0e 58 0e 81 0e 38 0f 47 0e 50 0e 1f 0f 94 0d 0c 0e
+04.0026 IN   3d 0f 0b 0f f0 0e 37 0e d8 0e 08 0e 9d 0e a2 0e c8 0e d0 0d ee 0e ed 0e 74 0e 7a 0e ac 0e 1f 0f 26 0e 33 0e 71 0e de 0d 5e 0e ee 0e f9 0e bf 0e 55 0e fc 0e a7 0d cd 0e e0 0e 37 0e 5d 0e fe 0e
+04.0027 IN   f4 0d 63 0e 44 0e 8f 0e 93 0e 2d 0e 9e 0e 80 0e 2e 0e 51 0f f0 0d c2 0d 97 0e 2b 0f 33 0e 38 0e ef 0d 9b 0e 0e 0f d5 0e 11 0f 93 0e 38 0e 09 0e 66 0e 9a 0e 22 0e 86 0e 32 0e fa 0d a0 0e 71 0e
+04.0028 IN   40 0e 68 0e bb 0e 5a 0e 9e 0d f8 0e 7d 0e 5e 0e 43 0e d4 0e a7 0d f0 0d ed 0d a9 0e d6 0e 8f 0e b5 0d c7 0e 42 0e 10 0e 70 0e f2 0d b9 0d 35 0e ff 0d 74 0e 63 0e b0 0e 2b 0e 49 0e f0 0e b7 0d
+04.0029 IN   27 0e 88 0d e8 0d fa 0e 2d 0e a1 0e e8 0d 7e 0e 9f 0d ff 0d 1a 0e 6f 0e 32 0e 5d 0e bf 0d 0a 0e 3e 0e ab 0d 02 0d 99 0e 91 0e ba 0e 61 0e 03 0e d7 0d 20 0f 17 0d c5 0d 91 0e ee 0e b7 0e 6f 0e
+04.0030 IN   b6 0e eb 0d c1 0d 81 0e e3 0e f3 0d a6 0e 2b 0e 1d 0e 23 0e d9 0d e4 0e 43 0e b7 0e e0 0e be 0e 34 0e 59 0e a1 0e fe 0d 3c 0e 04 0f ef 0e 9b 0d ed 0e 6d 0f a3 0e ec 0d 7b 0e 86 0e 8e 0e 01 0e
+04.0031 IN   aa 0e 02 0e 78 0e 8b 0e 29 0e d0 0e b6 0e 12 0f 51 0e 90 0e 9f 0e 52 0f 37 0e 8f 0e 13 0f f7 0e 97 0d 26 0e 24 0f ec 0e 90 0e c4 0d 7f 0e f2 0d c5 0e d3 0e 8b 0e 4b 0e 82 0e 33 0f 88 0e 1f 0f
+04.0032 IN   b4 0d 84 0e e3 0d c8 0e 83 0f 78 0e d9 0e 8e 0e f2 0e 80 0e dd 0e 46 0e 48 0e 50 0e 26 0e 03 0f b6 0e 15 0e 14 0e 63 0e 44 0e 9f 0e 49 0e 6c 0e 7e 0e 44 0e 78 0e 7c 0e a9 0d 61 0e 04 0e 7b 0e
+04.0033 IN   70 0e 0f 0e ab 0e 6c 0e 94 0f 91 0e f8 0d 59 0f d5 0d af 0e f3 0d fa 0d 47 0e b6 0e 00 0e 3a 0e 39 0e 29 0f 85 0e c7 0d df 0e e2 0d 2a 0e 0d 0f ab 0e ec 0d d2 0e 03 0e 1a 0e cd 0e af 0e 21 0e
+04.0034 IN   f8 0d f4 0e d8 0d 54 0e a2 0e da 0e 02 0f 64 0e 44 0e 39 0f f3 0e 3f 0e 48 0e 46 0e 05 0e 4f 0e 5e 0f 76 0e 1a 0e 71 0e ef 0d ee 0e cf 0e 3e 0f ac 0e 93 0e c5 0d a5 0e 53 0e f0 0d d2 0e 40 0f
+04.0035 IN   cd 0e bb 0e 9a 0d 49 0f 5d 0e e0 0e 2f 0e 8d 0e 07 0f 2e 0e 58 0f 8f 0e e6 0d e7 0e 5d 0e 77 0e 68 0e a2 0d e3 0d db 0e b4 0d 3f 0e cb 0e b5 0e c6 0e 35 0e 33 0f 90 0d 0b 0f 08 0e 19 0f 55 0e
+04.0036 IN   ce 0e 9c 0e d0 0d 66 0e 87 0e 37 0f 6a 0e 5c 0e 07 0e ee 0e 60 0d c1 0e 2a 0e 3e 0e dc 0e 6d 0e 48 0e c7 0d e4 0d b8 0e aa 0e 7a 0e 68 0e 5b 0e 8b 0e 68 0e c0 0e bf 0d 78 0e 94 0e dc 0e d1 0e
+04.0037 IN   03 0e 7c 0e 59 0e e3 0e cc 0e 6e 0e 98 0e 20 0e 99 0e d3 0e 8f 0f 5b 0d 71 0e fe 0e fd 0e d3 0e 56 0e af 0d 96 0e e3 0e 3e 0d a9 0e fa 0d 0e 0f f5 0e 82 0e 66 0e 35 0e c1 0e 36 0e c8 0e 32 0e
+04.0038 IN   d3 0e 8f 0e 3a 0e 3b 0e 5e 0e 3d 0e 88 0e be 0e 9b 0e 93 0e 3b 0f 4f 0e 8a 0e 7d 0e 8a 0d f1 0d 50 0e c9 0e 3b 0e df 0d 47 0f 3d 0e 0b 10 a4 0e 6d 0e aa 0e c8 0e 83 0e a8 0e 93 0e fb 0e 35 0f
+04.0039 IN   5e 0e cc 0e ef 0e 2a 0f 3e 0e e6 0d 3a 0e 96 0e 59 0e 0f 0f 87 0e 52 0e b2 0e ec 0e da 0d c8 0e bc 0e b4 0e bb 0e cf 0f 11 0e 1b 0f 78 0f 10 0e 90 0e bf 0f 69 0e 2a 0e 6f 0e 21 0e 11 0f 79 0e
+04.0040 IN   d6 0e 0b 0e 6d 0e 59 0e fb 0e 62 0e f0 0e d8 0d c5 0e 37 0e 03 0e 6e 0e 9c 0e e6 0e b6 0e cb 0e 68 0e 1e 0e 96 0e c5 0d 5d 0e 20 0e 30 0f 95 0e 85 0e 13 0e c0 0d 48 0e ab 0e c2 0e 38 0e 61 0e
+04.0041 IN   5e 0e 1b 0e d4 0e ed 0d 85 0e 86 0e 27 0e 61 0e ca 0e 97 0e b1 0e 02 0e fb 0d 28 0e de 0d 79 0e ff 0e 8f 0d 3b 0f a7 0e 57 0e a6 0e 6b 0e 88 0e 4a 0e bc 0e b2 0e 31 0e 45 0e 47 0e 92 0d 22 0e
+04.0042 IN   50 0e d9 0e 92 0e 54 0d 46 0f 71 0d 8e 0e 7b 0e 30 0e 5e 0e 6f 0e 20 0e 61 0e fc 0d 54 0e 8b 0e 3c 0e 6e 0e 2a 0f 19 0e 7c 0e 63 0e a6 0e 56 0e 57 0f cb 0e dd 0e 80 0e 6d 0e 6e 0e f3 0d 4e 0e
+04.0043 IN   a4 0e 30 0e b8 0d 2f 0e 6f 0e 38 0e 4e 0e bd 0e ee 0d ad 0e 1b 0d 8f 0e 62 0e ae 0e bf 0e 82 0e 85 0e 94 0e 44 0e 77 0e 5c 0f e3 0d 92 0e 76 0e bb 0d e6 0d 07 0f a8 0e d5 0e c9 0f 62 0e 2c 0f
+04.0044 IN   1f 0f b8 0e 89 0e d4 0d aa 0e b3 0e 69 0e 58 0e b4 0e b6 0e be 0e 8f 0e ec 0e f2 0d 94 0e c3 0e d9 0e 4b 0e 62 0e 92 0e a8 0e b5 0e ff 0d e8 0d 0d 0e 5b 0e 61 0d bd 0e af 0e fe 0d 7c 0e 81 0e
+04.0045 IN   02 0e d0 0d 7f 0e e8 0e 83 0e 53 0e 28 0e 4a 0f 5f 0e 41 0e 92 0e 55 0e 46 0e 0a 0e ee 0d 74 0e 04 0e b7 0e 1a 0e 5c 0f 45 0e e2 0d fe 0d 13 0e aa 0e e2 0e 7b 0e 58 0e e7 0e e0 0e 85 0e 33 0e
+04.0046 IN   68 0e 7c 0e db 0e 33 0e 40 0e 29 0e 3c 0e 2b 0e 96 0f 9c 0d 3c 0e 7f 0e 8e 0e 9b 0e c0 0e 98 0e 48 0f 64 0e ff 0d 27 0e c2 0e 65 0e 8b 0e ab 0e 14 0e 75 0e 83 0e de 0d 89 0e 0a 0e 76 0e d3 0e
+04.0047 IN   7d 0e 95 0e d7 0e ba 0e 0f 0e 7c 0e 5d 0e 5a 0e 85 0e 9b 0d 8a 0e 75 0e 07 0d 3b 0e 03 0e 5c 0e 1f 0e f6 0d 1f 0e 94 0e 86 0e 1d 0e 6c 0e 0f 0e 7a 0e 94 0e 43 0e 4d 0e 8d 0e 1d 0f 86 0d f1 0d
+04.0048 IN   83 0e d8 0d d3 0d 05 0e a1 0e 79 0e f0 0e cc 0d 11 0e 55 0e 2b 0e a6 0e 8d 0e 84 0e 2e 0f b6 0e 00 0e d3 0d 3d 0e 79 0e 8e 0e 77 0e 0e 0e 54 0e e3 0d 87 0e d7 0d 81 0e 1e 0e b7 0e 43 0e f9 0d
+04.0049 IN   cc 0e 6a 0e 37 0e 8f 0e 58 0e 93 0e 9c 0e d2 0d 1a 0e bc 0d 1a 0e 5f 0d 5c 0e 2b 0e c9 0e 5b 0f 28 0e 37 0e 79 0e bd 0e 26 0e 4e 0f db 0e 24 0e 54 0e b9 0e 58 0e 4e 0e e3 0d 92 0e e5 0e 19 0e
+04.0050 IN   56 0e 37 0e 3c 0e d0 0e c5 0e ae 0e ef 0d 3c 0e c3 0e 86 0e f3 0e 72 0e a0 0e c5 0d 26 0e 7a 0e 15 0e 75 0e 73 0e d2 0e 69 0e 78 0e f6 0d 9d 0e 5a 0e 10 0e 62 0f e1 0e 4b 0e b1 0e 44 0e a4 0d
+04.0051 IN   c4 0e 0c 0e f4 0e 66 0e 71 0e 53 0e 4a 0e b1 0d 24 0e 69 0e 0e 0e 9a 0e 0c 0e 70 0e f1 0e d0 0d ca 0e 9a 0d 6c 0e 0d 0e fc 0d 9e 0e 28 0e 8d 0e 59 0d ca 0e eb 0d 52 0e 0c 0e c9 0d dd 0d f8 0e
+04.0052 IN   a4 0c 10 0f 1f 0f dc 0e 3b 0d 05 0f 93 0d 44 0e 14 0e a9 0e 35 0e 8e 0e 8e 0e ee 0e e6 0e 87 0e 53 0e 1d 0e 3b 0e fa 0d ed 0d 3f 0e 5a 0e b0 0d de 0d 2a 0e 56 0e 17 0e a1 0e 7c 0d ac 0e 54 0e
+04.0053 IN   72 0e 93 0f 60 0e d6 0d 29 0e b1 0e 21 0e 5a 0e 6e 0e b5 0e 56 0e 14 0e ec 0e d4 0d a1 0e 37 0e e2 0e 4e 0e 52 0e b1 0d 1d 0f 49 0e c3 0d 05 0e 81 0d f5 0d 6f 0e 5f 0e 39 0e c0 0e e4 0e 8b 0e
+04.0054 IN   26 0e 95 0e 5f 0e b9 0e d9 0e b2 0e 25 0d f6 0d c8 0d bc 0e 10 0e d6 0d 6e 0e a3 0e a0 0d ab 0f cb 0d 98 0e 0a 0e 36 0e 7c 0e 20 0e 35 0e 82 0d 77 0e 7e 0d e8 0d 8e 0e 67 0e 66 0e f6 0d cd 0d
+04.0055 IN   8d 0e fa 0e 5d 0e df 0d c8 0d 7e 0e be 0e 0b 0e 86 0e 5b 0e e7 0e 5d 0e bb 0d ef 0d 07 0e 0f 0e 53 0e 3a 0f 50 0e 7e 0e c8 0e da 0d 32 0e 12 0e 68 0e 0a 0e 0b 0e b3 0e 7f 0e d0 0e 89 0e 3b 0d
+--- step 05 expected=1 got=1 ---
+05.0000 IN   1e 00 fa 0e 5d 0e df 0d c8 0d 7e 0e be 0e 0b 0e 86 0e 5b 0e e7 0e 5d 0e bb 0d ef 0d 07 0e 0f 0e 53 0e 3a 0f 50 0e 7e 0e c8 0e da 0d 32 0e 12 0e 68 0e 0a 0e 0b 0e b3 0e 7f 0e d0 0e 89 0e 3b 0d
