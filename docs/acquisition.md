@@ -22,3 +22,5 @@
   - Änderung der Abtastrate: die Abtastrate beträgt immer 0.8879 pt/s
   - Setzen der Option `10 nm Band` im zeit- oder ereignisgesteuertem Modus
 - `Benachbarte Wellenlängen kombinieren` im zeit- oder ereignisgesteuertem Modus: Es werden zwar Pakete gesendet (gleiche Anzahl und Sequenz wie beim Setzen des Modus), die Option bleibt aber nicht gesetzt
+- Beim Setzen der Datenerfassungsmodi `zeitgesteuert` und `ereignisgesteuert` setzt eine Art Ping-Modus ein &rarr; die App fordert periodisch Messdaten an, allerdings mit einer kleineren Frequenz als wenn eine Messung gestartet wird
+- In der neuen App `Spectral Analysis` setzt die Anforderung von Messdaten unmittelbar nach der Initialisierung des Geräts und unabhängig vom gewählten Betriebs-/Datenerfassungsmodus ein; die `out`-Pakete werden mit der gleichen Frequenz wie für eine Messung geschickt

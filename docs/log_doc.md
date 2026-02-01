@@ -42,7 +42,7 @@
     - docs\wireshark\spectrovis\01\json_files\calibration
     - docs\wireshark\spectrovis\01\json_files\recalibration
     - Der Name des Unterverzeichnisses bezieht sich auf den Betriebsmodus, in dem das Gerät kalibriert wird.
-  - Datenerfassung:
+  - Datenerfassung: Mitschnitte von Datenerfassungen in verschiedenen Betriebs- und Datenerfassungsmodi finden sich in den Verzeichnissen der beiden getrackten Workflows (siehe nächster Abschnitt)
 
 ## Workflows
 - Zur Rekonstruktion des Kommunikationsprotokolls werden verschiedene Workflows mit Wireshark getrackt. Detaillierte Beschreibungen siehe [workflow.md](workflow.md)

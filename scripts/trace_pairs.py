@@ -6,7 +6,6 @@ Export deterministic OUT->IN windows as a text artifact for protocol RE.
 Rule:
 - Each OUT starts a segment.
 - All subsequent IN packets belong to that OUT until the next OUT.
-No windowing, no max-k heuristics.
 """
 
 from __future__ import annotations
@@ -161,9 +160,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="trace_pairs", description="Export deterministic OUT->IN windows.")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("init", help="Export init OUT->IN windows.")
+    sub.add_parser("init")
 
-    p_change = sub.add_parser("change", help="Export change-mode OUT->IN windows.")
+    p_change = sub.add_parser("change")
     p_change.add_argument("--end", required=True)
     p_change.add_argument("--start", required=True)
 
