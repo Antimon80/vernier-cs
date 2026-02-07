@@ -1,12 +1,25 @@
+#!/usr/bin/env python3
 import time
 import hid
+import numpy as np
+import matplotlib.pyplot as plt
 
 VID = 0x08F7
-# PID = 0x0009       # SpectroVisPlus without battery
-# PID = 0x0011  # new SpectroVis with battery
-# PID = 0x0006  # old SpectroVis
 PID = 0x000D  # Emissions Spectrometer
 
+# --- IMPORTANT: fixed, known offset for the LUT inside the OUT#3 response burst
+LUT_OFFSET_BYTES = 4 * 64 + 48  # = 304 bytes (152 u16)
+
+WL_MIN_NM = 350.6
+WL_MAX_NM = 899.6
+
+# Tunables (same philosophy as your runner)
+READ_TIMEOUT_MS = 10
+STEP_TIMEOUT_MS = 500
+QUIET_WINDOW_MS = 30
+INTER_OUT_SLEEP = 0.01
+
+# --------- INIT SEQUENCE (copy/paste from your working script) ----------
 OUT_FRAMES = [
     bytes.fromhex(
         "00 00 00 fc 00 00 00 07 00 00 00 f5 c3 6d 1d 78 db 19 00 60 b0 7a 71 00 00 00 00 a0 b2 7a 71 00 00 00 00 ec da 19 00 70 e2 19 00 80 46 73 71 00 00 00 00 2c db 19 00 ae 35 5d 71 07 00 00 00 04"
@@ -100,51 +113,17 @@ OUT_FRAMES = [
     ),
 ]
 
-# expected number of IN packets AFTER each OUT (for logging only)
-EXPECTED_IN = [
-    0,
-    0,
-    1,
-    56,
-    1,
-    1,
-    1,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    56,
-    1,
-    56,
-]
-
-# Tunables
-READ_TIMEOUT_MS = 10  # per hid.read() call (short polling)
-STEP_TIMEOUT_MS = 500  # hard cap per OUT->IN burst (milliseconds)
-QUIET_WINDOW_MS = (
-    30  # stop when no packet arrives for this long after first packet (milliseconds)
+# Pick ONE 0x40 frame for manual measurement trigger
+MEAS_OUT_FRAME = bytes.fromhex(
+    "40 00 00 58 3b f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 55 01 08 f0 6d 04 55 01 00 00 00 00 00 00 08 f0 f7 06 58 3b f8 06 f8 ef 6d 04 00 00 1c 01 2f"
 )
-INTER_OUT_SLEEP = 0.01  # seconds
+
+# -----------------------------------------------------------------------
 
 
 def normalize_payload(data) -> bytes:
     raw = bytes(data)
+    # hid.read(65) often includes report ID first; your devices tend to use report-id 0
     if len(raw) == 65 and raw[0] == 0x00:
         return raw[1:]
     return raw
@@ -153,23 +132,14 @@ def normalize_payload(data) -> bytes:
 def write_report(dev, payload64: bytes):
     if len(payload64) != 64:
         raise ValueError(f"OUT frame must be 64 bytes, got {len(payload64)}")
-    dev.write(b"\x00" + payload64)  # report id 0
+    dev.write(b"\x00" + payload64)
 
 
 def read_packets(dev):
-    """
-    Collect one OUT->IN response burst.
-
-    - Hard-stop after STEP_TIMEOUT_MS total.
-    - Once the first IN arrives, keep collecting.
-    - Stop early if QUIET_WINDOW_MS passes with no further packets.
-    - Normalize each payload to exactly 64 bytes (pad/trim) for stable logs.
-    """
     got = []
     timeout = time.monotonic() + (STEP_TIMEOUT_MS / 1000.0)
-
     first_seen = False
-    last_packet_time = None  # monotonic seconds
+    last_packet_time = None
 
     while time.monotonic() < timeout:
         data = dev.read(65, READ_TIMEOUT_MS)
@@ -180,12 +150,10 @@ def read_packets(dev):
             if len(payload) != 64:
                 payload = (payload + b"\x00" * 64)[:64]
             got.append(payload)
-
             first_seen = True
             last_packet_time = now
             continue
 
-        # no data this read()
         if first_seen and last_packet_time is not None:
             quiet_ms = (now - last_packet_time) * 1000.0
             if quiet_ms >= QUIET_WINDOW_MS:
@@ -194,42 +162,101 @@ def read_packets(dev):
     return got
 
 
-def main():
-    if len(OUT_FRAMES) != len(EXPECTED_IN):
-        raise ValueError("OUT_FRAMES and EXPECTED_IN must have same length")
+def concat_payloads(payloads64):
+    if not payloads64:
+        return b""
+    return b"".join(payloads64)
 
+
+def bytes_to_u16_le(buf: bytes) -> np.ndarray:
+    n = (len(buf) // 2) * 2
+    return np.frombuffer(buf[:n], dtype="<u2").copy()
+
+
+def lut_from_out3_response(payloads64) -> np.ndarray:
+    buf = concat_payloads(payloads64)
+    if len(buf) <= LUT_OFFSET_BYTES + 2:
+        raise RuntimeError(f"LUT burst too short: {len(buf)} bytes")
+    lut_bytes = buf[LUT_OFFSET_BYTES:]
+    lut = bytes_to_u16_le(lut_bytes)
+    return lut
+
+
+def wavelength_axis_from_lut(lut_u16: np.ndarray, n_points: int) -> np.ndarray:
+    """
+    Deterministic mapping:
+    - LUT is already monotone increasing AFTER the fixed offset.
+    - Resample LUT to n_points (index domain), then affine-map to [WL_MIN_NM, WL_MAX_NM].
+    """
+    lut = np.asarray(lut_u16, dtype=np.uint16).astype(np.float64)
+    if lut.size < 2 or n_points < 2:
+        return np.linspace(WL_MIN_NM, WL_MAX_NM, max(n_points, 2))
+
+    # resample LUT values to measurement length
+    t_src = np.linspace(0.0, 1.0, lut.size)
+    t_dst = np.linspace(0.0, 1.0, n_points)
+    lut_res = np.interp(t_dst, t_src, lut)
+
+    # normalize to 0..1 using endpoints (no padding => no plateau)
+    a = float(lut_res[0])
+    b = float(lut_res[-1])
+    if b <= a:
+        return np.linspace(WL_MIN_NM, WL_MAX_NM, n_points)
+
+    u = (lut_res - a) / (b - a)
+    wl = WL_MIN_NM + u * (WL_MAX_NM - WL_MIN_NM)
+    return wl
+
+
+def main():
     infos = hid.enumerate(VID, PID)
     if not infos:
         raise RuntimeError(f"No HID device found for VID=0x{VID:04x} PID=0x{PID:04x}")
-    info = infos[0]
-    dev = hid.Device(path=info["path"])
+    dev = hid.Device(path=infos[0]["path"])
 
-    out_lines = []
-    in_lines = []
+    lut = None
 
     try:
         for i, outp in enumerate(OUT_FRAMES):
-            # log OUT
-            out_lines.append(f"{i:02d} OUT  {outp.hex(' ')}")
-
-            # send OUT
             write_report(dev, outp)
             time.sleep(INTER_OUT_SLEEP)
-
-            # read IN burst (do NOT stop based on EXPECTED_IN)
-            exp = EXPECTED_IN[i]
             ins = read_packets(dev)
 
-            # log IN grouped by step
-            in_lines.append(f"--- step {i:02d} expected={exp} got={len(ins)} ---")
-            for j, inp in enumerate(ins):
-                in_lines.append(f"{i:02d}.{j:04d} IN   {inp.hex(' ')}")
+            # OUT #3 (0-based index) is the 0x02 request in your sequence
+            if i == 3:
+                lut = lut_from_out3_response(ins)
 
-        with open("out.txt", "w", encoding="utf-8") as f:
-            f.write("\n".join(out_lines) + "\n")
+        if lut is None:
+            raise RuntimeError("Did not capture LUT (OUT#3 not present?)")
 
-        with open("in_by_step.txt", "w", encoding="utf-8") as f:
-            f.write("\n".join(in_lines) + "\n")
+        input(
+            "\nInit done. Press ENTER to trigger one measurement (send one 0x40 frame) ...\n"
+        )
+
+        write_report(dev, MEAS_OUT_FRAME)
+        time.sleep(INTER_OUT_SLEEP)
+        meas_ins = read_packets(dev)
+
+        meas_buf = concat_payloads(meas_ins)
+        meas_u16 = bytes_to_u16_le(meas_buf)
+
+        # Build wavelength axis from LUT
+        wl = wavelength_axis_from_lut(lut, meas_u16.size)
+
+        # Plot (normalize optional)
+        y = meas_u16.astype(np.float64)
+        if y.size == 0:
+            raise RuntimeError("No measurement data decoded (u16 length 0)")
+
+        y_norm = y / (np.max(y) if np.max(y) > 0 else 1.0)
+
+        plt.figure()
+        plt.plot(wl, y_norm)
+        plt.xlabel("Wavelength (nm)")
+        plt.ylabel("Intensity (normalized)")
+        plt.title("Emission spectrum (LUT-mapped axis, fixed-offset LUT)")
+        plt.grid(True)
+        plt.show()
 
     finally:
         dev.close()

@@ -19,7 +19,7 @@ from dataset import (
     OUTPUT_DIR,
     IN,
     OUT,
-    alias as ds_alias,
+    alias,
     list_runs,
     load_data,
     write_output,
@@ -174,17 +174,23 @@ def main() -> None:
         dir_path = LOAD_DIR / "init"
         out_path = OUTPUT_DIR / "trace_pairs" / "init.txt"
         run_pairs(dir_path, out_path)
+    
+    elif args.cmd == "cal":
+        mode = alias(args.mode)
+        dir_path = LOAD_DIR / "calibration" / mode
+        out_path = OUTPUT_DIR / "trace_pairs" / f"calibration_{mode}.txt"
+        run_pairs(dir_path, out_path)
 
     elif args.cmd == "change":
-        end = ds_alias(args.end)
-        start = ds_alias(args.start)
+        end = alias(args.end)
+        start = alias(args.start)
         dir_path = LOAD_DIR / "change_mode" / end / start
         out_path = OUTPUT_DIR / "trace_pairs" / f"change_{end}_from_{start}.txt"
         run_pairs(dir_path, out_path)
 
     elif args.cmd == "meas":
-        mode = ds_alias(args.mode)
-        acq = ds_alias(args.acq)
+        mode = alias(args.mode)
+        acq = alias(args.acq)
         dir_path = LOAD_DIR / "measurement" / mode / acq
         out_path = OUTPUT_DIR / "trace_pairs" / f"measurement_{mode}_{acq}.txt"
         run_pairs(dir_path, out_path)
