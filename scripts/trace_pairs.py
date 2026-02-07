@@ -12,19 +12,22 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import List, Tuple, Dict, Any
+from typing import Any, Dict, List, Tuple
 
 from dataset import (
-    load_data,
-    list_runs,
-    write_output,
-    OUTPUT_DIR,
     LOAD_DIR,
+    OUTPUT_DIR,
     IN,
     OUT,
+    alias as ds_alias,
+    list_runs,
+    load_data,
+    write_output,
 )
 from protocol_tools import hex_payload, format_groups
 
+
+# ---------- rendering helpers ----------
 
 def _report_id(payload: str) -> str:
     b = hex_payload(payload)
@@ -39,20 +42,47 @@ def _render_payload(payload: str, indent: str = "") -> str:
 
 
 def render_segments(segments: List[Tuple[str, List[str]]]) -> str:
-    out: List[str] = []
+    lines: List[str] = []
     for i, (out_payload, resp) in enumerate(segments):
-        out.append(
-            f"OUT #{i}: report={_report_id(out_payload)} len={len(hex_payload(out_payload))}"
-        )
-        out.append(_render_payload(out_payload))
+        if out_payload:
+            lines.append(f"OUT #{i}: report={_report_id(out_payload)} len={len(hex_payload(out_payload))}")
+            lines.append(_render_payload(out_payload))
+        else:
+            # Should rarely happen; kept explicit so you see it.
+            lines.append(f"OUT #{i}: (missing)")
+
         if not resp:
-            out.append("  IN: (none)")
+            lines.append("  IN: (none)")
         else:
             for k, p in enumerate(resp):
-                out.append(f"  IN[{k}]: report={_report_id(p)} len={len(hex_payload(p))}")
-                out.append(_render_payload(p, indent="  "))
-        out.append("\n" + "-" * 72 + "\n")
-    return "\n".join(out).rstrip() + "\n"
+                lines.append(f"  IN[{k}]: report={_report_id(p)} len={len(hex_payload(p))}")
+                lines.append(_render_payload(p, indent="  "))
+
+        lines.append("\n" + "-" * 72 + "\n")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+# ---------- core logic ----------
+
+def _sort_key(p: Dict[str, Any]) -> Tuple[int, float]:
+    """
+    Deterministic ordering:
+    - Prefer global capture order via frame_no (Wireshark frame.number).
+    - Fall back to time_sec if frame_no missing.
+    """
+    frame_no = int(p.get("frame_no", -1))
+    time_sec = p.get("time_sec")
+    if time_sec is None:
+        time_sec = float("inf")
+    return (frame_no, float(time_sec))
+
+
+def _load_with_dir(path: Path, direction: str) -> List[Dict[str, Any]]:
+    packets = load_data(path)
+    for p in packets:
+        p["dir"] = direction
+    return packets
 
 
 def load_run_pairs(dir_path: Path) -> List[Tuple[Path, Path]]:
@@ -63,34 +93,9 @@ def load_run_pairs(dir_path: Path) -> List[Tuple[Path, Path]]:
     return list(zip(outs, ins))
 
 
-def _load_with_dir(path: Path, direction: str) -> List[Dict[str, Any]]:
-    """
-    Load packets from one file and annotate each packet with direction ("out"|"in").
-    """
-    packets = load_data(path)
-    for p in packets:
-        p["dir"] = direction
-    return packets
-
-
-def _sort_key(p: Dict[str, Any]) -> Tuple[int, float]:
-    """
-    Deterministic global ordering.
-    Prefer Wireshark's frame number (global capture order).
-    Fall back to time_sec if frame_no missing.
-    """
-    frame_no = int(p.get("frame_no", -1))
-    time_sec = p.get("time_sec")
-    if time_sec is None:
-        time_sec = float("inf")
-    return (frame_no, float(time_sec))
-
-
 def segment_by_out_boundaries(packets: List[Dict[str, Any]]) -> List[Tuple[str, List[str]]]:
     """
-    Deterministic segmentation:
-    - Start a new segment at each OUT packet.
-    - Attach all subsequent IN packets until the next OUT.
+    Start a segment at each OUT; attach subsequent IN packets until next OUT.
     """
     segments: List[Tuple[str, List[str]]] = []
     current_out: str | None = None
@@ -101,22 +106,21 @@ def segment_by_out_boundaries(packets: List[Dict[str, Any]]) -> List[Tuple[str, 
         if not payload:
             continue
 
-        direction = p.get("dir")
-        if direction == OUT:
+        d = p.get("dir")
+        if d == OUT:
             if current_out is not None:
                 segments.append((current_out, current_in))
             current_out = payload
             current_in = []
-        elif direction == IN:
+        elif d == IN:
             if current_out is None:
-                # IN before first OUT: keep it visible instead of silently dropping.
-                # (Alternative: drop, or collect in a separate "prelude" section.)
+                # IN before first OUT: keep visible (prelude segment)
                 current_out = ""
                 current_in = [payload]
             else:
                 current_in.append(payload)
         else:
-            raise RuntimeError(f"Invalid packet dir={direction!r}; expected {OUT!r} or {IN!r}")
+            raise RuntimeError(f"Invalid packet dir={d!r}; expected {OUT!r} or {IN!r}")
 
     if current_out is not None:
         segments.append((current_out, current_in))
@@ -125,36 +129,26 @@ def segment_by_out_boundaries(packets: List[Dict[str, Any]]) -> List[Tuple[str, 
 
 
 def run_pairs(dir_path: Path, out_path: Path) -> None:
-    texts: List[str] = []
+    parts: List[str] = []
 
     for run_idx, (out_file, in_file) in enumerate(load_run_pairs(dir_path), start=1):
         out_packets = _load_with_dir(out_file, OUT)
         in_packets = _load_with_dir(in_file, IN)
 
         merged = [p for p in out_packets if p.get("payload")] + [p for p in in_packets if p.get("payload")]
-
-        # Deterministic ordering: global capture order via frame_no (then time_sec fallback).
         merged.sort(key=_sort_key)
-
-        # Optional: recompute a global relative base for the merged stream (kept for debugging).
-        t0 = next((p.get("time_sec") for p in merged if p.get("time_sec") is not None), None)
-        if t0 is not None:
-            for p in merged:
-                ts = p.get("time_sec")
-                p["time_rel_ms"] = (ts - t0) * 1000.0 if ts is not None else None
-        else:
-            for p in merged:
-                p["time_rel_ms"] = None
 
         segments = segment_by_out_boundaries(merged)
 
-        texts.append(f"=== RUN {run_idx}: {out_file.name} / {in_file.name} ===\n")
-        texts.append(render_segments(segments))
-        texts.append("\n")
+        parts.append(f"=== RUN {run_idx}: {out_file.name} / {in_file.name} ===\n")
+        parts.append(render_segments(segments))
+        parts.append("\n")
 
-    write_output("".join(texts), out_path)
+    write_output("".join(parts), out_path)
     print(f"[ok] written {out_path}")
 
+
+# ---------- CLI ----------
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="trace_pairs", description="Export deterministic OUT->IN windows.")
@@ -165,6 +159,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_change = sub.add_parser("change")
     p_change.add_argument("--end", required=True)
     p_change.add_argument("--start", required=True)
+
+    p_meas = sub.add_parser("meas")
+    p_meas.add_argument("--mode", required=True)
+    p_meas.add_argument("--acq", required=True)
 
     return p
 
@@ -178,8 +176,17 @@ def main() -> None:
         run_pairs(dir_path, out_path)
 
     elif args.cmd == "change":
-        dir_path = LOAD_DIR / "change_mode" / args.end / args.start
-        out_path = OUTPUT_DIR / "trace_pairs" / f"change_{args.end}_from_{args.start}.txt"
+        end = ds_alias(args.end)
+        start = ds_alias(args.start)
+        dir_path = LOAD_DIR / "change_mode" / end / start
+        out_path = OUTPUT_DIR / "trace_pairs" / f"change_{end}_from_{start}.txt"
+        run_pairs(dir_path, out_path)
+
+    elif args.cmd == "meas":
+        mode = ds_alias(args.mode)
+        acq = ds_alias(args.acq)
+        dir_path = LOAD_DIR / "measurement" / mode / acq
+        out_path = OUTPUT_DIR / "trace_pairs" / f"measurement_{mode}_{acq}.txt"
         run_pairs(dir_path, out_path)
 
     else:
