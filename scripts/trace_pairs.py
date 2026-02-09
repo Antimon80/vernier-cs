@@ -156,7 +156,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("init")
 
-    p_change = sub.add_parser("change")
+    p_cal = sub.add_parser("cal")
+    p_cal.add_argument("--mode", required=True)
+
+    p_change = sub.add_parser("chng_mode")
     p_change.add_argument("--end", required=True)
     p_change.add_argument("--start", required=True)
 
@@ -181,7 +184,7 @@ def main() -> None:
         out_path = OUTPUT_DIR / "trace_pairs" / f"calibration_{mode}.txt"
         run_pairs(dir_path, out_path)
 
-    elif args.cmd == "change":
+    elif args.cmd == "chng_mode":
         end = alias(args.end)
         start = alias(args.start)
         dir_path = LOAD_DIR / "change_mode" / end / start

@@ -9,7 +9,7 @@ import proto
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "reconstruction" / "spectra"
+OUTPUT_DIR = PROJECT_ROOT / "docs" / "spectra"
 
 VID = 0x08F7
 PID = [0x0006, 0x0009, 0x0011, 0x000A, 0x000D]
