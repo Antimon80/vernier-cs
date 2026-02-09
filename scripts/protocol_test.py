@@ -5,6 +5,7 @@ VID = 0x08F7
 # PID = 0x0009       # SpectroVisPlus without battery
 # PID = 0x0011  # new SpectroVis with battery
 # PID = 0x0006  # old SpectroVis
+# PID = 0x000a  # UV-Vis Spectrometer
 PID = 0x000D  # Emissions Spectrometer
 
 OUT_FRAMES = [

@@ -12,7 +12,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 

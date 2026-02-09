@@ -1,138 +1,50 @@
 #!/usr/bin/env python3
 import time
+from pathlib import Path
 import hid
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
+import proto
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+OUTPUT_DIR = PROJECT_ROOT / "docs" / "protocol" / "reconstruction" / "spectra"
 
 VID = 0x08F7
-PID = 0x000D  # Emissions Spectrometer
+PID = [0x0006, 0x0009, 0x0011, 0x000A, 0x000D]
 
-# --- IMPORTANT: fixed, known offset for the LUT inside the OUT#3 response burst
-LUT_OFFSET_BYTES = 4 * 64 + 48  # = 304 bytes (152 u16)
+# ------------------ Y SCALING ------------------
+# Device sends 16-bit raw counts 0x0000..0xFFFF. Convert to relative intensity 0..1.
+COUNTS_MAX = 65535.0
 
-WL_MIN_NM = 350.6
-WL_MAX_NM = 899.6
-
-# Tunables (same philosophy as your runner)
 READ_TIMEOUT_MS = 10
 STEP_TIMEOUT_MS = 500
 QUIET_WINDOW_MS = 30
 INTER_OUT_SLEEP = 0.01
-
-# --------- INIT SEQUENCE (copy/paste from your working script) ----------
-OUT_FRAMES = [
-    bytes.fromhex(
-        "00 00 00 fc 00 00 00 07 00 00 00 f5 c3 6d 1d 78 db 19 00 60 b0 7a 71 00 00 00 00 a0 b2 7a 71 00 00 00 00 ec da 19 00 70 e2 19 00 80 46 73 71 00 00 00 00 2c db 19 00 ae 35 5d 71 07 00 00 00 04"
-    ),
-    bytes.fromhex(
-        " 00 00 00 a8 da 19 00 f9 f6 d9 77 00 00 00 00 76 76 43 a2 1f 00 00 00 20 00 00 00 0f 00 00 00 80 da 19 00 c7 4d 41 77 00 db 19 00 70 1b de 77 9e 20 df 77 b0 fa 74 04 00 00 1c 01 00 00 00 00 00"
-    ),
-    bytes.fromhex(
-        " 01 00 00 85 10 5e 71 00 00 00 00 00 00 00 00 41 00 00 00 00 00 00 00 00 00 00 00 e4 07 00 00 41 00 00 00 41 00 00 00 00 00 00 00 a8 da 19 00 f9 f6 d9 77 00 00 00 00 76 76 43 a2 1f 00 00 00 20"
-    ),
-    bytes.fromhex(
-        "02 00 00 f8 46 1c 01 b7 0b df 77 00 00 00 00 00 00 1c 01 28 1e ca 06 c1 01 00 00 08 0e 00 00 00 00 00 00 02 00 00 00 03 00 00 00 00 00 00 00 00 0e 00 00 00 00 03 1d 54 d9 19 00 f9 f6 d9 77 00"
-    ),
-    bytes.fromhex(
-        "ab 00 00 d0 da 19 00 d8 b0 7a 71 c0 da 19 00 60 b0 7a 71 e0 07 00 00 b8 fb 6f 71 00 70 6e 04 2c 00 00 00 f0 4b 74 04 18 83 21 01 48 77 21 01 01 e2 19 00 00 00 00 00 04 00 00 00 fe ff ff ff f4"
-    ),
-    bytes.fromhex(
-        "04 1e 00 00 00 00 00 20 00 00 00 02 00 00 00 00 00 00 00 20 00 00 00 64 00 00 00 d0 df 19 00 f9 f6 d9 77 00 00 00 00 0e 73 43 a2 1f 00 00 00 20 00 00 00 0f 00 00 00 a8 df 19 00 00 00 1c 01 28"
-    ),
-    bytes.fromhex(
-        "04 0f 00 00 00 00 00 d0 fd 74 04 2c df 19 00 c4 5f 5d 71 d0 fd 74 04 cd c7 6d 1d 78 b2 7a 71 f7 08 00 00 4d 60 5d 71 00 00 00 00 39 04 00 00 3c 01 7a 00 48 4a 71 04 7a 00 00 00 00 00 00 00 d0"
-    ),
-    bytes.fromhex(
-        "40 00 00 c8 3b f8 06 00 00 1c 01 74 df 19 00 bd c6 6d 1d 2f 00 00 00 34 df 19 00 64 00 00 00 96 00 57 01 08 f0 6d 04 57 01 00 00 00 00 00 00 08 f0 f7 06 c8 3b f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 c8 3b f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 57 01 08 f0 6d 04 57 01 00 00 00 00 00 00 08 f0 f7 06 c8 3b f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 90 3b f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 56 01 08 f0 6d 04 56 01 00 00 00 00 00 00 08 f0 f7 06 90 3b f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 50 3d f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 5e 01 08 f0 6d 04 5e 01 00 00 00 00 00 00 08 f0 f7 06 50 3d f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 30 37 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 42 01 08 f0 6d 04 42 01 00 00 00 00 00 00 08 f0 f7 06 30 37 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 30 37 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 42 01 08 f0 6d 04 42 01 00 00 00 00 00 00 08 f0 f7 06 30 37 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 d0 39 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 4e 01 08 f0 6d 04 4e 01 00 00 00 00 00 00 08 f0 f7 06 d0 39 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 10 38 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 46 01 08 f0 6d 04 46 01 00 00 00 00 00 00 08 f0 f7 06 10 38 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 98 39 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 4d 01 08 f0 6d 04 4d 01 00 00 00 00 00 00 08 f0 f7 06 98 39 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 98 39 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 4d 01 08 f0 6d 04 4d 01 00 00 00 00 00 00 08 f0 f7 06 98 39 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 08 3a f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 96 00 4f 01 08 f0 6d 04 4f 01 00 00 00 00 00 00 08 f0 f7 06 08 3a f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 e8 3a f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 53 01 08 f0 6d 04 53 01 00 00 00 00 00 00 08 f0 f7 06 e8 3a f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 b0 3a f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 52 01 08 f0 6d 04 52 01 00 00 00 00 00 00 08 f0 f7 06 b0 3a f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 28 39 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 4b 01 08 f0 6d 04 4b 01 00 00 00 00 00 00 08 f0 f7 06 28 39 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 60 39 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 4c 01 08 f0 6d 04 4c 01 00 00 00 00 00 00 08 f0 f7 06 60 39 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 30 37 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 42 01 08 f0 6d 04 42 01 00 00 00 00 00 00 08 f0 f7 06 30 37 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 58 3b f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 55 01 08 f0 6d 04 55 01 00 00 00 00 00 00 08 f0 f7 06 58 3b f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 f0 38 f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 4a 01 08 f0 6d 04 4a 01 00 00 00 00 00 00 08 f0 f7 06 f0 38 f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 88 3d f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 5f 01 08 f0 6d 04 5f 01 00 00 00 00 00 00 08 f0 f7 06 88 3d f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 58 3b f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 55 01 08 f0 6d 04 55 01 00 00 00 00 00 00 08 f0 f7 06 58 3b f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "40 00 00 58 3b f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 55 01 08 f0 6d 04 55 01 00 00 00 00 00 00 08 f0 f7 06 58 3b f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-    ),
-    bytes.fromhex(
-        "41 00 00 64 00 00 00 ec 00 a9 00 48 4a 71 04 a9 00 00 00 00 00 00 00 d0 eb 74 04 30 07 75 04 38 4a 71 04 00 00 1c 01 13 00 00 00 28 ea 19 00 aa ec d9 77 00 00 00 00 f6 46 43 a2 d0 18 71 04 00"
-    ),
-    bytes.fromhex(
-        "40 00 00 7c 92 dd 77 09 23 df 77 00 00 00 00 08 ea 19 00 00 00 00 00 00 00 00 00 08 ea 19 00 08 ea 19 00 00 00 1c 01 2c ea 19 00 b0 0e 43 77 00 00 00 00 cd 0e 43 77 2d 86 15 90 68 40 ec 06 00"
-    ),
-]
-
-# Pick ONE 0x40 frame for manual measurement trigger
-MEAS_OUT_FRAME = bytes.fromhex(
-    "40 00 00 58 3b f8 06 00 00 1c 01 e4 de 19 00 2d c5 6d 1d 2f 00 00 00 a4 de 19 00 64 00 00 00 94 00 55 01 08 f0 6d 04 55 01 00 00 00 00 00 00 08 f0 f7 06 58 3b f8 06 f8 ef 6d 04 00 00 1c 01 2f"
-)
 
 # -----------------------------------------------------------------------
 
 
 def normalize_payload(data) -> bytes:
     raw = bytes(data)
-    # hid.read(65) often includes report ID first; your devices tend to use report-id 0
     if len(raw) == 65 and raw[0] == 0x00:
         return raw[1:]
     return raw
 
 
-def write_report(dev, payload64: bytes):
-    if len(payload64) != 64:
-        raise ValueError(f"OUT frame must be 64 bytes, got {len(payload64)}")
-    dev.write(b"\x00" + payload64)
+def write_report(dev, payload: bytes):
+    """
+    Write a HID report with report-id 0.
+    Payload is padded with 0x00 up to 64 bytes if shorter.
+    """
+    if len(payload) > 64:
+        raise ValueError(f"OUT frame must be <= 64 bytes, got {len(payload)}")
+
+    if len(payload) < 64:
+        payload = payload + b"\x00" * (64 - len(payload))
+
+    dev.write(b"\x00" + payload)
 
 
 def read_packets(dev):
@@ -173,93 +85,156 @@ def bytes_to_u16_le(buf: bytes) -> np.ndarray:
     return np.frombuffer(buf[:n], dtype="<u2").copy()
 
 
-def lut_from_out3_response(payloads64) -> np.ndarray:
-    buf = concat_payloads(payloads64)
-    if len(buf) <= LUT_OFFSET_BYTES + 2:
-        raise RuntimeError(f"LUT burst too short: {len(buf)} bytes")
-    lut_bytes = buf[LUT_OFFSET_BYTES:]
-    lut = bytes_to_u16_le(lut_bytes)
-    return lut
+def build_linear_axis(
+    n_points: int, samples_min: float, samples_max: float
+) -> np.ndarray:
+    if n_points < 2:
+        return np.array([samples_min], dtype=np.float64)
+    return np.linspace(samples_min, samples_max, n_points, dtype=np.float64)
 
 
-def wavelength_axis_from_lut(lut_u16: np.ndarray, n_points: int) -> np.ndarray:
+def save_spectrum(path: str, samples: np.ndarray, counts_u16: np.ndarray):
     """
-    Deterministic mapping:
-    - LUT is already monotone increasing AFTER the fixed offset.
-    - Resample LUT to n_points (index domain), then affine-map to [WL_MIN_NM, WL_MAX_NM].
+    Save spectrum as TSV:
+    nm <tab> counts <tab> rel_intensity
     """
-    lut = np.asarray(lut_u16, dtype=np.uint16).astype(np.float64)
-    if lut.size < 2 or n_points < 2:
-        return np.linspace(WL_MIN_NM, WL_MAX_NM, max(n_points, 2))
+    samples = np.asarray(samples, dtype=np.float64)
+    counts = np.asarray(counts_u16, dtype=np.uint16)
 
-    # resample LUT values to measurement length
-    t_src = np.linspace(0.0, 1.0, lut.size)
-    t_dst = np.linspace(0.0, 1.0, n_points)
-    lut_res = np.interp(t_dst, t_src, lut)
+    n = min(samples.size, counts.size)
+    rel = counts[:n].astype(np.float64) / COUNTS_MAX
 
-    # normalize to 0..1 using endpoints (no padding => no plateau)
-    a = float(lut_res[0])
-    b = float(lut_res[-1])
-    if b <= a:
-        return np.linspace(WL_MIN_NM, WL_MAX_NM, n_points)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("# wavelength_nm\tcounts_u16\trel_intensity\n")
+        for i in range(n):
+            f.write(f"{samples[i]:.6f}\t{int(counts[i])}\t{rel[i]:.10f}\n")
 
-    u = (lut_res - a) / (b - a)
-    wl = WL_MIN_NM + u * (WL_MAX_NM - WL_MIN_NM)
-    return wl
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_init = sub.add_parser("init")
+    p_init.set_defaults(cmd="init")
+    p_init.add_argument("--type", required=True)
+
+    p_change_mode = sub.add_parser("chng_mode")
+    p_change_mode.set_defaults(cmd="chng_mode")
+    p_change_mode.add_argument("--type", required=True)
+
+    p_meas = sub.add_parser("meas")
+    p_meas.set_defaults(cmd="meas")
+
+    p_close = sub.add_parser("close")
+    p_close.set_defaults(cmd="close")
+    p_close.add_argument("--type", required=True)
+
+    return parser
 
 
 def main():
-    infos = hid.enumerate(VID, PID)
+    infos = []
+    for pid in PID:
+        infos.extend(hid.enumerate(VID, pid))
+
     if not infos:
         raise RuntimeError(f"No HID device found for VID=0x{VID:04x} PID=0x{PID:04x}")
     dev = hid.Device(path=infos[0]["path"])
 
-    lut = None
+    dev_pid = infos[0].get("product_id")
 
-    try:
-        for i, outp in enumerate(OUT_FRAMES):
-            write_report(dev, outp)
+    PID_TO_NAME = {
+        0x0006: "spectrovis",
+        0x0009: "spectrovis_plus",
+        0x0011: "spectrovis_plus_ble",
+        0x000A: "uv_vis",
+        0x000D: "emission",
+    }
+
+    out_frames = []
+    args = build_parser().parse_args()
+    if args.cmd == "init":
+        if args.type == "sv":
+            out_frames = proto.spectrovis_init
+        elif args.type == "sv_plus":
+            out_frames = proto.spectrovis_plus_init
+        elif args.type == "sv_plus_ble":
+            out_frames = proto.spectrovis_plus_ble_init
+        elif args.type == "uv_vis":
+            out_frames = proto.uv_vis_init
+        elif args.type == "emission":
+            out_frames = proto.emission_init
+
+        for out in out_frames:
+            write_report(dev, out)
             time.sleep(INTER_OUT_SLEEP)
-            ins = read_packets(dev)
+            _ = read_packets(dev)
 
-            # OUT #3 (0-based index) is the 0x02 request in your sequence
-            if i == 3:
-                lut = lut_from_out3_response(ins)
+        print("Device initialized.")
 
-        if lut is None:
-            raise RuntimeError("Did not capture LUT (OUT#3 not present?)")
+    elif args.cmd == "chng_mode":
+        if args.type == "sv" or args.type == "uv_vis":
+            out_frames = proto.absorbance_to_intensity_spectrovis
+        elif args.type == "sv_plus" or args.type == "sv_plus_ble":
+            out_frames = proto.absorbance_to_intensity_spectrovis_plus
 
-        input(
-            "\nInit done. Press ENTER to trigger one measurement (send one 0x40 frame) ...\n"
-        )
+        for out in out_frames:
+            write_report(dev, out)
+            time.sleep(INTER_OUT_SLEEP)
+            _ = read_packets(dev)
 
-        write_report(dev, MEAS_OUT_FRAME)
+        print("Changed mode to 'intensity'.")
+
+    elif args.cmd == "meas":
+        write_report(dev, proto.measurement[0])
         time.sleep(INTER_OUT_SLEEP)
-        meas_ins = read_packets(dev)
+        print("Measurement request sent.")
 
-        meas_buf = concat_payloads(meas_ins)
+        meas_in = read_packets(dev)
+        meas_buf = concat_payloads(meas_in)
         meas_u16 = bytes_to_u16_le(meas_buf)
 
-        # Build wavelength axis from LUT
-        wl = wavelength_axis_from_lut(lut, meas_u16.size)
-
-        # Plot (normalize optional)
-        y = meas_u16.astype(np.float64)
-        if y.size == 0:
+        if meas_u16.size == 0:
             raise RuntimeError("No measurement data decoded (u16 length 0)")
 
-        y_norm = y / (np.max(y) if np.max(y) > 0 else 1.0)
+        # X-axis: FULL RAW RANGE, linearly mapped over ALL samples
+        sample_no = build_linear_axis(meas_u16.size, 1, len(meas_u16))
 
+        # Y-axis: counts -> relative intensity 0..1 (NO max-normalization)
+        y_rel = meas_u16.astype(np.float64) / COUNTS_MAX
+
+        # Save (use the same x-window as for plot)
+        spectrometer = PID_TO_NAME.get(
+            dev_pid, f"unknown_{dev_pid:04x}" if dev_pid is not None else "unknown"
+        )
+
+        save_spectrum(OUTPUT_DIR / f"{spectrometer}_argon.tsv", sample_no, meas_u16)
+
+        title = f"Spectrum (RAW {1}-{len(meas_u16)} samples)"
         plt.figure()
-        plt.plot(wl, y_norm)
-        plt.xlabel("Wavelength (nm)")
-        plt.ylabel("Intensity (normalized)")
-        plt.title("Emission spectrum (LUT-mapped axis, fixed-offset LUT)")
+        plt.plot(sample_no, y_rel)
+        plt.xlabel("Sample index (raw CCD pixel)")
+        plt.ylabel("Relative intensity (counts / 65535)")
+        plt.title(title)
         plt.grid(True)
         plt.show()
 
-    finally:
+    elif args.cmd == "close":
+        if args.type == "sv":
+            out_frames = proto.spectrovis_close
+        elif args.type == "sv_plus" or args.type == "sv_plus_ble":
+            out_frames = proto.spectrovis_plus_close
+        elif args.type == "uv_vis" or args.type == "emission":
+            out_frames = proto.spectrovis_close
+
+        for out in out_frames:
+            write_report(dev, out)
+            time.sleep(INTER_OUT_SLEEP)
+            _ = read_packets(dev)
+
         dev.close()
+
+        print("Device closed.")
 
 
 if __name__ == "__main__":
