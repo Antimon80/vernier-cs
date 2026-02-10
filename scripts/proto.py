@@ -252,7 +252,7 @@ absorbance_to_intensity_spectrovis_plus = [
     bytes.fromhex("42 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c0 f2 fc ff ff ff ff ff 00 00 00 00 6c e8 19 00 06 1c 06 de 54 e9 19 00 e0 9b d3 75 47 2c ca 8e fe ff ff ff d4 e8 19 00 4f"),
     bytes.fromhex("43 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 c0 f2 fc ff ff ff ff ff 00 00 00 00 6c e8 19 00 06 1c 06 de 54 e9 19 00 e0 9b d3 75 47 2c ca 8e fe ff ff ff d4 e8 19 00 4f"),
     bytes.fromhex("40 00 00 7c 92 e8 77 09 23 ea 77 00 00 00 00 c8 e8 19 00 00 00 00 00 00 00 00 00 c8 e8 19 00 c8 e8 19 00 00 00 0e 01 ec e8 19 00 b0 0e d3 75 00 00 00 00 cd 0e d3 75 db f9 31 fb 68 eb 72 04 00"),
-    bytes.fromhex("04 1e 00 00 00 00 00 20 00 00 00 02 00 00 00 00 00 00 00 20 00 00 00 00 00 00 00 80 e8 19 00 f9 f6 e4 77 00 00 00 00 f6 9d 37 32 1f 00 00 00 20 00 00 00 0f 00 00 00 58 e8 19 00 00 00 0e 01 d8"),
+    bytes.fromhex("04 c8 00 00 00 00 00 20 00 00 00 02 00 00 00 00 00 00 00 20 00 00 00 00 00 00 00 80 e8 19 00 f9 f6 e4 77 00 00 00 00 f6 9d 37 32 1f 00 00 00 20 00 00 00 0f 00 00 00 58 e8 19 00 00 00 0e 01 d8"),
 ]   
 
 # change operating mode from 'absorbance' to 'fluorescence 500 nm'

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import time
 from pathlib import Path
 import hid
@@ -208,7 +207,7 @@ def main():
             dev_pid, f"unknown_{dev_pid:04x}" if dev_pid is not None else "unknown"
         )
 
-        save_spectrum(OUTPUT_DIR / f"{spectrometer}_argon.tsv", sample_no, meas_u16)
+        save_spectrum(OUTPUT_DIR / f"{spectrometer}_helium_200ms.tsv", sample_no, meas_u16)
 
         title = f"Spectrum (RAW {1}-{len(meas_u16)} samples)"
         plt.figure()
