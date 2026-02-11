@@ -1,4 +1,4 @@
-namespace Backend.Devices;
+namespace Backend.Devices.GoDirect;
 
 public sealed class SpectrometerSession
 {
@@ -7,4 +7,7 @@ public sealed class SpectrometerSession
 
     public ushort[]? DarkCounts { get; set; }
     public ushort[]? BlankCounts { get; set; }
+
+    public bool IsReady { get; set; }
+    public bool IsCalibrated { get; set; }
 }

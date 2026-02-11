@@ -1,6 +1,7 @@
 namespace Backend.Discovery;
 
 using Backend.Devices;
+using Backend.Devices.GoDirect;
 
 public interface IDeviceManager : IDisposable
 {

@@ -1,0 +1,1 @@
+namespace Backend.Devices.GoDirect;

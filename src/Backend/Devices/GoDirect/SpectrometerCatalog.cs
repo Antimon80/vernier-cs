@@ -1,4 +1,4 @@
-namespace Backend.Devices;
+namespace Backend.Devices.GoDirect;
 
 public static class SpectrometerCatalog
 {

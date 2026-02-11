@@ -47,10 +47,10 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid) : IT
     {
         ct.ThrowIfCancellationRequested();
 
-        var s = _stream;
+        var stream = _stream;
         _stream = null;
 
-        s?.Dispose();
+        stream?.Dispose();
         return Task.CompletedTask;
     }
 
