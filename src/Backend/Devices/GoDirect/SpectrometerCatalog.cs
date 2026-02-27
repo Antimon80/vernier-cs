@@ -17,7 +17,10 @@ public static class SpectrometerCatalog
                 HasLed405: false,
                 HasLed500: false,
                 WavelengthMinNm: 403.3,
-                WavelengthMaxNm: 723.2
+                WavelengthMaxNm: 723.2,
+                CCDPixelIndexMin: 58,
+                CCDPixelIndexMax: 162,
+                IntegrationTimeMsMean: 40
             )
         },
 
@@ -32,7 +35,10 @@ public static class SpectrometerCatalog
                 HasLed405: true,
                 HasLed500: true,
                 WavelengthMinNm: 380.6,
-                WavelengthMaxNm: 899.6
+                WavelengthMaxNm: 899.6,
+                CCDPixelIndexMin: 577,
+                CCDPixelIndexMax: 1238,
+                IntegrationTimeMsMean: 110
             )
         },
 
@@ -47,7 +53,10 @@ public static class SpectrometerCatalog
                 HasLed405: true,
                 HasLed500: true,
                 WavelengthMinNm: 380.6,
-                WavelengthMaxNm: 948.8
+                WavelengthMaxNm: 948.8,
+                CCDPixelIndexMin: 0,        // needs to be updated
+                CCDPixelIndexMax: 0,        // needs to be updated
+                IntegrationTimeMsMean: 70
             )
         },
 
@@ -62,7 +71,10 @@ public static class SpectrometerCatalog
                 HasLed405: false,
                 HasLed500: false,
                 WavelengthMinNm: 240.4,
-                WavelengthMaxNm: 849.5
+                WavelengthMaxNm: 849.5,
+                CCDPixelIndexMin: 0,        // needs to be updated
+                CCDPixelIndexMax: 0,        // needs to be updated
+                IntegrationTimeMsMean: 25
             )
         },
 
@@ -77,7 +89,10 @@ public static class SpectrometerCatalog
                 HasLed405: false,
                 HasLed500: false,
                 WavelengthMinNm: 350.6,
-                WavelengthMaxNm: 899.6
+                WavelengthMaxNm: 899.6,
+                CCDPixelIndexMin: 0,        // needs to be updated
+                CCDPixelIndexMax: 0,        // needs to be updated
+                IntegrationTimeMsMean: 0    // no white lamp
             )
         },
     };

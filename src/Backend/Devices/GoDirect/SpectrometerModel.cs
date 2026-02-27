@@ -9,5 +9,8 @@ public sealed record SpectrometerModel(
     bool HasLed405,
     bool HasLed500,
     double WavelengthMinNm,
-    double WavelengthMaxNm
+    double WavelengthMaxNm,
+    int CCDPixelIndexMin,
+    int CCDPixelIndexMax,
+    int IntegrationTimeMsMean
 );

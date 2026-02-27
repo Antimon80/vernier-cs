@@ -2,7 +2,7 @@ namespace Backend.Devices.GoDirect;
 
 public sealed class SpectrometerSession
 {
-    public int IntegrationTime { get; set; } = 30;
+    public int IntegrationTime { get; set; }
     public LampMode LampMode { get; set; } = LampMode.Off;
 
     public ushort[]? DarkCounts { get; set; }
