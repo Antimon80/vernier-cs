@@ -31,16 +31,14 @@ namespace Backend.Protocol
             return code;
         }
 
-        public async Task<ushort[]> ReadLinearitySequence(CancellationToken ct = default)
+        public async Task<byte[]> ReadLinearitySequence(CancellationToken ct = default)
         {
             int packetCount = (_model.Pid == 0x0006) ? 128 : 56;
 
             await SendCommand(0x02, 0x00, 0x00, ct).ConfigureAwait(false);
 
-            byte[] bytes = await ReadPayloadBytes(packetCount, ct).ConfigureAwait(false);
-            ushort[] values = DecodeU16BigEnian(bytes);
+            return await ReadPayloadBytes(packetCount, ct).ConfigureAwait(false);
 
-            return values;
         }
 
         public async Task<int> SetIntegrationTime(int ms, CancellationToken ct = default)
