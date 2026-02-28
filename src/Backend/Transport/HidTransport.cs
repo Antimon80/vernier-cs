@@ -1,14 +1,16 @@
 namespace Backend.Transport;
 
-using System.Diagnostics;
+using System.Globalization;
 using System.Threading.Channels;
 using HidSharp;
+using Microsoft.Extensions.Logging;
 
 public sealed class HidTransport : ITransport
 {
     private readonly string _devicePath;
     private readonly ushort _vid;
     private readonly ushort _pid;
+    private readonly ILogger<HidTransport>? _log;
 
     private HidStream? _stream;
 
@@ -71,6 +73,9 @@ public sealed class HidTransport : ITransport
         _rxCts = new CancellationTokenSource();
         _rxTask = Task.Run(() => ReaderLoop(_rxCts.Token), CancellationToken.None);
 
+        _log?.LogInformation("HID transport connected. VID=0x{Vid:X4}, PID=0x{Pid:X4}, maxIn={MaxIn}, maxOut={MaxOut}",
+        _vid, _pid, _maxInputReportLen, _maxOutputReportLen);
+
         return Task.CompletedTask;
     }
 
@@ -84,6 +89,10 @@ public sealed class HidTransport : ITransport
         if (rxCts is not null)
         {
             try { rxCts.Cancel(); }
+            catch (Exception ex)
+            {
+                _log?.LogWarning(ex, "Cancel RX loop failed.");
+            }
             finally { rxCts.Dispose(); }
         }
 
@@ -93,7 +102,10 @@ public sealed class HidTransport : ITransport
         if (rxTask is not null)
         {
             try { await rxTask.ConfigureAwait(false); }
-            catch { }
+            catch (Exception ex)
+            {
+                _log?.LogWarning(ex, "RX task ended with exception.");
+            }
         }
 
         Channel<byte[]>? ch = _rxChannel;
@@ -101,13 +113,29 @@ public sealed class HidTransport : ITransport
 
         if (ch is not null)
         {
-            ch.Writer.TryComplete();
+            try
+            {
+                ch.Writer.TryComplete();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogWarning(ex, "Completing RX channel failed.");
+            }
         }
 
         HidStream? stream = _stream;
         _stream = null;
 
-        stream?.Dispose();
+        try
+        {
+            stream?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Disposing HID stream failed.");
+        }
+        _log?.LogInformation("HID transport disconnected.");
+
     }
 
     public Task Write(ReadOnlyMemory<byte> payload, CancellationToken ct = default)
@@ -127,7 +155,17 @@ public sealed class HidTransport : ITransport
 
         payload.Span.CopyTo(outBuf.AsSpan(1));
 
-        _stream!.Write(outBuf, 0, outBuf.Length);
+        try
+        {
+            _stream!.Write(outBuf, 0, outBuf.Length);
+            _log?.LogTrace("HID OUT wrote {len} bytes (payload {PayloadLen}).", outBuf.Length, payload.Length);
+        }
+        catch (Exception ex)
+        {
+            _log?.LogError(ex, "HID OUT write failed.");
+            throw;
+        }
+
         return Task.CompletedTask;
     }
 
@@ -137,38 +175,27 @@ public sealed class HidTransport : ITransport
     {
         EnsureConnected();
 
-        Channel<byte[]>? ch = _rxChannel;
-        if (ch is null)
+        Channel<byte[]> ch = _rxChannel ?? throw new InvalidOperationException("RX channel not initialized. Call Connect() first.");
+
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        linked.CancelAfter(OverallReadTimeoutMs);
+
+        try
         {
-            throw new InvalidOperationException("RX channel not initialized. Call Connect() first.");
-        }
-
-        Stopwatch sw = Stopwatch.StartNew();
-
-        while (true)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            if (sw.ElapsedMilliseconds > OverallReadTimeoutMs)
+            while (await ch.Reader.WaitToReadAsync(linked.Token).ConfigureAwait(false))
             {
-                throw new TimeoutException(
-                    $"Buffered read exceeded overall timeout of {OverallReadTimeoutMs} ms (no packet available).");
-            }
-
-
-            if (ch.Reader.TryRead(out byte[]? packet))
-            {
-                return packet;
-            }
-
-            ValueTask<bool> waitTask = ch.Reader.WaitToReadAsync(ct);
-            bool canRead = await waitTask.ConfigureAwait(false);
-
-            if (!canRead)
-            {
-                throw new InvalidOperationException("RX channel completed (device disconnected?).");
+                if (ch.Reader.TryRead(out var packet))
+                {
+                    return packet;
+                }
             }
         }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            throw new TimeoutException($"Buffered read exceeded overall timeout of {OverallReadTimeoutMs} ms (no packet available).");
+        }
+
+        throw new InvalidOperationException("RX channel completed (device disconnected?).");
     }
 
     // Drops all currently buffered packets. Useful for resync between commands.
@@ -181,16 +208,91 @@ public sealed class HidTransport : ITransport
             return;
         }
 
+        int drained = 0;
+        while (ch.Reader.TryRead(out _))
+        {
+            drained++;
+        }
+
+        if (drained > 0)
+        {
+            _log?.LogDebug("Flushed RX buffer: {Count} packets discarded.", drained);
+        }
+
         while (ch.Reader.TryRead(out _))
         {
 
         }
     }
 
+    public async Task<int> Drain(int expectedPackets, int perPacketTimeoutMs = 100, CancellationToken ct = default)
+    {
+        if (expectedPackets <= 0)
+        {
+            return 0;
+        }
+
+        Channel<byte[]>? ch = _rxChannel;
+        if (ch is null)
+        {
+            return 0;
+        }
+
+        int drained = 0;
+
+        for (int i = 0; i < expectedPackets; i++)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (ch.Reader.TryRead(out _))
+            {
+                drained++;
+                continue;
+            }
+
+            using var one = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            one.CancelAfter(perPacketTimeoutMs);
+
+            try
+            {
+                if (!await ch.Reader.WaitToReadAsync(one.Token).ConfigureAwait(false))
+                {
+                    break;
+                }
+
+                if (ch.Reader.TryRead(out _))
+                {
+                    drained++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+        }
+
+        if (drained > 0)
+        {
+            _log?.LogWarning("Drained {Drained}/{Expected} expected response packets (best-effort).", drained, expectedPackets);
+        }
+
+        return drained;
+    }
+
     public void Dispose()
     {
-        try { _stream?.Dispose(); }
-        finally { _stream = null; }
+        try
+        {
+            Disconnect(CancellationToken.None).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Dispose->Disconnect failed.");
+        }
     }
 
     private async Task ReaderLoop(CancellationToken ct)
@@ -200,10 +302,13 @@ public sealed class HidTransport : ITransport
 
         if (stream is null || ch is null)
         {
+            _log?.LogWarning("ReaderLoop started without stream/channel.");
             return;
         }
 
         byte[] inBuf = new byte[_maxInputReportLen];
+
+        _log?.LogDebug("ReaderLoop started.");
 
         while (!ct.IsCancellationRequested)
         {
@@ -216,32 +321,21 @@ public sealed class HidTransport : ITransport
                     continue;
                 }
 
-                int offset;
-                int len;
-
-                if (n == PayloadLen + 1)
-                {
-                    offset = 1;
-                    len = n - 1;
-                }
-                else
-                {
-                    offset = 0;
-                    len = n;
-                }
-                if (len <= 0)
+                int offset = (n >= PayloadLen + 1) ? 1 : 0;
+                int available = n - offset;
+                if (available <= 0)
                 {
                     await Task.Yield();
                     continue;
                 }
 
                 byte[] payload = new byte[PayloadLen];
-                int copyLen = Math.Min(PayloadLen, len);
+                int copyLen = Math.Min(PayloadLen, available);
                 Array.Copy(inBuf, offset, payload, 0, copyLen);
 
                 await ch.Writer.WriteAsync(payload, ct).ConfigureAwait(false);
             }
-            catch(TimeoutException)
+            catch (TimeoutException)
             {
                 continue;
             }
@@ -249,13 +343,15 @@ public sealed class HidTransport : ITransport
             {
                 break;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                _log?.LogError(ex, "ReaderLoop fatal error. Completing channel.");
                 try { ch.Writer.TryComplete(ex); }
                 catch { }
-                break;
+                return;
             }
         }
+        _log?.LogDebug("ReaderLoop stopped.");
         try { ch.Writer.TryComplete(); }
         catch { }
     }

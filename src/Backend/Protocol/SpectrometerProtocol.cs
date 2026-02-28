@@ -1,9 +1,4 @@
-using System;
 using System.Buffers.Binary;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Threading;
-using System.Threading.Tasks;
 using Backend.Devices.GoDirect;
 using Backend.Transport;
 
@@ -122,11 +117,19 @@ namespace Backend.Protocol
 
         private async Task<byte[]> SendAndReadSingle(byte b0, byte b1, byte b2, CancellationToken ct)
         {
-            await SendCommand(b0, b1, b2, ct).ConfigureAwait(false);
+            try
+            {
+                await SendCommand(b0, b1, b2, ct).ConfigureAwait(false);
 
-            byte[] packet = await _transport.Read(ct).ConfigureAwait(false);
+                byte[] packet = await _transport.Read(ct).ConfigureAwait(false);
 
-            return SliceToModelPayload(packet);
+                return SliceToModelPayload(packet);
+            }
+            catch (Exception)
+            {
+                _transport.FlushInputBuffer();
+                throw;
+            }
         }
 
         private async Task<byte[]> ReadPayloadBytes(int packetCount, CancellationToken ct)
@@ -141,17 +144,42 @@ namespace Backend.Protocol
             byte[] result = new byte[packetCount * payloadBytes];
             int offset = 0;
 
-            for (int i = 0; i < packetCount; i++)
+            int received = 0;
+            try
             {
-                ct.ThrowIfCancellationRequested();
+                for(; received < packetCount; received++)
+                {
+                    ct.ThrowIfCancellationRequested();
 
-                byte[] packet = await _transport.Read(ct).ConfigureAwait(false);
+                    byte[] packet = await _transport.Read(ct).ConfigureAwait(false);
 
-                Buffer.BlockCopy(packet, 0, result, offset, payloadBytes);
-                offset += payloadBytes;
+                    Buffer.BlockCopy(packet, 0, result, offset, payloadBytes);
+                    offset += payloadBytes;
+                }
+
+                return result;
+            }
+            catch (Exception)
+            {
+                int remaining = packetCount - received;
+                if (remaining > 0)
+                {
+                    try
+                    {
+                        await _transport.Drain(remaining, perPacketTimeoutMs: 50, ct: CancellationToken.None).ConfigureAwait(false);
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else
+                {
+                    _transport.FlushInputBuffer();
+                }
+                throw;
             }
 
-            return result;
         }
 
         private byte[] SliceToModelPayload(byte[] pacekt)
