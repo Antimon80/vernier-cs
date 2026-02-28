@@ -1,6 +1,5 @@
 namespace Backend.Transport;
 
-using System.Globalization;
 using System.Threading.Channels;
 using HidSharp;
 using Microsoft.Extensions.Logging;

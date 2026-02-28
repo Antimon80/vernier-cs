@@ -18,7 +18,6 @@ Beim Start der App wird eine Sequenz von Commands an das Gerät geschickt, die m
 | 0x43 00 00 | 1 | Der Command `0x43` steuert grundsätzlich das Verhalten der 500-nm-LED (sofern vorhanden); das Gerät bestätigt mit den ersten beiden Bytes der Antwort `0x 00 00`, dass die Lichtquelle **aus** ist | Überprüfung der Funktionalität der 500-nm-LED |
 | 0x41 01 00 | 1 | Der Command `0x41` steuert grundsätzlich das Verhalten der Weisslichtquelle; das Gerät bestätigt mit den ersten beiden Bytes der Antwort `0x 01 00`, dass die Lichtquelle **an** ist | Überprüfung der Funktionalität der Weisslichtquelle; Setzen des Standard-Betriebsmodus |
 | 0x40 00 00 | 64 (SpectroVis) bzw. 56 (alle übrigen Modell) | Messdaten in ADC-Counts | Das Gerät muss deutlich höhere Counts als im Dark-Mode messen &rarr; Überprüfung der Funktionalität der Weisslichtquelle |
-| ----- | ----- | ----- | ----- |
 
 #### Anmerkungen
 - Die Commands `0x42 00 00` und `0x43 00 00` müssen nur für die Modelle `SpectroVisPlus` und `SpectroVisPlus (BLE)` geschickt werden, alle anderen Modelle besitzen keine LEDs zum Anregen von Fluoreszenz.
@@ -109,7 +108,7 @@ Die Geräte können an sich nur rohe Messdaten bei einer bestimmten Integrations
 | ----- | ----- | ----- | ----- |
 | 0x41 00 00 | 1 | Der Status der Weisslichtquelle wird mit `0x 00 00` als **aus** bestätigt. | Validierung des Status der Lichtquelle. |
 | 0x42 00 00 | 1 | Der Status der 405-nm-LED wird mit `0x 00 00` als **aus** bestätigt. | Validierung des Status der Lichtquelle. |
-| 0x42 01 00 | 1 | Der Status der 405-nm-LED wird mit `0x 00 00` als **an** bestätigt. | Validierung des Status der Lichtquelle. |
+| 0x42 01 00 | 1 | Der Status der 405-nm-LED wird mit `0x 01 00` als **an** bestätigt. | Validierung des Status der Lichtquelle. |
 | 0x40 00 00 | 56 | Messdaten in ADC-Counts | Das Gerät muss beim Wechsel zwischen den beiden Betriebsmodi etwa ähnlich hohe ADC-Counts zählen. |
 | 0x04 1e 00 | 1 | Bestätigung der gesetzten Integrationszeit mit `1e 00`. | Die Integrationszeit wird auf den Standardwert von 30 ms gesetzt |
 
@@ -126,7 +125,7 @@ Die Geräte können an sich nur rohe Messdaten bei einer bestimmten Integrations
 | ----- | ----- | ----- | ----- |
 | 0x41 00 00 | 1 | Der Status der Weisslichtquelle wird mit `0x 00 00` als **aus** bestätigt. | Validierung des Status der Lichtquelle. |
 | 0x43 00 00 | 1 | Der Status der 500-nm-LED wird mit `0x 00 00` als **aus** bestätigt. | Validierung des Status der Lichtquelle. |
-| 0x43 01 00 | 1 | Der Status der 500-nm-LED wird mit `0x 00 00` als **an** bestätigt. | Validierung des Status der Lichtquelle. |
+| 0x43 01 00 | 1 | Der Status der 500-nm-LED wird mit `0x 01 00` als **an** bestätigt. | Validierung des Status der Lichtquelle. |
 | 0x40 00 00 | 56 | Messdaten in ADC-Counts | Das Gerät muss beim Wechsel zwischen den beiden Betriebsmodi etwa ähnlich hohe ADC-Counts zählen. |
 | 0x04 1e 00 | 1 | Bestätigung der gesetzten Integrationszeit mit `1e 00`. | Die Integrationszeit wird auf den Standardwert von 30 ms gesetzt |
 
@@ -148,4 +147,32 @@ Die Geräte können an sich nur rohe Messdaten bei einer bestimmten Integrations
 
 
 ## Kalibration
-Alle Modelle mit einer Weisslichtquelle müssen für die Betriebsmodi `Absorbanz` bzw. `Transmission` kalibriert werden.
+Alle Modelle mit einer Weisslichtquelle müssen für die Betriebsmodi `Absorbanz` bzw. `Transmission` kalibriert werden. In den Original Apps von Vernier sind zwei unterschiedliche Kalbirationsroutinen implementiert, beide starten aber damit, bei einer default gesetzten Integrationszeit ein Dunkelspektrum aufzuzeichnen. Dann wird die Weisslichtquelle eingeschaltet und die Integrationszeit inkrementell variiert. Nach jeder Veränderung der Integrationszeit werden Messdaten angefordert. Ist die beste Interationszeit gefunden, werden nacheinander mehrere Spektren angefordert und wahrscheinlich zu einem Referenzspektrum gemittelt. Nachfolgend wird eine eigene Kalibrationsroutine entworfen, die zuerst das Weisslichtreferenzspektrum und bei gleicher Integrationszeit das Dunkelspektrum speichert.
+
+### Erfassung des Weisslichtreferenzspektrums
+
+| Command | Anzahl Antwortpakete | Inhalt Antwortpakete | Interpretation |
+| ----- | ----- | ----- | ----- |
+| 0x42 00 00 | 1 | Der Status der 405-nm-LED wird mit `0x 00 00` als **aus** bestätigt. | Validierung des Status der Lichtquelle. |
+| 0x43 00 00 | 1 | Der Status der 500-nm-LED wird mit `0x 00 00` als **aus** bestätigt. | Validierung des Status der Lichtquelle. |
+| 0x41 01 00 | 1 | Der Status der Weisslichtquelle wird mit `0x 01 00` als **an** bestätigt. | Validierung des Status der Lichtquelle. |
+| 0x04 ?? ?? | 1 | Bestätigung der gesetzten Integrationszeit mit `?? ??`. | Die Integrationszeit wird auf den Wert ?? ms gesetzt. |
+| 0x40 00 00 | 64 (SpectroVis) bzw. 56 (alle übrigen Modelle) | Messdaten in ADC-Counts | Im modellspezifischen Pixelindexintervall des CCD-Sensors werden die ADC-Counts auf ihren Wert überprüft. Ziel ist im Mittel 70 - 90 % des Maximalwerts `0xffff` bei eingesetzer Küvette mit Lösemittel. |
+
+Die Sequenz `0x04 ?? ??` und `0x40 00 00` wird 5 - 6 x wiederholt, bis die optimale Integrationszeit gefunden ist. Der Startwert ist dabei modellspezifisch und wird auf einen Wert festgelegt, der üblicherweise bei der Kalibration in der Original App gesetzt wird:  
+
+- SpectroVis &rarr; 40 ms
+- SpectroVisPlus &rarr; 110 ms
+- SpectroVisPlus (BLE) &rarr; 70 ms
+- UV-Vis-Spectrometer &rarr; 25 ms
+
+Dann werden 5 x mit dem Command `0x40 00 00` Messdaten angefordert und der Mittelwert zu einem Wiesslichtreferenzspektrum gespeichert.
+
+### Erfassung des Dunkelreferenzspektrums
+
+| Command | Anzahl Antwortpakete | Inhalt Antwortpakete | Interpretation |
+| ----- | ----- | ----- | ----- |
+| 0x41 00 00 | 1 | Der Status der Weisslichtquelle wird mit `0x 00 00` als **aus** bestätigt | Validierung des Status der Lichtquelle. |
+| 0x40 00 00 (5 x) | 64 (SpectroVis) bzw. 56 (alle übrigen Modelle) | Messdaten in ADC-Counts | Die Antwortpakete aller 5 Anfragen werden gemittelt und zu einem Dunkelreferenzspektrum gespeichert. |
+| 0x41 01 00 | 1 | Der Status der Weisslichtquelle wird mit `0x 01 00` als **an** bestätigt | Validierung des Status der Lichtquelle. |
+| 0x40 00 00 (periodisch) | 64 (SpectroVis) bzw. 56 (alle übrigen Modelle) | Messdaten in ADC-Counts | Das Spektrometer wird in den Zustand `Messwerterfassung` versetzt, d. h. die App fragt periodisch Messdaten an. |

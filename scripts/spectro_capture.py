@@ -58,8 +58,6 @@ def read_packets(dev):
 
         if data:
             payload = normalize_payload(data)
-            if len(payload) != 64:
-                payload = (payload + b"\x00" * 64)[:64]
             got.append(payload)
             first_seen = True
             last_packet_time = now
@@ -73,10 +71,10 @@ def read_packets(dev):
     return got
 
 
-def concat_payloads(payloads64):
-    if not payloads64:
+def concat_payloads(payloads):
+    if not payloads:
         return b""
-    return b"".join(payloads64)
+    return b"".join(payloads)
 
 
 def bytes_to_u16_le(buf: bytes) -> np.ndarray:
