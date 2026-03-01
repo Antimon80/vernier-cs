@@ -1,19 +1,23 @@
 namespace Backend.Devices.GoDirect
 {
     /// <summary>
-    /// CCD linearity check from RAW bytes returned by the 0x02 command.
+    /// CCD linearity evaluation based on RAW bytes returned by the 0x02 device command.
     ///
-    /// Strategy:
-    /// - Try multiple decoders (LE/BE, full vs odd-index-only).
-    /// - For each decoded u16 sequence:
-    ///   - Find the longest strictly-increasing run.
-    ///   - Inside that run, find the longest contiguous "linear core" where step sizes
-    ///     stay within median(step) ± tolerance.
-    /// - Pick the best candidate by a score (Pass > Warn > Fail, longer core is better,
-    ///   fewer out-of-tolerance steps is better, lower MAD is better).
+    /// The algorithm:
+    /// 1. Try multiple decoding strategies (LE/BE, full sequence vs odd indices only).
+    /// 2. For each decoded u16 sequence:
+    ///    - Detect strictly increasing runs.
+    ///    - Inside the best run, extract the longest "linear core" where
+    ///      step sizes stay within median(step) ± tolerance.
+    /// 3. Score all candidates and return the best result.
+    ///
+    /// Intended for sanity-checking CCD ramp linearity during diagnostics.
     /// </summary>
     public static class CcdLinearity
     {
+        /// <summary>
+        /// Overall quality classification of the detected linear core.
+        /// </summary>
         public enum Levels
         {
             Pass,
@@ -21,6 +25,9 @@ namespace Backend.Devices.GoDirect
             Fail
         }
 
+        /// <summary>
+        /// Result of one decoder evaluation.
+        /// </summary>
         public sealed record Result(
             Levels Level,
             string Decoder,
@@ -34,6 +41,9 @@ namespace Backend.Devices.GoDirect
             string Message
         );
 
+        /// <summary>
+        /// Runs all decoding strategies and returns the best-scoring candidate.
+        /// </summary>
         public static Result EvaluateAuto(byte[] rawBytes, int tolerance, int minRunLength)
         {
             List<Result> candidates =
@@ -46,6 +56,11 @@ namespace Backend.Devices.GoDirect
 
             return candidates.OrderByDescending(Score).First();
 
+            // Score prioritizes:
+            // 1. Pass > Warn > Fail
+            // 2. Longer core
+            // 3. Fewer out-of-tolerance steps
+            // 4. Lower MAD (noise)
             static long Score(Result r)
             {
                 long levelBias = r.Level switch
@@ -62,6 +77,9 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Evaluates a single decoding strategy.
+        /// </summary>
         private static Result Evaluate(
             byte[] rawBytes,
             int tolerance,
@@ -84,7 +102,10 @@ namespace Backend.Devices.GoDirect
                     Message: "Input too short.");
             }
 
+            // Decode raw bytes into u16 values
             int[] allValues = DecodeU16(rawBytes, littleEndian);
+
+            // Optional filtering (used for devices that interleave data)
             int[] values = takeOddIndicesOnly
                 ? allValues.Where((_, index) => (index % 2) == 1).ToArray()
                 : allValues;
@@ -103,6 +124,7 @@ namespace Backend.Devices.GoDirect
                     Message: "No decoded values.");
             }
 
+            // Find strictly increasing segments
             List<Run> increasingRuns = FindStrictlyIncreasingRuns(values);
 
             // Prefer runs that are already "long enough"; otherwise take the longest run we have.
@@ -111,8 +133,10 @@ namespace Backend.Devices.GoDirect
                 ? longEnough.OrderByDescending(r => r.Length).First()
                 : increasingRuns.OrderByDescending(r => r.Length).First();
 
+            // Extract most linear contiguous core inside that run
             LinearCore core = ExtractBestLinearCore(values, bestRun.StartIndex, bestRun.Length, tolerance);
 
+            // Basic validation
             if (core.Length < minRunLength || core.StepMedian <= 0)
             {
                 string msg = $"linear core too short or invalid: coreLen={core.Length} (<{minRunLength}) or stepMedian={core.StepMedian} (<=0); " +
@@ -129,6 +153,7 @@ namespace Backend.Devices.GoDirect
                     Message: msg);
             }
 
+            // Classification logic
             if (core.OutOfToleranceSteps == 0 && core.StepMad <= 1)
             {
                 string msg = $"coreLen={core.Length}, start={core.StartIndex}, stepMedian={core.StepMedian}, stepMad={core.StepMad}, outTol={core.OutOfToleranceSteps}";
@@ -159,7 +184,9 @@ namespace Backend.Devices.GoDirect
             }
         }
 
-        // Decoding
+        /// <summary>
+        /// Decodes raw byte array into u16 values (LE or BE).
+        /// </summary>
         private static int[] DecodeU16(byte[] rawBytes, bool littleEndian)
         {
             int count = rawBytes.Length / 2;
@@ -178,9 +205,11 @@ namespace Backend.Devices.GoDirect
             return values;
         }
 
-        // Run detection (strictly increasing)
         private readonly record struct Run(int StartIndex, int Length);
 
+        /// <summary>
+        /// Splits sequence into maximal strictly increasing runs.
+        /// </summary>
         private static List<Run> FindStrictlyIncreasingRuns(int[] values)
         {
             List<Run> runs = [];
@@ -204,7 +233,6 @@ namespace Backend.Devices.GoDirect
             return runs;
         }
 
-        // Linear core extraction
         private readonly record struct LinearCore(
             int StartIndex,
             int Length,
@@ -213,9 +241,8 @@ namespace Backend.Devices.GoDirect
             int OutOfToleranceSteps);
 
         /// <summary>
-        /// Within a strictly increasing run [runStart .. runStart+runLength),
-        /// find the longest contiguous sub-run whose step sizes are within
-        /// median(step) ± tolerance.
+        /// Within a strictly increasing run, find the longest contiguous
+        /// segment whose step sizes stay within median ± tolerance.
         /// </summary>
         private static LinearCore ExtractBestLinearCore(int[] values, int runStart, int runLength, int tolerance)
         {
@@ -299,7 +326,9 @@ namespace Backend.Devices.GoDirect
             return steps;
         }
 
-        // Robust stats (median, MAD)
+        /// <summary>
+        /// Computes the median of an integer array.
+        /// </summary>
         private static int Median(int[] values)
         {
             int[] sorted = (int[])values.Clone();
@@ -313,6 +342,9 @@ namespace Backend.Devices.GoDirect
                 : (sorted[mid - 1] + sorted[mid]) / 2;
         }
 
+        /// <summary>
+        /// Median Absolute Deviation (robust dispersion metric).
+        /// </summary>
         private static int Mad(int[] values, int median)
         {
             if (values.Length == 0)

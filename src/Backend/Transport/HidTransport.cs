@@ -4,6 +4,17 @@ using System.Threading.Channels;
 using HidSharp;
 using Microsoft.Extensions.Logging;
 
+/// <summary>
+/// HID-based transport implementation using HidSharp.
+/// 
+/// Architecture:
+/// - A background ReaderLoop continuously reads HID input reports.
+/// - Incoming 64-byte payloads are pushed into a bounded Channel (FIFO).
+/// - Public Read() consumes from that buffered channel.
+/// - Write() sends one 64-byte payload per HID output report.
+/// 
+/// This decouples low-level blocking HID I/O from higher-level protocol logic.
+/// </summary>
 public sealed class HidTransport : ITransport
 {
     private readonly string _devicePath;
@@ -13,16 +24,23 @@ public sealed class HidTransport : ITransport
 
     private HidStream? _stream;
 
+    // Fixed payload size expected by the device protocol
     private const int PayloadLen = 64;
+    // HID report ID (0x00 for most devices without numbered reports)
     private const byte ReportId = 0x00;
+    // Max number of buffered packets in the RX channel
     private const int PacketQueueCapacity = 1024;
+    // Overall timeout for buffered Read()
     private const int OverallReadTimeoutMs = 2000;
 
     private int _maxInputReportLen;
     private int _maxOutputReportLen;
 
+    // Channel used as a thread-safe FIFO between ReaderLoop and Read()
     private Channel<byte[]>? _rxChannel;
+    // Controls cancellation of ReaderLoop
     private CancellationTokenSource? _rxCts;
+    // Background reader task
     private Task? _rxTask;
 
     public HidTransport(string devicePath, ushort vid, ushort pid)
@@ -32,13 +50,21 @@ public sealed class HidTransport : ITransport
         _pid = pid;
     }
 
+    /// <summary>
+    /// True if the HID stream is currently open.
+    /// </summary>
     public bool IsConnected => _stream is not null;
 
+    /// <summary>
+    /// Opens the HID device, initializes report sizes,
+    /// and starts the background ReaderLoop.
+    /// </summary>
     public Task Connect(CancellationToken ct = default)
     {
         if (IsConnected) { return Task.CompletedTask; }
         ct.ThrowIfCancellationRequested();
 
+        // Locate matching HID device by VID/PID and device path
         HidDevice? dev = DeviceList.Local
             .GetHidDevices(_vid, _pid)
             .FirstOrDefault(d => string.Equals(d.DevicePath, _devicePath, StringComparison.OrdinalIgnoreCase));
@@ -55,12 +81,16 @@ public sealed class HidTransport : ITransport
 
         _stream = stream;
 
+        // Ensure report buffers are large enough (ReportID + 64 payload)
         _maxInputReportLen = Math.Max(stream.Device.GetMaxInputReportLength(), PayloadLen + 1);
         _maxOutputReportLen = Math.Max(stream.Device.GetMaxOutputReportLength(), PayloadLen + 1);
 
+        // Short read timeout to allow polling behavior in ReaderLoop
         _stream.ReadTimeout = 50;
+        // Write timeout for outbound commands
         _stream.WriteTimeout = 200;
 
+        // Bounded FIFO channel between ReaderLoop (writer) and Read() (readers)
         ChannelOptions options = new BoundedChannelOptions(PacketQueueCapacity)
         {
             SingleReader = false,
@@ -70,6 +100,8 @@ public sealed class HidTransport : ITransport
 
         _rxChannel = Channel.CreateBounded<byte[]>((BoundedChannelOptions)options);
         _rxCts = new CancellationTokenSource();
+
+        // Start background reader (decoupled from caller cancellation)
         _rxTask = Task.Run(() => ReaderLoop(_rxCts.Token), CancellationToken.None);
 
         _log?.LogInformation("HID transport connected. VID=0x{Vid:X4}, PID=0x{Pid:X4}, maxIn={MaxIn}, maxOut={MaxOut}",
@@ -78,6 +110,10 @@ public sealed class HidTransport : ITransport
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops ReaderLoop, completes RX channel,
+    /// and disposes the HID stream.
+    /// </summary>
     public async Task Disconnect(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
@@ -137,6 +173,10 @@ public sealed class HidTransport : ITransport
 
     }
 
+    /// <summary>
+    /// Sends one 64-byte protocol payload as a HID output report.
+    /// The payload is copied into a full report buffer including ReportID.
+    /// </summary>
     public Task Write(ReadOnlyMemory<byte> payload, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
@@ -168,8 +208,13 @@ public sealed class HidTransport : ITransport
         return Task.CompletedTask;
     }
 
-    // Reads one 64-byte payload from the internal FIFO buffer.
-    // This does NOT call HidStream.Read(); the reader loop does that.
+    //// <summary>
+    /// Returns one 64-byte payload from the internal RX buffer.
+    /// Does NOT access the HID stream directly.
+    /// 
+    /// Throws TimeoutException if no packet becomes available
+    /// within OverallReadTimeoutMs.
+    /// </summary>
     public async Task<byte[]> Read(CancellationToken ct = default)
     {
         EnsureConnected();
@@ -197,8 +242,11 @@ public sealed class HidTransport : ITransport
         throw new InvalidOperationException("RX channel completed (device disconnected?).");
     }
 
-    // Drops all currently buffered packets. Useful for resync between commands.
 
+    /// <summary>
+    /// Discards all currently buffered packets in the RX channel.
+    /// Useful to resynchronize protocol state between commands.
+    /// </summary>
     public void FlushInputBuffer()
     {
         Channel<byte[]>? ch = _rxChannel;
@@ -224,6 +272,12 @@ public sealed class HidTransport : ITransport
         }
     }
 
+    /// <summary>
+    /// Best-effort drain of up to expectedPackets from the RX buffer.
+    /// 
+    /// Waits perPacketTimeoutMs for each missing packet.
+    /// Intended for command-response cleanup scenarios.
+    /// </summary>
     public async Task<int> Drain(int expectedPackets, int perPacketTimeoutMs = 100, CancellationToken ct = default)
     {
         if (expectedPackets <= 0)
@@ -282,6 +336,9 @@ public sealed class HidTransport : ITransport
         return drained;
     }
 
+    /// <summary>
+    /// Stops transport and releases resources.
+    /// </summary>
     public void Dispose()
     {
         try
@@ -294,6 +351,17 @@ public sealed class HidTransport : ITransport
         }
     }
 
+    /// <summary>
+    /// Background loop reading HID input reports.
+    /// 
+    /// Behavior:
+    /// - Reads raw HID reports.
+    /// - Strips ReportID if present.
+    /// - Extracts up to 64 payload bytes.
+    /// - Pushes payload into RX channel.
+    /// 
+    /// Terminates on cancellation or fatal stream error.
+    /// </summary>
     private async Task ReaderLoop(CancellationToken ct)
     {
         HidStream? stream = _stream;
@@ -320,6 +388,7 @@ public sealed class HidTransport : ITransport
                     continue;
                 }
 
+                // Skip ReportID if present
                 int offset = (n >= PayloadLen + 1) ? 1 : 0;
                 int available = n - offset;
                 if (available <= 0)
@@ -336,6 +405,7 @@ public sealed class HidTransport : ITransport
             }
             catch (TimeoutException)
             {
+                // Expected due to short ReadTimeout; continue polling
                 continue;
             }
             catch (OperationCanceledException)
