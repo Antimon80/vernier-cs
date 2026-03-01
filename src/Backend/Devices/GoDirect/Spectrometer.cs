@@ -6,36 +6,56 @@ using Microsoft.Extensions.Logging;
 
 namespace Backend.Devices.GoDirect
 {
-
+    /// <summary>
+    /// High-level spectrometer device facade for Vernier Go Direct models.
+    ///
+    /// Responsibilities:
+    /// - Connect/disconnect transport and run initialization checks.
+    /// - Manage device configuration (integration time, lamp mode, operating mode).
+    /// - Perform calibration (blank/dark capture) for absorbance/transmission modes.
+    /// - Provide live streaming of raw spectra and processed display spectra.
+    ///
+    /// Concurrency model:
+    /// - All protocol operations are guarded by an exclusive semaphore to prevent
+    ///   overlapping 0x40 acquisition cycles with configuration/calibration commands.
+    /// - Streaming runs in a background Task and repeatedly acquires raw counts.
+    ///
+    /// Notes:
+    /// - This class intentionally caches the latest spectrum for a UI pull-model.
+    /// - Event handlers are invoked defensively (exceptions are caught and logged).
+    /// </summary>
     public sealed class Spectrometer : ISpectrometer, IDisposable
     {
+        /// <summary>Default integration time applied after initialization (ms).</summary>
         private const int DefaultIntegrationTime = 30;
 
-        // Calibration
+        // Calibration configuration
         private const int CalibrationAverages = 5;
         private const double TargetLo = 0.70;
         private const double TargetHi = 0.90;
 
-        // Warm-up: cumulative ON-time of white lamp (excluding short OFF windows during calibration dark capture)
+        /// <summary>
+        /// Required cumulative ON-time of the white lamp (excluding short OFF windows
+        /// during calibration dark capture).
+        /// </summary>
         private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(5);
 
         // CCD linearity check parameters
         private const int LinearityMinRun = 64;
-        private const int LinearityTolearance = 3;
+        private const int LinearityTolerance = 3;
 
-        // Live streaming
-        private const int PauseTimeoutMs = 1500;
-
+        // Dependencies
         private readonly ITransport _transport;
         private readonly SpectrometerProtocol _proto;
         private readonly SpectrometerModel _model;
         private readonly ILogger<Spectrometer>? _log;
 
+        // Session state and diagnostics
         private readonly List<string> _warnings = [];
 
+        private bool _isInitialized;
         private readonly Stopwatch _whiteOnStopwatch = new();
         private bool _whiteIsOn;
-        private bool _isInitialized;
         private LampMode _lampMode = LampMode.Off;
 
         // Exclusive access to the protocol (0x40 cycles vs config/calibration)
@@ -49,36 +69,155 @@ namespace Backend.Devices.GoDirect
         private readonly object _latestLock = new();
         private ushort[]? _latestSpectrum;
         private DateTimeOffset _latestSpectrumAt;
+
+        // Processing
         private readonly SpectrumProcessor _processor;
 
-
+        /// <summary>
+        /// Creates a new spectrometer façade for a given transport + model.
+        /// </summary>
+        /// <param name="transport">Underlying transport (HID, etc.). Must be connected via <see cref="Connect"/>.</param>
+        /// <param name="model">Static model description (pixel mapping, lamp presence, PID, etc.).</param>
+        /// <param name="log">Optional logger.</param>
         public Spectrometer(ITransport transport, SpectrometerModel model, ILogger<Spectrometer>? log = null)
         {
             _transport = transport ?? throw new ArgumentNullException(nameof(transport));
             _model = model;
             _proto = new SpectrometerProtocol(_transport, _model);
+
+            // Processor uses the current Session (mode, dark/blank, etc.) and emits display spectra.
             _processor = new SpectrumProcessor(_model, Session, windowSpectra: 4);
             _processor.DisplayUpdated += (s, t) => DisplaySpectrumReceived?.Invoke(s, t);
+
             _log = log;
         }
 
+        // Public properties
         public SpectrometerModel Model => _model;
+
+        /// <summary>
+        /// Mutable runtime session state (integration time, mode, blank/dark, snapshots, flags).
+        /// </summary>
         public SpectrometerSession Session { get; } = new();
+
         public OperatingMode Mode => Session.Mode;
 
+        /// <summary>
+        /// Non-fatal issues found during initialization/calibration (echo mismatch, weak lamp check, etc.).
+        /// </summary>
         public IReadOnlyList<string> Warnings => _warnings;
 
         public ushort Vid => SpectrometerCatalog.VernierVid;
-
         public ushort Pid => _model.Pid;
-
         public string DeviceName => _model.Name;
 
+        /// <summary>True if the underlying transport is connected.</summary>
         public bool IsConnected => _transport.IsConnected;
 
+        // Events
+
+        /// <summary>
+        /// Fired when a raw spectrum is acquired (device counts, full CCD length).
+        /// </summary>
         public event Action<ushort[], DateTimeOffset>? SpectrumReceived;
+
+        /// <summary>
+        /// Fired when a processed display spectrum is available (ROI, correction, scaling, etc.).
+        /// </summary>
         public event Action<DisplaySpectrum, DateTimeOffset>? DisplaySpectrumReceived;
 
+        // Public API: lifecycle
+
+        /// <summary>
+        /// Connects the transport and initializes the device if needed.
+        /// </summary>
+        public async Task Connect(CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (IsConnected && _isInitialized)
+            {
+                return;
+            }
+
+            await _transport.Connect(ct).ConfigureAwait(false);
+            await Initialize(ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Stops streaming (if running), turns off lamps, clears session readiness,
+        /// and disconnects the transport.
+        /// </summary>
+        public async Task Disconnect(CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (!IsConnected)
+            {
+                return;
+            }
+
+            await StopStreaming(ct).ConfigureAwait(false);
+            await _exclusive.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                // Ensure all lamps off on disconnect
+                if (_model.HasWhiteLamp)
+                {
+                    await _proto.SetLamp(LampMode.White, false, ct).ConfigureAwait(false);
+                }
+                if (_model.HasLed405)
+                {
+                    await _proto.SetLamp(LampMode.Fluo405, false, ct).ConfigureAwait(false);
+                }
+                if (_model.HasLed500)
+                {
+                    await _proto.SetLamp(LampMode.Fluo500, false, ct).ConfigureAwait(false);
+                }
+
+                _whiteIsOn = false;
+                if (_whiteOnStopwatch.IsRunning)
+                {
+                    _whiteOnStopwatch.Stop();
+                }
+
+                Session.IsReady = false;
+                Session.IsCalibrated = false;
+                _isInitialized = false;
+            }
+            finally
+            {
+                _exclusive.Release();
+            }
+
+            await _transport.Disconnect(ct).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Releases resources. This synchronously calls <see cref="Disconnect"/> and logs failures.
+        /// </summary>
+        public void Dispose()
+        {
+            try
+            {
+                Disconnect(CancellationToken.None).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _log?.LogWarning(ex, "Dispose -> Disconnect failed.");
+            }
+        }
+
+        // Public API: initialization/calibration
+
+        /// <summary>
+        /// Runs device sanity checks and sets a safe default configuration:
+        /// - Reads model code.
+        /// - Performs CCD linearity check from raw bytes.
+        /// - Checks dark noise at two integration times to detect a dead/mismatched CCD.
+        /// - Sets default integration time and initializes lamp state.
+        /// - Optionally checks "light vs dark" response for white lamp models.
+        /// </summary>
         public async Task Initialize(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -94,7 +233,7 @@ namespace Backend.Devices.GoDirect
 
             // 2) CCD linearity: raw bytes + auto-decoder
             byte[] linBytes = await _proto.ReadLinearitySequence(ct).ConfigureAwait(false);
-            var linRes = CcdLinearity.EvaluateAuto(linBytes, tolerance: LinearityTolearance, minRunLength: LinearityMinRun);
+            var linRes = CcdLinearity.EvaluateAuto(linBytes, tolerance: LinearityTolerance, minRunLength: LinearityMinRun);
 
             _log?.LogInformation(
                 "CCD linearity: {Level} (decoder={Decoder}, coreLen={CoreLen}, outTol={OutTol}, stepMedian={StepMedian}, stepMad={StepMad}, start={Start})",
@@ -164,57 +303,12 @@ namespace Backend.Devices.GoDirect
                 Session.IsReady, Session.IsCalibrated, _whiteIsOn, (int)_whiteOnStopwatch.Elapsed.TotalSeconds, _warnings.Count);
         }
 
-        public void StartStreaming()
-        {
-            if (!_isInitialized)
-            {
-                throw new InvalidOperationException("Device not initialized. Call Initialize() first.");
-            }
-
-            if (_streamTask is not null && !_streamTask.IsCompleted)
-            {
-                return;
-            }
-
-            _streamCts = new CancellationTokenSource();
-            _streamTask = Task.Run(() => StreamingLoop(_streamCts.Token), CancellationToken.None);
-
-            _log?.LogInformation("Live streaming started.");
-        }
-
-        public async Task StopStreaming(CancellationToken ct = default)
-        {
-            CancellationTokenSource? cts = _streamCts;
-            _streamCts = null;
-
-            if (cts is not null)
-            {
-                try
-                {
-                    cts.Cancel();
-                }
-                catch
-                {
-                    cts.Dispose();
-                }
-            }
-
-            Task? task = _streamTask;
-            _streamTask = null;
-
-            if (task is not null)
-            {
-                try
-                {
-                    await task.ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _log?.LogWarning(ex, "Stream loop ended with exception.");
-                }
-            }
-        }
-
+        /// <summary>
+        /// Performs absorbance/transmission calibration:
+        /// - Ensures white lamp warmup.
+        /// - Finds an integration time that yields a target mean ROI ratio (TargetLo..TargetHi).
+        /// - Captures averaged blank (white ON) and dark (white OFF) spectra.
+        /// </summary>
         public async Task Calibrate(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -267,6 +361,11 @@ namespace Backend.Devices.GoDirect
             Session.IntegrationTime, CalibrationAverages, (int)_whiteOnStopwatch.Elapsed.TotalSeconds);
         }
 
+        // Public API: configuration and acquisition
+
+        /// <summary>
+        /// Sets the operating mode and adjusts lamp mode accordingly.
+        /// </summary>
         public async Task SetOperatingMode(OperatingMode mode, CancellationToken ct = default)
         {
             switch (mode)
@@ -289,6 +388,10 @@ namespace Backend.Devices.GoDirect
             Session.Mode = mode;
         }
 
+        /// <summary>
+        /// Sets integration time (ms). This invalidates calibration because blank/dark
+        /// spectra depend on integration time.
+        /// </summary>
         public async Task SetIntegrationTime(int ms, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -298,6 +401,9 @@ namespace Backend.Devices.GoDirect
             Session.IsCalibrated = false;
         }
 
+        /// <summary>
+        /// Acquires one raw spectrum (exclusive protocol access, no streaming required).
+        /// </summary>
         public async Task<ushort[]> AcquireSingleSpectrum(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -307,6 +413,10 @@ namespace Backend.Devices.GoDirect
             }, ct).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Captures the last processed display spectrum into the session snapshots.
+        /// Returns false if no display spectrum is currently available.
+        /// </summary>
         public bool CaptureDisplayedSpectrum(string? label = null)
         {
             if (_processor.TryGetLastDisplay(out var disp))
@@ -317,75 +427,73 @@ namespace Backend.Devices.GoDirect
             return false;
         }
 
-        public async Task Connect(CancellationToken ct = default)
-        {
-            ct.ThrowIfCancellationRequested();
+        // Public API: streaming
 
-            if (IsConnected && _isInitialized)
+        /// <summary>
+        /// Starts live streaming (repeated acquisitions in a background loop).
+        /// Requires successful <see cref="Initialize"/>.
+        /// </summary>
+        public void StartStreaming()
+        {
+            if (!_isInitialized)
+            {
+                throw new InvalidOperationException("Device not initialized. Call Initialize() first.");
+            }
+
+            if (_streamTask is not null && !_streamTask.IsCompleted)
             {
                 return;
             }
 
-            await _transport.Connect(ct).ConfigureAwait(false);
-            await Initialize(ct).ConfigureAwait(false);
+            _streamCts = new CancellationTokenSource();
+            _streamTask = Task.Run(() => StreamingLoop(_streamCts.Token), CancellationToken.None);
+
+            _log?.LogInformation("Live streaming started.");
         }
 
-        public async Task Disconnect(CancellationToken ct = default)
+        /// <summary>
+        /// Stops live streaming and waits for the loop to terminate.
+        /// </summary>
+        public async Task StopStreaming(CancellationToken ct = default)
         {
-            ct.ThrowIfCancellationRequested();
+            CancellationTokenSource? cts = _streamCts;
+            _streamCts = null;
 
-            if (!IsConnected)
+            if (cts is not null)
             {
-                return;
+                try
+                {
+                    cts.Cancel();
+                }
+                catch
+                {
+                    cts.Dispose();
+                }
             }
 
-            await StopStreaming(ct).ConfigureAwait(false);
-            await _exclusive.WaitAsync(ct).ConfigureAwait(false);
-            try
-            {
-                if (_model.HasWhiteLamp)
-                {
-                    await _proto.SetLamp(LampMode.White, false, ct).ConfigureAwait(false);
-                }
-                if (_model.HasLed405)
-                {
-                    await _proto.SetLamp(LampMode.Fluo405, false, ct).ConfigureAwait(false);
-                }
-                if (_model.HasLed500)
-                {
-                    await _proto.SetLamp(LampMode.Fluo500, false, ct).ConfigureAwait(false);
-                }
+            Task? task = _streamTask;
+            _streamTask = null;
 
-                _whiteIsOn = false;
-                if (_whiteOnStopwatch.IsRunning)
+            if (task is not null)
+            {
+                try
                 {
-                    _whiteOnStopwatch.Stop();
+                    await task.ConfigureAwait(false);
                 }
-
-                Session.IsReady = false;
-                Session.IsCalibrated = false;
-                _isInitialized = false;
-            }
-            finally
-            {
-                _exclusive.Release();
-            }
-
-            await _transport.Disconnect(ct).ConfigureAwait(false);
-        }
-
-        public void Dispose()
-        {
-            try
-            {
-                Disconnect(CancellationToken.None).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                _log?.LogWarning(ex, "Dispose -> Disconnect failed.");
+                catch (Exception ex)
+                {
+                    _log?.LogWarning(ex, "Stream loop ended with exception.");
+                }
             }
         }
 
+        // Private helpers: lamps and warmup
+
+        /// <summary>
+        /// Sets a safe initial lamp configuration:
+        /// - Turn everything off (where present).
+        /// - Turn white lamp on (if present) as default.
+        /// </summary>
         private async Task InitializeLamps(CancellationToken ct)
         {
             if (_model.HasWhiteLamp)
@@ -412,6 +520,10 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Sets the requested lamp mode. This always switches all lamps off first
+        /// to avoid mixed illumination states.
+        /// </summary>
         private async Task SetLampMode(LampMode mode, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
@@ -466,6 +578,9 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Turns the white lamp on/off and optionally accounts warmup time.
+        /// </summary>
         private async Task SetWhiteLamp(bool on, bool countWarmupTime, CancellationToken ct)
         {
             if (!_model.HasWhiteLamp)
@@ -493,6 +608,9 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Turns a fluorescence LED on/off (guarded by model capability checks).
+        /// </summary>
         private async Task SetLed(LampMode ledMode, bool on, CancellationToken ct)
         {
             if (ledMode == LampMode.Fluo405 && !_model.HasLed405)
@@ -507,6 +625,10 @@ namespace Backend.Devices.GoDirect
             await _proto.SetLamp(ledMode, on, ct).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Ensures the white lamp has been on for at least <see cref="RequiredWarmup"/>.
+        /// Uses cumulative on-time (Stopwatch) rather than wall time.
+        /// </summary>
         private async Task EnsureWarmUp(CancellationToken ct)
         {
             if (!_model.HasWhiteLamp)
@@ -532,6 +654,11 @@ namespace Backend.Devices.GoDirect
             await Task.Delay(remaining, ct).ConfigureAwait(false);
         }
 
+        // Private helpers: acquisition averaging
+
+        /// <summary>
+        /// Acquires <paramref name="n"/> raw spectra and returns the per-pixel average.
+        /// </summary>
         private async Task<ushort[]> AcquireAverageRaw(int n, CancellationToken ct)
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(n);
@@ -557,7 +684,12 @@ namespace Backend.Devices.GoDirect
             return avg;
         }
 
-        // Measurement data stream + pause/resume boundary control
+        // Private helpers: streaming loop
+
+        /// <summary>
+        /// Streaming loop: acquires spectra repeatedly and pushes them into the processor.
+        /// All protocol access is protected by <see cref="_exclusive"/>.
+        /// </summary>
         private async Task StreamingLoop(CancellationToken ct)
         {
             _log?.LogDebug("Measurement data stream loop started.");
@@ -573,12 +705,14 @@ namespace Backend.Devices.GoDirect
                         DateTimeOffset timeStamp = DateTimeOffset.UtcNow;
                         _processor.PushRaw(raw, timeStamp);
 
+                        // Cache last raw spectrum for UI pull-model
                         lock (_latestLock)
                         {
                             _latestSpectrum = raw;
                             _latestSpectrumAt = timeStamp;
                         }
 
+                        // Notify listeners
                         try
                         {
                             SpectrumReceived?.Invoke(raw, timeStamp);
@@ -610,6 +744,11 @@ namespace Backend.Devices.GoDirect
             _log?.LogDebug("Measurement data stream loop stopped.");
         }
 
+        // Private helpers: exclusive protocol execution
+
+        /// <summary>
+        /// Executes an asynchronous protocol operation under exclusive access.
+        /// </summary>
         private async Task ExecuteExclusive(Func<Task> op, CancellationToken ct)
         {
             await _exclusive.WaitAsync(ct).ConfigureAwait(false);
@@ -623,6 +762,9 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Executes an asynchronous protocol operation under exclusive access and returns its result.
+        /// </summary>
         private async Task<T> ExecuteExclusive<T>(Func<Task<T>> op, CancellationToken ct)
         {
             await _exclusive.WaitAsync(ct).ConfigureAwait(false);
@@ -636,6 +778,12 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        // Private helpers: sanity checks
+
+        /// <summary>
+        /// Basic CCD "alive" check: rejects empty spectra and constant 0/65535 outputs.
+        /// Also emits a warning if ROI variation is extremely small.
+        /// </summary>
         private void EnsureCcdAlive(ushort[] counts, string context)
         {
             if (counts.Length == 0)
@@ -672,6 +820,13 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        // Private helpers: integration time search
+
+        /// <summary>
+        /// Searches an integration time in [tMin..tMax] that places the ROI mean ratio
+        /// inside the target band [TargetLo..TargetHi]. Uses a binary-search-like approach
+        /// and tracks the best candidate if the band is not reached.
+        /// </summary>
         private async Task<(int tMs, double ratio, bool inBand)> FindIntegrationTimeForTargetBand(
             int tMin, int tMax, int maxIter, int probeAverages, CancellationToken ct)
         {
@@ -724,7 +879,12 @@ namespace Backend.Devices.GoDirect
             return (bestT, bestRatio, false);
         }
 
-        // ROI: Region of interest
+        // Private helpers: ROI (region of interest) and statistics
+
+        /// <summary>
+        /// Returns ROI pixel indices clamped to a given spectrum length.
+        /// Uses model-specific ROI if provided; otherwise falls back to a default range.
+        /// </summary>
         private (int lo, int hi) GetRoi(int spectrumLen)
         {
             if (_model.CCDPixelIndexMin > 0 || _model.CCDPixelIndexMax > 0)
@@ -747,6 +907,10 @@ namespace Backend.Devices.GoDirect
             return (a, b);
         }
 
+        /// <summary>
+        /// Returns ROI indices without clamping (model values or default 100..900).
+        /// Consumers must clamp to actual spectrum length.
+        /// </summary>
         private (int lo, int hi) GetRoi()
         {
             if (_model.CCDPixelIndexMin > 0 || _model.CCDPixelIndexMax > 0)
@@ -757,6 +921,9 @@ namespace Backend.Devices.GoDirect
             return (100, 900);
         }
 
+        /// <summary>
+        /// Compares two spectra by the mean in ROI. Returns true if mean(a) >= factor * mean(b).
+        /// </summary>
         private bool MeanInRoiIsHigher(ushort[] a, ushort[] b, double factor)
         {
             if (a.Length != b.Length)
@@ -776,6 +943,9 @@ namespace Backend.Devices.GoDirect
 
         }
 
+        /// <summary>
+        /// Computes the mean raw count value in ROI.
+        /// </summary>
         private double MeanInRoi(ushort[] counts)
         {
             (int lo, int hi) = GetRoi();
@@ -797,6 +967,10 @@ namespace Backend.Devices.GoDirect
             return n == 0 ? 0.0 : sum / n;
         }
 
+        /// <summary>
+        /// Computes ROI mean normalized to [0..1] by dividing by ushort.MaxValue.
+        /// Used to steer integration time search against the target band.
+        /// </summary>
         private double MeanRatioInRoi(ushort[] counts)
         {
             (int lo, int hi) = GetRoi();
@@ -823,7 +997,9 @@ namespace Backend.Devices.GoDirect
             return sum / n / ushort.MaxValue;
         }
 
-        // Integration time should not exceed a certain threshold to avoid CCD saturation
+        /// <summary>
+        /// Clamps integration time to a safe operating interval.
+        /// </summary>
         private static int ClampIntegrationTime(int ms, int min, int max) => Math.Min(max, Math.Max(min, ms));
     }
 }
