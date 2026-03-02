@@ -17,6 +17,7 @@ public interface ISpectrometer : IDevice
     SpectrometerModel Model { get; }
     SpectrometerSession Session { get; }
     OperatingMode Mode { get; }
+    IReadOnlyList<string> Warnings {get;}
 
     event Action<ushort[], DateTimeOffset>? SpectrumReceived;
 

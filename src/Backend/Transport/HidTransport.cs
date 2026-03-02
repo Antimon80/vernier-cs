@@ -15,12 +15,12 @@ using Microsoft.Extensions.Logging;
 /// 
 /// This decouples low-level blocking HID I/O from higher-level protocol logic.
 /// </summary>
-public sealed class HidTransport : ITransport
+public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILogger<HidTransport>? log = null) : ITransport
 {
-    private readonly string _devicePath;
-    private readonly ushort _vid;
-    private readonly ushort _pid;
-    private readonly ILogger<HidTransport>? _log;
+    private readonly string _devicePath = devicePath ?? throw new ArgumentNullException(nameof(devicePath));
+    private readonly ushort _vid = vid;
+    private readonly ushort _pid = pid;
+    private readonly ILogger<HidTransport>? _log = log;
 
     private HidStream? _stream;
 
@@ -36,19 +36,12 @@ public sealed class HidTransport : ITransport
     private int _maxInputReportLen;
     private int _maxOutputReportLen;
 
-    // Channel used as a thread-safe FIFO between ReaderLoop and Read()
+    // Channel uses as a thread-safe FIFO between ReaderLoop and Read()
     private Channel<byte[]>? _rxChannel;
     // Controls cancellation of ReaderLoop
     private CancellationTokenSource? _rxCts;
     // Background reader task
     private Task? _rxTask;
-
-    public HidTransport(string devicePath, ushort vid, ushort pid)
-    {
-        _devicePath = devicePath ?? throw new ArgumentNullException(nameof(devicePath));
-        _vid = vid;
-        _pid = pid;
-    }
 
     /// <summary>
     /// True if the HID stream is currently open.

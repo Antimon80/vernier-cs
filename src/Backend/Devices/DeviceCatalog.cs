@@ -1,10 +1,10 @@
 namespace Backend.Devices.GoDirect;
 
-public static class SpectrometerCatalog
+public static class DeviceCatalog
 {
     public const ushort VernierVid = 0x08f7;
 
-    public static readonly IReadOnlyDictionary<ushort, SpectrometerModel> Models = new Dictionary<ushort, SpectrometerModel>
+    public static readonly IReadOnlyDictionary<ushort, SpectrometerModel> SpectrometerModels = new Dictionary<ushort, SpectrometerModel>
     {
         {
             0x0006,
@@ -97,8 +97,8 @@ public static class SpectrometerCatalog
         },
     };
 
-    public static bool IsSpectrometerPid(ushort pid) => Models.ContainsKey(pid);
+    public static bool IsSpectrometerPid(ushort pid) => SpectrometerModels.ContainsKey(pid);
 
-    public static SpectrometerModel GetModel(ushort pid) => Models.TryGetValue(pid, out var model)
+    public static SpectrometerModel GetModel(ushort pid) => SpectrometerModels.TryGetValue(pid, out var model)
         ? model : throw new ArgumentOutOfRangeException(nameof(pid), $"Unknown spectrometer PID 0x{pid:X4}");
 }

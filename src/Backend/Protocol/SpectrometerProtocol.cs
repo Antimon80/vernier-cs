@@ -95,7 +95,7 @@ namespace Backend.Protocol
             await SendCommand(0x40, 0x00, 0x00, ct).ConfigureAwait(false);
 
             byte[] bytes = await ReadPayloadBytes(_model.PacketCount, ct).ConfigureAwait(false);
-            ushort[] values = DecodeU16BigEnian(bytes);
+            ushort[] values = DecodeU16LittleEndian(bytes);
 
             return values;
         }

@@ -38,7 +38,7 @@ namespace Backend.Devices.GoDirect
         /// Required cumulative ON-time of the white lamp (excluding short OFF windows
         /// during calibration dark capture).
         /// </summary>
-        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(1);
 
         // CCD linearity check parameters
         private const int LinearityMinRun = 64;
@@ -101,13 +101,14 @@ namespace Backend.Devices.GoDirect
         public SpectrometerSession Session { get; } = new();
 
         public OperatingMode Mode => Session.Mode;
+        public LampMode LampMode => _lampMode;
 
         /// <summary>
         /// Non-fatal issues found during initialization/calibration (echo mismatch, weak lamp check, etc.).
         /// </summary>
         public IReadOnlyList<string> Warnings => _warnings;
 
-        public ushort Vid => SpectrometerCatalog.VernierVid;
+        public ushort Vid => DeviceCatalog.VernierVid;
         public ushort Pid => _model.Pid;
         public string DeviceName => _model.Name;
 
@@ -328,7 +329,7 @@ namespace Backend.Devices.GoDirect
             await EnsureWarmUp(ct).ConfigureAwait(false);
 
             // Find optimal integration time for blank/reference (5 - 6 iterations)
-            var (tFound, ratio, inBand) = await FindIntegrationTimeForTargetBand(
+            (int tFound, double ratio, bool inBand) = await FindIntegrationTimeForTargetBand(
                 tMin: 1, tMax: 1000, maxIter: 10, probeAverages: 3, ct).ConfigureAwait(false);
 
             int echoedFinal = await _proto.SetIntegrationTime(tFound, ct).ConfigureAwait(false);
@@ -615,10 +616,12 @@ namespace Backend.Devices.GoDirect
         {
             if (ledMode == LampMode.Fluo405 && !_model.HasLed405)
             {
+                _log?.LogDebug("Operating mode not supported: {ledMode}", ledMode);
                 return;
             }
             if (ledMode == LampMode.Fluo500 && !_model.HasLed500)
             {
+                _log?.LogDebug("Operating mode not supported: {ledMode}", ledMode);
                 return;
             }
 
@@ -933,6 +936,8 @@ namespace Backend.Devices.GoDirect
 
             double ma = MeanInRoi(a);
             double mb = MeanInRoi(b);
+
+            _log?.LogInformation("Ratio of mean in ROI is {ma}/{mb}.", ma, mb);
 
             if (mb <= 0)
             {

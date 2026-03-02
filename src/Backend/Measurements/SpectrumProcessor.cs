@@ -93,10 +93,7 @@ public sealed class SpectrumProcessor
     /// </exception>
     public void PushRaw(ushort[] raw, DateTimeOffset timestamp)
     {
-        if (raw is null)
-        {
-            throw new ArgumentNullException(nameof(raw));
-        }
+        ArgumentNullException.ThrowIfNull(raw);
 
         DisplaySpectrum? toEmit = null;
 
@@ -130,27 +127,27 @@ public sealed class SpectrumProcessor
                 {
                     acc[i] += s[i];
                 }
-
-                ushort[] meanRaw = new ushort[len];
-                uint n = (uint)_window.Count;
-                for (int i = 0; i < len; i++)
-                {
-                    meanRaw[i] = (ushort)(acc[i] / n);
-                }
-
-                // Convert averaged raw data to a display spectrum using current session state.
-                DisplaySpectrum display = SpectrumConverter.Compute(_model, _session, meanRaw);
-
-                _lastDisplay = display;
-                toEmit = display;
             }
 
-            // Emit outside the lock to avoid re-entrancy and long-running handlers blocking producers.
-            if (toEmit is not null)
+            ushort[] meanRaw = new ushort[len];
+            uint n = (uint)_window.Count;
+            for (int i = 0; i < len; i++)
             {
-                DisplayUpdated?.Invoke(toEmit, timestamp);
-
+                meanRaw[i] = (ushort)(acc[i] / n);
             }
+
+            // Convert averaged raw data to a display spectrum using current session state.
+            DisplaySpectrum display = SpectrumConverter.Compute(_model, _session, meanRaw);
+
+            _lastDisplay = display;
+            toEmit = display;
+        }
+
+        // Emit outside the lock to avoid re-entrancy and long-running handlers blocking producers.
+        if (toEmit is not null)
+        {
+            DisplayUpdated?.Invoke(toEmit, timestamp);
+
         }
     }
 }
