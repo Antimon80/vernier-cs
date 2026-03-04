@@ -2,11 +2,7 @@
 using Backend.Discovery;
 using Backend.Measurements;
 using Microsoft.Extensions.Logging;
-
-using System.Windows.Forms;
-using ScottPlot;
 using ScottPlot.WinForms;
-using System.Data.SqlTypes;
 using System.Globalization;
 
 internal static class Program
@@ -44,7 +40,8 @@ internal static class Program
             Console.WriteLine($"Found 1 device: {devices[0].Name}");
             await deviceManager.Connect(0);
 
-            PrintStatus(deviceManager);
+            Spectrometer spectrometer = EnsureConnected(deviceManager);
+            PrintStatus(spectrometer);
         }
         else
         {
@@ -65,6 +62,7 @@ internal static class Program
 
             string[] parts = userInput.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string command = parts[0].ToLowerInvariant();
+            Spectrometer spectrometer = (Spectrometer)EnsureConnected(deviceManager);
 
             try
             {
@@ -85,50 +83,49 @@ internal static class Program
                         break;
 
                     case "status":
-                        PrintStatus(deviceManager);
+                        PrintStatus(spectrometer);
                         break;
 
                     case "init":
-                        EnsureConnected(deviceManager);
-                        await deviceManager.CurrentSpectrometer!.Initialize();
+                        await spectrometer.Initialize();
                         Console.WriteLine("OK: initialized.");
-                        PrintWarnings(deviceManager);
+                        PrintWarnings(spectrometer);
                         break;
 
                     case "mode":
                         RequireArgs(parts, 2);
-                        EnsureConnected(deviceManager);
                         var mode = ParseMode(parts[1]);
-                        await deviceManager.CurrentSpectrometer!.SetOperatingMode(mode);
+                        await spectrometer.SetOperatingMode(mode);
                         Console.WriteLine($"OK: mode set to {mode}");
                         break;
 
                     case "cal":
                     case "calibrate":
-                        EnsureConnected(deviceManager);
-                        await deviceManager.CurrentSpectrometer!.Calibrate();
+                        await spectrometer.Calibrate();
                         Console.WriteLine("OK: calibrated.");
-                        PrintWarnings(deviceManager);
+                        PrintWarnings(spectrometer);
+                        break;
+
+                    case "warmup":
+                        RequireArgs(parts, 2);
+                        Console.WriteLine($"OK: SkipWarmup set to {spectrometer.SkipWarmup} (true=skip warmup wait).");
                         break;
 
                     case "it":
                         RequireArgs(parts, 2);
-                        EnsureConnected(deviceManager);
                         int ms = int.Parse(parts[1], CultureInfo.InvariantCulture);
-                        await deviceManager.CurrentSpectrometer!.SetIntegrationTime(ms);
+                        await spectrometer.SetIntegrationTime(ms);
                         Console.WriteLine($"OK: integratin time set to {ms} ms (echoed stored in session).");
                         break;
 
                     case "meas":
-                        EnsureConnected(deviceManager);
-                        var spectrometer = deviceManager.CurrentSpectrometer!;
-                        var raw = await spectrometer.AcquireSingleSpectrum();
-                        var displaySpectrum = SpectrumConverter.Compute(spectrometer.Model, spectrometer.Session, raw);
+                        ushort[] raw = await spectrometer.AcquireSingleSpectrum();
+                        DisplaySpectrum displaySpectrum = SpectrumConverter.Compute(spectrometer.Model, spectrometer.Session, raw);
 
-                        var x = displaySpectrum.WavelengthNm;
-                        var y = displaySpectrum.YAxis;
+                        double[] x = displaySpectrum.WavelengthNm;
+                        double[] y = displaySpectrum.YAxis;
 
-                        var (xf, yf) = FilterNaN(x, y);
+                        (double[] xf, double[] yf) = FilterNaN(x, y);
 
                         ShowSpectrum(
                             title: $"{spectrometer.DeviceName} - {spectrometer.Mode}",
@@ -167,6 +164,7 @@ internal static class Program
         Console.WriteLine(" mode<abs|trans|f405|f500|int|raw>   - select operating mode");
         Console.WriteLine(" it <ms>                             - set integration time");
         Console.WriteLine(" cal                                 - calibrate (abs/trans only, needs white lamp and blank)");
+        Console.WriteLine(" warmup <on|off>                     - skip white lamp warmup wait (on=skip, off=normal)");
         Console.WriteLine(" meas                                - acquire single spectrum + show chart");
         Console.WriteLine(" disconnect                          - disconnect current device");
         Console.WriteLine(" help                                - show help");
@@ -174,20 +172,13 @@ internal static class Program
         Console.WriteLine();
     }
 
-    private static void PrintStatus(DeviceManager deviceManager)
+    private static void PrintStatus(Spectrometer spectrometer)
     {
-        if (deviceManager.CurrentDevice is null)
-        {
-            Console.WriteLine("No device connected.");
-            return;
-        }
-
-        ISpectrometer? spectrometer = deviceManager.CurrentSpectrometer;
-        Console.WriteLine($"Connected: {spectrometer?.DeviceName} VID=0x{spectrometer?.Vid:X4} PID=0x{spectrometer?.Pid:X4} Mode={spectrometer?.Mode} Connected={spectrometer?.IsConnected}");
-        Console.WriteLine($"Model: packets={spectrometer?.Model.PacketCount}, payloadBytes={spectrometer?.Model.PacketPayloadBytes}, white={spectrometer?.Model.HasWhiteLamp}, 405={spectrometer?.Model.HasLed405}, 500={spectrometer?.Model.HasLed500}");
-        Console.WriteLine($"ROI: [{spectrometer?.Model.CCDPixelIndexMin}..{spectrometer?.Model.CCDPixelIndexMax}]  nm=[{spectrometer?.Model.WavelengthMinNm:F1}..{spectrometer?.Model.WavelengthMaxNm:F1}]");
-        Console.WriteLine($"Session: ready={spectrometer?.Session.IsReady}, calibrated={spectrometer?.Session.IsCalibrated}, it={spectrometer?.Session.IntegrationTime}ms");
-        PrintWarnings(deviceManager);
+        Console.WriteLine($"Connected: {spectrometer.DeviceName} VID=0x{spectrometer.Vid:X4} PID=0x{spectrometer.Pid:X4} Mode={spectrometer.Mode} Connected={spectrometer.IsConnected}");
+        Console.WriteLine($"Model: packets={spectrometer.Model.PacketCount}, payloadBytes={spectrometer.Model.PacketPayloadBytes}, white={spectrometer.Model.HasWhiteLamp}, 405={spectrometer.Model.HasLed405}, 500={spectrometer.Model.HasLed500}");
+        Console.WriteLine($"ROI: [{spectrometer.Model.CCDPixelIndexMin}..{spectrometer.Model.CCDPixelIndexMax}]  nm=[{spectrometer.Model.WavelengthMinNm:F1}..{spectrometer.Model.WavelengthMaxNm:F1}]");
+        Console.WriteLine($"Session: ready={spectrometer.Session.IsReady}, calibrated={spectrometer.Session.IsCalibrated}, it={spectrometer.Session.IntegrationTime}ms");
+        PrintWarnings(spectrometer);
     }
 
     private static void PrintDevices(IReadOnlyList<DeviceDescriptor> devices)
@@ -199,9 +190,8 @@ internal static class Program
         }
     }
 
-    private static void PrintWarnings(DeviceManager deviceManager)
+    private static void PrintWarnings(Spectrometer spectrometer)
     {
-        ISpectrometer? spectrometer = deviceManager.CurrentSpectrometer;
         if (spectrometer is null)
         {
             return;
@@ -217,12 +207,14 @@ internal static class Program
         }
     }
 
-    private static void EnsureConnected(DeviceManager deviceManager)
+    private static Spectrometer EnsureConnected(DeviceManager deviceManager)
     {
-        if (deviceManager.CurrentSpectrometer is null || !deviceManager.CurrentSpectrometer.IsConnected)
+        if (deviceManager.CurrentSpectrometer is not Spectrometer spec || !spec.IsConnected)
         {
-            throw new InvalidOperationException("No connected spectrometer. Use 'select <i>' first.");
+            throw new InvalidOperationException("No connected GoDirect spectrometer. Use 'select <i>' first.");
         }
+
+        return spec;
     }
 
     private static void RequireArgs(string[] parts, int n)
@@ -272,8 +264,8 @@ internal static class Program
 
     private static (double[] x2, double[] y2) FilterNaN(double[] x, double[] y)
     {
-        List<double> xs = new List<double>(y.Length);
-        List<double> ys = new List<double>(y.Length);
+        List<double> xs = new(y.Length);
+        List<double> ys = new(y.Length);
 
         for (int i = 0; i < y.Length; i++)
         {

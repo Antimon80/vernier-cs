@@ -33,6 +33,7 @@ namespace Backend.Protocol
 
         public async Task<byte[]> ReadLinearitySequence(CancellationToken ct = default)
         {
+            _transport.FlushInputBuffer();
             int packetCount = (_model.Pid == 0x0006) ? 128 : 56;
 
             await SendCommand(0x02, 0x00, 0x00, ct).ConfigureAwait(false);
@@ -145,7 +146,7 @@ namespace Backend.Protocol
             int received = 0;
             try
             {
-                for(; received < packetCount; received++)
+                for (; received < packetCount; received++)
                 {
                     ct.ThrowIfCancellationRequested();
 
@@ -171,31 +172,28 @@ namespace Backend.Protocol
 
                     }
                 }
-                else
-                {
-                    _transport.FlushInputBuffer();
-                }
+                _transport.FlushInputBuffer();
                 throw;
             }
 
         }
 
-        private byte[] SliceToModelPayload(byte[] pacekt)
+        private byte[] SliceToModelPayload(byte[] packet)
         {
             int payloadBytes = _model.PacketPayloadBytes;
             if (payloadBytes == HidPayloadLength)
             {
-                return pacekt;
+                return packet;
             }
 
             byte[] sliced = new byte[payloadBytes];
-            Buffer.BlockCopy(pacekt, 0, sliced, 0, payloadBytes);
+            Buffer.BlockCopy(packet, 0, sliced, 0, payloadBytes);
             return sliced;
         }
 
         // Decode helpers
 
-        public static ushort[] DecodeU16BigEnian(byte[] bytes)
+        public static ushort[] DecodeU16BigEndian(byte[] bytes)
         {
             if (bytes.Length % 2 != 0)
             {

@@ -86,7 +86,7 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
         // Bounded FIFO channel between ReaderLoop (writer) and Read() (readers)
         ChannelOptions options = new BoundedChannelOptions(PacketQueueCapacity)
         {
-            SingleReader = false,
+            SingleReader = true,
             SingleWriter = true,
             FullMode = BoundedChannelFullMode.Wait
         };
@@ -229,6 +229,7 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
+            _log?.LogWarning("Buffered read timeout after {Ms}ms.", OverallReadTimeoutMs);
             throw new TimeoutException($"Buffered read exceeded overall timeout of {OverallReadTimeoutMs} ms (no packet available).");
         }
 
@@ -257,11 +258,6 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
         if (drained > 0)
         {
             _log?.LogDebug("Flushed RX buffer: {Count} packets discarded.", drained);
-        }
-
-        while (ch.Reader.TryRead(out _))
-        {
-
         }
     }
 

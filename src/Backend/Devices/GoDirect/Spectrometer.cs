@@ -38,7 +38,8 @@ namespace Backend.Devices.GoDirect
         /// Required cumulative ON-time of the white lamp (excluding short OFF windows
         /// during calibration dark capture).
         /// </summary>
-        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(5);
+        private bool _skipWarmup;
 
         // CCD linearity check parameters
         private const int LinearityMinRun = 64;
@@ -64,6 +65,8 @@ namespace Backend.Devices.GoDirect
         // Stream (measurement data) loop management
         private CancellationTokenSource? _streamCts;
         private Task? _streamTask;
+        private volatile bool _streamFaulted;
+        private bool IsStreamingActive => _streamTask is not null && !_streamTask.IsCompleted;
 
         // Latest spectrum cache for UI pull-model
         private readonly object _latestLock = new();
@@ -102,6 +105,15 @@ namespace Backend.Devices.GoDirect
 
         public OperatingMode Mode => Session.Mode;
         public LampMode LampMode => _lampMode;
+
+        /// <summary>
+        /// If true, the white lamp warm-up wait is skipped (dev/test).
+        /// </summary>
+        public bool SkipWarmup
+        {
+            get => _skipWarmup;
+            set => _skipWarmup = value;
+        }
 
         /// <summary>
         /// Non-fatal issues found during initialization/calibration (echo mismatch, weak lamp check, etc.).
@@ -185,6 +197,7 @@ namespace Backend.Devices.GoDirect
                 Session.IsReady = false;
                 Session.IsCalibrated = false;
                 _isInitialized = false;
+                _streamFaulted = false;
             }
             finally
             {
@@ -278,6 +291,7 @@ namespace Backend.Devices.GoDirect
             {
                 _warnings.Add($"Integration time echo mismatch (expected {DefaultIntegrationTime} ms, got {echoedDefault} ms).");
             }
+            ushort[] darkSpectrum3 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
             Session.IntegrationTime = echoedDefault;
 
             // 5) Lamp checks: switch OFF all lamps (where present) and validate echo.
@@ -290,7 +304,7 @@ namespace Backend.Devices.GoDirect
             {
                 // Compare dark spectrum from above with light spectrum
                 ushort[] lightSpectrum = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
-                if (!MeanInRoiIsHigher(lightSpectrum, darkSpectrum2, factor: 2.0))
+                if (!MeanInRoiIsHigher(lightSpectrum, darkSpectrum3, factor: 2.0))
                 {
                     _warnings.Add("White lamp check: light spectrum is not significantly higher than dark spectrum (ROI mean factor < 2). Lamp may be weak or optical path blocked.");
                 }
@@ -299,6 +313,7 @@ namespace Backend.Devices.GoDirect
             Session.IsReady = true;
             Session.IsCalibrated = false;
             _isInitialized = true;
+            _streamFaulted = false;
 
             _log?.LogInformation("Spectrometer initialized. Ready={Ready}, Calibrated={Calibrated}, WhiteOn={WhiteOn}, Warmup={WarmupSeconds}s, Warnings={WarningsCount}",
                 Session.IsReady, Session.IsCalibrated, _whiteIsOn, (int)_whiteOnStopwatch.Elapsed.TotalSeconds, _warnings.Count);
@@ -312,54 +327,57 @@ namespace Backend.Devices.GoDirect
         /// </summary>
         public async Task Calibrate(CancellationToken ct = default)
         {
-            ct.ThrowIfCancellationRequested();
-            if (!_isInitialized)
+            await RunWithStreamingPaused(async () =>
             {
-                throw new InvalidOperationException("Device is not initialized. Call Initialize() first.");
-            }
-            if (!_model.HasWhiteLamp)
-            {
-                throw new InvalidOperationException("This model has no white lamp; absorbance/transmission calibration is not applicable.");
-            }
+                ct.ThrowIfCancellationRequested();
+                if (!_isInitialized)
+                {
+                    throw new InvalidOperationException("Device is not initialized. Call Initialize() first.");
+                }
+                if (!_model.HasWhiteLamp)
+                {
+                    throw new InvalidOperationException("This model has no white lamp; absorbance/transmission calibration is not applicable.");
+                }
 
-            // Ensure white lamp mode before calibration steps
-            await SetLampMode(LampMode.White, ct).ConfigureAwait(false);
+                // Ensure white lamp mode before calibration steps
+                await SetLampMode(LampMode.White, ct).ConfigureAwait(false);
 
-            // Warm-up: cumulative ON time
-            await EnsureWarmUp(ct).ConfigureAwait(false);
+                // Warm-up: cumulative ON time
+                await EnsureWarmUp(ct).ConfigureAwait(false);
 
-            // Find optimal integration time for blank/reference (5 - 6 iterations)
-            (int tFound, double ratio, bool inBand) = await FindIntegrationTimeForTargetBand(
-                tMin: 1, tMax: 1000, maxIter: 10, probeAverages: 3, ct).ConfigureAwait(false);
+                // Find optimal integration time for blank/reference (5 - 6 iterations)
+                (int tFound, double ratio, bool inBand) = await FindIntegrationTimeForTargetBand(
+                    tMin: 1, tMax: 1000, maxIter: 10, probeAverages: 3, ct).ConfigureAwait(false);
 
-            int echoedFinal = await _proto.SetIntegrationTime(tFound, ct).ConfigureAwait(false);
-            Session.IntegrationTime = echoedFinal;
+                int echoedFinal = await _proto.SetIntegrationTime(tFound, ct).ConfigureAwait(false);
+                Session.IntegrationTime = echoedFinal;
 
-            if (!inBand)
-            {
-                _warnings.Add($"Calibration: ROI target band [{TargetLo:P0}..{TargetHi:P0}] not reached. " +
-                $"Using best-efford t={echoedFinal} ms (ratio={ratio:P1}).");
-            }
+                if (!inBand)
+                {
+                    _warnings.Add($"Calibration: ROI target band [{TargetLo:P0}..{TargetHi:P0}] not reached. " +
+                    $"Using best-efford t={echoedFinal} ms (ratio={ratio:P1}).");
+                }
 
 
-            // Capture and average blank spectra (white ON)
-            await SetLampMode(LampMode.White, ct).ConfigureAwait(false);
-            ushort[] blankAvg = await AcquireAverageRaw(CalibrationAverages, ct).ConfigureAwait(false);
-            Session.BlankCounts = blankAvg;
+                // Capture and average blank spectra (white ON)
+                await SetLampMode(LampMode.White, ct).ConfigureAwait(false);
+                ushort[] blankAvg = await AcquireAverageRaw(CalibrationAverages, ct).ConfigureAwait(false);
+                Session.BlankCounts = blankAvg;
 
-            // Capture and average dark spectra (white OFF, but do NOT count this off-time against warmup)
-            await SetWhiteLamp(on: false, countWarmupTime: false, ct).ConfigureAwait(false);
-            ushort[] darkAvg = await AcquireAverageRaw(CalibrationAverages, ct).ConfigureAwait(false);
-            Session.DarkCounts = darkAvg;
+                // Capture and average dark spectra (white OFF, but do NOT count this off-time against warmup)
+                await SetWhiteLamp(on: false, countWarmupTime: false, ct).ConfigureAwait(false);
+                ushort[] darkAvg = await AcquireAverageRaw(CalibrationAverages, ct).ConfigureAwait(false);
+                Session.DarkCounts = darkAvg;
 
-            // Restore default: white ON, measurement ready
-            await SetWhiteLamp(on: true, countWarmupTime: true, ct).ConfigureAwait(false);
+                // Restore default: white ON, measurement ready
+                await SetWhiteLamp(on: true, countWarmupTime: true, ct).ConfigureAwait(false);
 
-            Session.IsCalibrated = true;
-            Session.IsReady = true;
+                Session.IsCalibrated = true;
+                Session.IsReady = true;
 
-            _log?.LogInformation("Calibration completed. t={T}ms, blank/dark average over {N} spectra, warmup={WarmupSeconds}s",
-            Session.IntegrationTime, CalibrationAverages, (int)_whiteOnStopwatch.Elapsed.TotalSeconds);
+                _log?.LogInformation("Calibration completed. t={T}ms, blank/dark average over {N} spectra, warmup={WarmupSeconds}s",
+                Session.IntegrationTime, CalibrationAverages, (int)_whiteOnStopwatch.Elapsed.TotalSeconds);
+            }, ct).ConfigureAwait(false);
         }
 
         // Public API: configuration and acquisition
@@ -369,24 +387,29 @@ namespace Backend.Devices.GoDirect
         /// </summary>
         public async Task SetOperatingMode(OperatingMode mode, CancellationToken ct = default)
         {
-            switch (mode)
+            await RunWithStreamingPaused(async () =>
             {
-                case OperatingMode.Absorbance:
-                case OperatingMode.Transmission:
-                case OperatingMode.Intensity:
-                    await SetLampMode(_model.HasWhiteLamp ? LampMode.White : LampMode.Off, ct);
-                    break;
+                switch (mode)
+                {
+                    case OperatingMode.Absorbance:
+                    case OperatingMode.Transmission:
+                        await SetLampMode(_model.HasWhiteLamp ? LampMode.White : LampMode.Off, ct).ConfigureAwait(false);
+                        break;
+                    case OperatingMode.Intensity:
+                        await SetLampMode(LampMode.Off, ct).ConfigureAwait(false);
+                        break;
+                    case OperatingMode.Fluorescence405:
+                        await SetLampMode(LampMode.Fluo405, ct).ConfigureAwait(false);
+                        break;
+                    case OperatingMode.Fluorescence500:
+                        await SetLampMode(LampMode.Fluo500, ct).ConfigureAwait(false);
+                        break;
+                }
 
-                case OperatingMode.Fluorescence405:
-                    await SetLampMode(LampMode.Fluo405, ct);
-                    break;
-
-                case OperatingMode.Fluorescence500:
-                    await SetLampMode(LampMode.Fluo500, ct);
-                    break;
-            }
-
-            Session.Mode = mode;
+                Session.Mode = mode;
+                Session.IsCalibrated = false;
+                _streamFaulted = false;
+            }, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -396,10 +419,14 @@ namespace Backend.Devices.GoDirect
         public async Task SetIntegrationTime(int ms, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            int echoed = await _proto.SetIntegrationTime(ClampIntegrationTime(ms, 1, 1000), ct).ConfigureAwait(false);
-            Session.IntegrationTime = echoed;
 
-            Session.IsCalibrated = false;
+            await RunWithStreamingPaused(async () =>
+            {
+                int echoed = await _proto.SetIntegrationTime(ClampIntegrationTime(ms, 1, 1000), ct).ConfigureAwait(false);
+                Session.IntegrationTime = echoed;
+                Session.IsCalibrated = false;
+                _streamFaulted = false;
+            }, ct).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -634,6 +661,12 @@ namespace Backend.Devices.GoDirect
         /// </summary>
         private async Task EnsureWarmUp(CancellationToken ct)
         {
+            if (SkipWarmup)
+            {
+                _log?.LogInformation("White lamp warm-up skipped by configuration.");
+                return;
+            }
+
             if (!_model.HasWhiteLamp)
             {
                 return;
@@ -762,6 +795,27 @@ namespace Backend.Devices.GoDirect
             finally
             {
                 _exclusive.Release();
+            }
+        }
+
+        private async Task RunWithStreamingPaused(Func<Task> op, CancellationToken ct)
+        {
+            bool wasStreaming = IsStreamingActive;
+            if (wasStreaming)
+            {
+                await StopStreaming(ct).ConfigureAwait(false);
+            }
+
+            try
+            {
+                await ExecuteExclusive(op, ct).ConfigureAwait(false);
+            }
+            finally
+            {
+                if (wasStreaming && !_streamFaulted)
+                {
+                    StartStreaming();
+                }
             }
         }
 
