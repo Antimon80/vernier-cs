@@ -64,7 +64,7 @@ public static class SpectrumConverter
         bool hasBlank = blank is not null && blank.Length == raw.Length;
 
         const double max = 65535.0;
-        const double eps = 1e-6;
+        const double eps = 1e-3;
 
         switch (mode)
         {

@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Backend.Devices.GoDirect;
 
 namespace Backend.Measurements;

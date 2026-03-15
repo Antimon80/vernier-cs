@@ -54,8 +54,8 @@ public static class DeviceCatalog
                 HasLed500: true,
                 WavelengthMinNm: 380.6,
                 WavelengthMaxNm: 948.8,
-                CCDPixelIndexMin: 0,        // needs to be updated
-                CCDPixelIndexMax: 0,        // needs to be updated
+                CCDPixelIndexMin: 562,
+                CCDPixelIndexMax: 1337,
                 IntegrationTimeMsMean: 70
             )
         },
@@ -72,8 +72,8 @@ public static class DeviceCatalog
                 HasLed500: false,
                 WavelengthMinNm: 240.4,
                 WavelengthMaxNm: 849.5,
-                CCDPixelIndexMin: 0,        // needs to be updated
-                CCDPixelIndexMax: 0,        // needs to be updated
+                CCDPixelIndexMin: 511,
+                CCDPixelIndexMax: 1450,
                 IntegrationTimeMsMean: 25
             )
         },
@@ -90,8 +90,8 @@ public static class DeviceCatalog
                 HasLed500: false,
                 WavelengthMinNm: 350.6,
                 WavelengthMaxNm: 899.6,
-                CCDPixelIndexMin: 0,        // needs to be updated
-                CCDPixelIndexMax: 0,        // needs to be updated
+                CCDPixelIndexMin: 611,
+                CCDPixelIndexMax: 1421,
                 IntegrationTimeMsMean: 0    // no white lamp
             )
         },

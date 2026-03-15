@@ -1,4 +1,4 @@
-# wavelength_nm	counts_u16	rel_intensity
+# pixel_index	counts_u16	rel_intensity
 1.000000	3800	0.0579842832
 2.000000	3901	0.0595254444
 3.000000	3980	0.0607309071
