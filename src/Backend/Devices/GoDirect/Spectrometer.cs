@@ -247,11 +247,11 @@ namespace Backend.Devices.GoDirect
 
             // 2) CCD linearity: raw bytes + auto-decoder
             byte[] linBytes = await _proto.ReadLinearitySequence(ct).ConfigureAwait(false);
-            var linRes = CcdLinearity.EvaluateAuto(linBytes, tolerance: LinearityTolerance, minRunLength: LinearityMinRun);
+            var linRes = CcdLinearity.Evaluate(linBytes, tolerance: LinearityTolerance, minRunLength: LinearityMinRun);
 
             _log?.LogInformation(
-                "CCD linearity: {Level} (decoder={Decoder}, coreLen={CoreLen}, outTol={OutTol}, stepMedian={StepMedian}, stepMad={StepMad}, start={Start})",
-                linRes.Level, linRes.Decoder, linRes.CoreLength, linRes.OutOfToleranceSteps, linRes.StepMedian, linRes.StepMad, linRes.CoreStartIndex);
+                "CCD linearity: {Level} (coreLen={CoreLen}, outTol={OutTol}, stepMedian={StepMedian}, stepMad={StepMad}, start={Start})",
+                linRes.Level, linRes.CoreLength, linRes.OutOfToleranceSteps, linRes.StepMedian, linRes.StepMad, linRes.CoreStartIndex);
 
             if (linRes.Level == CcdLinearity.Levels.Fail)
             {
