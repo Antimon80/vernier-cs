@@ -38,7 +38,7 @@ namespace Backend.Devices.GoDirect
         /// Required cumulative ON-time of the white lamp (excluding short OFF windows
         /// during calibration dark capture).
         /// </summary>
-        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(1);
         private bool _skipWarmup;
 
         // CCD linearity check parameters
@@ -90,7 +90,7 @@ namespace Backend.Devices.GoDirect
 
             // Processor uses the current Session (mode, dark/blank, etc.) and emits display spectra.
             _processor = new SpectrumProcessor(_model, Session, windowSpectra: 4);
-            _processor.DisplayUpdated += (s, t) => DisplaySpectrumReceived?.Invoke(s, t);
+            _processor.DisplayUpdated += (s, t) => SpectrumReceived?.Invoke(s, t);
 
             _log = log;
         }
@@ -132,12 +132,12 @@ namespace Backend.Devices.GoDirect
         /// <summary>
         /// Fired when a raw spectrum is acquired (device counts, full CCD length).
         /// </summary>
-        public event Action<ushort[], DateTimeOffset>? SpectrumReceived;
+        public event Action<ushort[], DateTimeOffset>? CountsReceived;
 
         /// <summary>
         /// Fired when a processed display spectrum is available (ROI, correction, scaling, etc.).
         /// </summary>
-        public event Action<DisplaySpectrum, DateTimeOffset>? DisplaySpectrumReceived;
+        public event Action<Spectrum, DateTimeOffset>? SpectrumReceived;
 
         // Public API: lifecycle
 
@@ -751,7 +751,7 @@ namespace Backend.Devices.GoDirect
                         // Notify listeners
                         try
                         {
-                            SpectrumReceived?.Invoke(raw, timeStamp);
+                            CountsReceived?.Invoke(raw, timeStamp);
                         }
                         catch (Exception ex) { _log?.LogWarning(ex, "SpectrumReceived handler threw."); }
                     }

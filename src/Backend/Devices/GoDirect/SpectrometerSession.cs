@@ -20,7 +20,7 @@ public sealed class SpectrometerSession
     /// In-memory list of captured display spectra ("snapshots") with timestamp and optional label.
     /// Used for manual captures (e.g., "before/after") or later export.
     /// </summary>
-    private readonly List<(DateTimeOffset Timestamp, DisplaySpectrum Spectrum, string? Label)> _snapshots = [];
+    private readonly List<(DateTimeOffset Timestamp, Spectrum Spectrum, string? Label)> _snapshots = [];
 
     /// <summary>
     /// Lock object for snapshot recording, because snapshots may be captured from streaming callbacks.
@@ -66,7 +66,7 @@ public sealed class SpectrometerSession
     /// </summary>
     /// <param name="spectrum">Processed display spectrum (not raw CCD counts).</param>
     /// <param name="timestamp">Capture time (typically UTC).</param>
-    public void AddSnapshot(DisplaySpectrum spectrum, DateTimeOffset timestamp, string? label = null)
+    public void AddSnapshot(Spectrum spectrum, DateTimeOffset timestamp, string? label = null)
     {
         lock (_recLock)
         {

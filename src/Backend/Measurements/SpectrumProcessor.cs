@@ -4,7 +4,7 @@ namespace Backend.Measurements;
 
 /// <summary>
 /// Small in-process pipeline that turns incoming raw CCD spectra into smoothed/averaged
-/// <see cref="DisplaySpectrum"/> instances and emits them via an event.
+/// <see cref="Spectrum"/> instances and emits them via an event.
 ///
 /// Design goals:
 /// - Provide short-window temporal smoothing to reduce noise/jitter in live display.
@@ -34,7 +34,7 @@ public sealed class SpectrumProcessor
     private readonly Queue<ushort[]> _window = new();
 
     /// <summary>Last computed display spectrum (smoothed).</summary>
-    private DisplaySpectrum? _lastDisplay;
+    private Spectrum? _lastDisplay;
 
     /// <summary>
     /// Creates a new processor with a fixed moving-average window size.
@@ -53,7 +53,7 @@ public sealed class SpectrumProcessor
     /// <summary>
     /// Raised whenever a new averaged display spectrum is computed.
     /// </summary>
-    public event Action<DisplaySpectrum, DateTimeOffset>? DisplayUpdated;
+    public event Action<Spectrum, DateTimeOffset>? DisplayUpdated;
 
     /// <summary>
     /// Returns the most recent computed display spectrum.
@@ -61,7 +61,7 @@ public sealed class SpectrumProcessor
     /// </summary>
     /// <param name="display">Receives the display spectrum (copy) on success.</param>
     /// <returns>True if a spectrum is available; otherwise false.</returns>
-    public bool TryGetLastDisplay(out DisplaySpectrum display)
+    public bool TryGetLastDisplay(out Spectrum display)
     {
         lock (_lock)
         {
@@ -83,7 +83,7 @@ public sealed class SpectrumProcessor
 
     /// <summary>
     /// Pushes a raw CCD spectrum into the smoothing window and, once the window is full,
-    /// computes the averaged raw spectrum and converts it to a <see cref="DisplaySpectrum"/>.
+    /// computes the averaged raw spectrum and converts it to a <see cref="Spectrum"/>.
     /// </summary>
     /// <param name="raw">Raw CCD counts (full sensor length).</param>
     /// <param name="timestamp">Acquisition time used for event emission.</param>
@@ -94,7 +94,7 @@ public sealed class SpectrumProcessor
     {
         ArgumentNullException.ThrowIfNull(raw);
 
-        DisplaySpectrum? toEmit = null;
+        Spectrum? toEmit = null;
 
         lock (_lock)
         {
@@ -136,7 +136,7 @@ public sealed class SpectrumProcessor
             }
 
             // Convert averaged raw data to a display spectrum using current session state.
-            DisplaySpectrum display = SpectrumConverter.Compute(_model, _session, meanRaw);
+            Spectrum display = SpectrumConverter.Compute(_model, _session, meanRaw);
 
             _lastDisplay = display;
             toEmit = display;

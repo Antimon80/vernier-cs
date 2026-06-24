@@ -1,14 +1,9 @@
+using Backend.Devices.GoDirect;
+
 namespace Backend.Measurements;
 
-public enum Spectrum
-{
-    Intensity,
-    Transmission,
-    Absorbance
-}
-
-public sealed record DisplaySpectrum(
+public sealed record Spectrum(
     double[] WavelengthNm,
     double[] YAxis,
-    Spectrum Spectrum
+    OperatingMode Mode
 );

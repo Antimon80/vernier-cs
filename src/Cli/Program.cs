@@ -28,7 +28,7 @@ internal static class Program
         Console.WriteLine("Spectrometer Testing CLI");
         Console.WriteLine("Discovering devices ...");
 
-        var devices = deviceManager.ListDevices();
+        IReadOnlyList<DeviceDescriptor> devices = deviceManager.ListDevices();
         if (devices.Count == 0)
         {
             Console.WriteLine("No supported device found.");
@@ -120,7 +120,7 @@ internal static class Program
 
                     case "meas":
                         ushort[] raw = await spectrometer.AcquireSingleSpectrum();
-                        DisplaySpectrum displaySpectrum = SpectrumConverter.Compute(spectrometer.Model, spectrometer.Session, raw);
+                        Spectrum displaySpectrum = SpectrumConverter.Compute(spectrometer.Model, spectrometer.Session, raw);
 
                         double[] x = displaySpectrum.WavelengthNm;
                         double[] y = displaySpectrum.YAxis;
@@ -131,7 +131,7 @@ internal static class Program
                             title: $"{spectrometer.DeviceName} - {spectrometer.Mode}",
                             x: xf, y: yf,
                             xLabel: "Wavelength [nm]",
-                            yLabel: displaySpectrum.Spectrum.ToString());
+                            yLabel: displaySpectrum.Mode.ToString());
 
                         Console.WriteLine("OK: measurement displayed.");
                         break;

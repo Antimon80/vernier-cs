@@ -19,7 +19,7 @@ public interface ISpectrometer : IDevice
     OperatingMode Mode { get; }
     IReadOnlyList<string> Warnings {get;}
 
-    event Action<ushort[], DateTimeOffset>? SpectrumReceived;
+    event Action<ushort[], DateTimeOffset>? CountsReceived;
 
     Task Initialize(CancellationToken ct = default);
     Task Calibrate(CancellationToken ct = default);

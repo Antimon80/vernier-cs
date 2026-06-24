@@ -3,8 +3,8 @@ using Backend.Devices.GoDirect;
 namespace Backend.Measurements;
 
 /// <summary>
-/// Converts a raw CCD spectrum (ushort counts over the full sensor) into a processed
-/// <see cref="DisplaySpectrum"/> according to the current <see cref="SpectrometerSession"/> state.
+/// Converts raw CCD count (ushort counts over the full sensor) into a processed
+/// <see cref="Spectrum"/> according to the current <see cref="SpectrometerSession"/> state.
 ///
 /// Responsibilities:
 /// - Apply the model's ROI (CCD pixel index range) to produce the displayed subset.
@@ -27,12 +27,12 @@ public static class SpectrumConverter
     /// <param name="model">Static model data (ROI pixel bounds, wavelength axis mapping, name, etc.).</param>
     /// <param name="session">Current session state (operating mode, calibration references, flags).</param>
     /// <param name="raw">Raw CCD counts across the full sensor length.</param>
-    /// <returns>A processed <see cref="DisplaySpectrum"/> for UI display and downstream analysis.</returns>
+    /// <returns>A processed <see cref="Spectrum"/> for UI display and downstream analysis.</returns>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the model ROI is not configured or when a calibrated mode is requested without
     /// valid calibration data (dark + blank).
     /// </exception>
-    public static DisplaySpectrum Compute(SpectrometerModel model, SpectrometerSession session, ushort[] raw)
+    public static Spectrum Compute(SpectrometerModel model, SpectrometerSession session, ushort[] raw)
     {
         OperatingMode mode = session.Mode;
 
@@ -109,7 +109,7 @@ public static class SpectrumConverter
                         yAxis[i] = -Math.Log10(t);
                     }
 
-                    return new DisplaySpectrum(wl, yAxis, Spectrum.Absorbance);
+                    return new Spectrum(wl, yAxis, OperatingMode.Absorbance);
                 }
 
             case OperatingMode.Transmission:
@@ -149,7 +149,7 @@ public static class SpectrumConverter
                         yAxis[i] = t;
                     }
 
-                    return new DisplaySpectrum(wl, yAxis, Spectrum.Transmission);
+                    return new Spectrum(wl, yAxis, OperatingMode.Transmission);
                 }
 
             case OperatingMode.Fluorescence405:
@@ -180,7 +180,7 @@ public static class SpectrumConverter
                         }
                     }
 
-                    return new DisplaySpectrum(wl, yAxis, Spectrum.Intensity);
+                    return new Spectrum(wl, yAxis, OperatingMode.Intensity);
                 }
         }
     }
