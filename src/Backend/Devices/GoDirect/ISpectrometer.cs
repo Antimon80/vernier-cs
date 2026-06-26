@@ -16,10 +16,8 @@ public interface ISpectrometer : IDevice
 {
     SpectrometerModel Model { get; }
     SpectrometerSession Session { get; }
-    OperatingMode Mode { get; }
     IReadOnlyList<string> Warnings {get;}
 
-    event Action<ushort[], DateTimeOffset>? CountsReceived;
 
     Task Initialize(CancellationToken ct = default);
     Task Calibrate(CancellationToken ct = default);
@@ -27,5 +25,5 @@ public interface ISpectrometer : IDevice
     Task SetOperatingMode(OperatingMode mode, CancellationToken ct = default);
     void StartStreaming();
     Task StopStreaming(CancellationToken ct = default);
-    Task<ushort[]> AcquireSingleSpectrum(CancellationToken ct = default);
+    Task<ushort[]> AcquireSingleRawCounts(CancellationToken ct = default);
 }

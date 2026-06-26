@@ -3,29 +3,26 @@ using Backend.Measurements;
 namespace Backend.Devices.GoDirect;
 
 /// <summary>
-/// Holds mutable runtime state for a spectrometer device session.
-/// 
-/// This is intentionally a lightweight data container that is shared with processing
-/// components (e.g., a SpectrumProcessor) and updated by the Spectrometer façade.
+/// Holds the mutable state and measurement results of the current
+/// spectrometer session.
 ///
-/// Typical contents:
-/// - Current integration time and operating mode.
-/// - Optional calibration references (blank and dark spectra).
-/// - Readiness/calibration flags for the UI.
-/// - A small in-memory snapshot log of processed display spectra.
+/// The session contains:
+/// - current device and measurement settings,
+/// - calibration references,
+/// - readiness and calibration state,
+/// - the latest processed live spectrum,
+/// - processed spectra captured for comparison, overlay or export.
 /// </summary>
 public sealed class SpectrometerSession
 {
     /// <summary>
-    /// In-memory list of captured display spectra ("snapshots") with timestamp and optional label.
+    /// In-memory list of captured and processed spectra with timestamp and optional label.
     /// Used for manual captures (e.g., "before/after") or later export.
     /// </summary>
-    private readonly List<(DateTimeOffset Timestamp, Spectrum Spectrum, string? Label)> _snapshots = [];
+    private readonly List<Spectrum> _snapshots = [];
+    private readonly object _spectrumLock = new();
 
-    /// <summary>
-    /// Lock object for snapshot recording, because snapshots may be captured from streaming callbacks.
-    /// </summary>
-    private readonly object _recLock = new();
+    private Spectrum? _currentSpectrum;
 
     /// <summary>
     /// Current device integration time in milliseconds (as last echoed/applied by the device).
@@ -39,14 +36,15 @@ public sealed class SpectrometerSession
     public OperatingMode Mode { get; set; } = OperatingMode.RawCounts;
 
     /// <summary>
-    /// Averaged dark reference spectrum (lamp OFF) used for correction.
-    /// Must match the raw spectrum length of the device; otherwise it is ignored by processors.
+    /// Averaged dark reference spectrum used for dark-count correction.
+    /// The array contains full-sensor raw CCD counts.
     /// </summary>
     public ushort[]? DarkCounts { get; set; }
 
     /// <summary>
-    /// Averaged blank/reference spectrum (lamp ON) used for transmission/absorbance.
-    /// Must match the raw spectrum length of the device; otherwise it is ignored by processors.
+    /// Averaged blank reference spectrum used for transmission and
+    /// absorbance calculations.
+    /// The array contains full-sensor raw CCD counts.
     /// </summary>
     public ushort[]? BlankCounts { get; set; }
 
@@ -61,16 +59,170 @@ public sealed class SpectrometerSession
     public bool IsCalibrated { get; set; }
 
     /// <summary>
-    /// Adds a captured display spectrum to the snapshot list.
-    /// Thread-safe.
+    /// Latest fully processed live spectrum.
+    ///
+    /// A defensive copy is returned so callers cannot mutate the
+    /// spectrum stored by this session.
     /// </summary>
-    /// <param name="spectrum">Processed display spectrum (not raw CCD counts).</param>
-    /// <param name="timestamp">Capture time (typically UTC).</param>
-    public void AddSnapshot(Spectrum spectrum, DateTimeOffset timestamp, string? label = null)
+    public Spectrum? CurrentSpectrum
     {
-        lock (_recLock)
+        get
         {
-            _snapshots.Add((timestamp, spectrum, label));
+            lock (_spectrumLock)
+            {
+                return _currentSpectrum is null ? null : CopySpectrum(_currentSpectrum);
+            }
         }
+    }
+
+    /// <summary>
+    /// Gets copies of all processed spectra captured during this session.
+    ///
+    /// Changes made to the returned collection or its spectra do not
+    /// affect the spectra stored in the session.
+    /// </summary>
+    public IReadOnlyList<Spectrum> Snapshots
+    {
+        get
+        {
+            lock (_spectrumLock)
+            {
+                return [.. _snapshots.Select(CopySpectrum)];
+            }
+        }
+    }
+
+    /// <summary>
+    /// Raised whenever a new processed live spectrum is stored.
+    /// </summary>
+    public event Action<Spectrum>? CurrentSpectrumChanged;
+
+    /// <summary>
+    /// Stores a newly processed live spectrum in the session.
+    ///
+    /// This method is intended to be called by SpectrumProcessor.
+    /// </summary>
+    internal void UpdateCurrentSpectrum(Spectrum spectrum)
+    {
+        ArgumentNullException.ThrowIfNull(spectrum);
+
+        Spectrum storedSpectrum = CopySpectrum(spectrum);
+        Spectrum eventSpectrum;
+
+        lock (_spectrumLock)
+        {
+            _currentSpectrum = storedSpectrum;
+            eventSpectrum = CopySpectrum(storedSpectrum);
+        }
+
+        CurrentSpectrumChanged?.Invoke(eventSpectrum);
+    }
+
+    /// <summary>
+    /// Captures the current processed live spectrum for later overlay,
+    /// comparison or export.
+    /// </summary>
+    /// <param name="label">
+    /// Optional descriptive label for the captured spectrum.
+    /// </param>
+    /// <returns>
+    /// True if a current spectrum was available and captured;
+    /// otherwise false.
+    /// </returns>
+    public bool CaptureCurrentSpectrum(string? label = null)
+    {
+        lock (_spectrumLock)
+        {
+            if (_currentSpectrum is null)
+            {
+                return false;
+            }
+
+            Spectrum snapshot = CopySpectrum(_currentSpectrum with
+            {
+                Label = label
+            });
+
+            _snapshots.Add(snapshot);
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Adds an already processed spectrum to the captured spectra of
+    /// this session.
+    ///
+    /// This can be used for imported spectra or processed single
+    /// measurements.
+    /// </summary>
+    public Spectrum AddSnapshot(Spectrum spectrum)
+    {
+        ArgumentNullException.ThrowIfNull(spectrum);
+
+        Spectrum snapshot = CopySpectrum(spectrum);
+
+        lock (_spectrumLock)
+        {
+            _snapshots.Add(snapshot);
+        }
+
+        return CopySpectrum(spectrum);
+    }
+
+    /// <summary>
+    /// Removes the specified captured spectrum with the specified identifier.
+    /// </summary>
+    public bool RemoveSnapshot(Guid spectrumId)
+    {
+        lock (_spectrumLock)
+        {
+            int index = _snapshots.FindIndex(spectrum => spectrum.Id == spectrumId);
+
+            if (index < 0)
+            {
+                return false;
+            }
+
+            _snapshots.RemoveAt(index);
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Removes all captured spectra while retaining the current live
+    /// spectrum and all device and calibration state.
+    /// </summary>
+    public void ClearSnapshots()
+    {
+        lock (_spectrumLock)
+        {
+            _snapshots.Clear();
+        }
+    }
+
+    /// <summary>
+    /// Clears the current live spectrum without deleting captured
+    /// spectra.
+    /// </summary>
+    internal void ClearCurrentSpectrum()
+    {
+        lock (_spectrumLock)
+        {
+            _currentSpectrum = null;
+        }
+    }
+
+    /// <summary>
+    /// Gets copies of all processed spectra captured during this session.
+    /// Changes made to the returned collection or its spectra do not affect
+    /// the data stored in the session.
+    /// </summary>
+    private static Spectrum CopySpectrum(Spectrum spectrum)
+    {
+        return spectrum with
+        {
+            WavelengthNm = (double[])spectrum.WavelengthNm.Clone(),
+            YAxis = (double[])spectrum.YAxis.Clone()
+        };
     }
 }
