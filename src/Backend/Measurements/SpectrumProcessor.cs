@@ -354,7 +354,8 @@ public sealed class SpectrumProcessor
     ///
     /// A = -log10(T)
     /// </summary>
-    private static double[] CreateAbsorbanceAxis(double[] rawCounts, ushort[]? darkCounts, ushort[]? blankCounts, bool isCalibrated, int firstPixel, int pointCount)
+    private static double[] CreateAbsorbanceAxis(double[] rawCounts, ushort[]? darkCounts, ushort[]? blankCounts, 
+    bool isCalibrated, int firstPixel, int pointCount)
     {
         ValidateCalibrationReferences(rawCounts.Length, darkCounts, blankCounts, isCalibrated, OperatingMode.Absorbance);
 
@@ -386,7 +387,8 @@ public sealed class SpectrumProcessor
     /// Verifies that dark and blank references required by calibrated
     /// operating modes are present and match the raw spectrum length.
     /// </summary>
-    private static void ValidateCalibrationReferences(int rawSpectrumLength, ushort[]? darkCounts, ushort[]? blankCounts, bool isCalibrated, OperatingMode mode)
+    private static void ValidateCalibrationReferences(int rawSpectrumLength, ushort[]? darkCounts, ushort[]? blankCounts, 
+    bool isCalibrated, OperatingMode mode)
     {
         if (!isCalibrated)
         {
@@ -400,12 +402,12 @@ public sealed class SpectrumProcessor
 
         if (darkCounts?.Length != rawSpectrumLength)
         {
-            throw new InvalidOperationException("The dark reference length does not match " + "the raw spectrum length.");
+            throw new InvalidOperationException("The dark reference length does not match the raw spectrum length.");
         }
 
         if (blankCounts.Length != rawSpectrumLength)
         {
-            throw new InvalidOperationException("The blank reference length does not match " + "the raw spectrum length.");
+            throw new InvalidOperationException("The blank reference length does not match the raw spectrum length.");
         }
     }
 

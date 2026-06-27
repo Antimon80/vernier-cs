@@ -140,6 +140,7 @@ public sealed class SpectrometerSession
 
             Spectrum snapshot = CopySpectrum(_currentSpectrum with
             {
+                Id = Guid.NewGuid(),
                 Label = label
             });
 
@@ -159,7 +160,11 @@ public sealed class SpectrometerSession
     {
         ArgumentNullException.ThrowIfNull(spectrum);
 
-        Spectrum snapshot = CopySpectrum(spectrum);
+        Spectrum snapshot = CopySpectrum(spectrum with
+        {
+            Id = Guid.NewGuid()
+        }
+        );
 
         lock (_spectrumLock)
         {

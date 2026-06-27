@@ -25,5 +25,5 @@ public interface ISpectrometer : IDevice
     Task SetOperatingMode(OperatingMode mode, CancellationToken ct = default);
     void StartStreaming();
     Task StopStreaming(CancellationToken ct = default);
-    Task<ushort[]> AcquireSingleRawCounts(CancellationToken ct = default);
+    Task AcquireSingleSpectrum(CancellationToken ct = default);
 }

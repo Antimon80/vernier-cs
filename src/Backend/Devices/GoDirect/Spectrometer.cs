@@ -38,7 +38,7 @@ namespace Backend.Devices.GoDirect
         /// Required cumulative ON-time of the white lamp (excluding short OFF windows
         /// during calibration dark capture).
         /// </summary>
-        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(5);
         private bool _skipWarmup;
 
         // CCD linearity check parameters
@@ -90,7 +90,6 @@ namespace Backend.Devices.GoDirect
 
             // Processor uses the current Session (mode, dark/blank, etc.) and emits display spectra.
             _processor = new SpectrumProcessor(_model, Session, windowSpectra: 4);
-            _processor.DisplayUpdated += (s, t) => SpectrumReceived?.Invoke(s, t);
 
             _log = log;
         }
@@ -133,11 +132,6 @@ namespace Backend.Devices.GoDirect
         /// Fired when a raw spectrum is acquired (device counts, full CCD length).
         /// </summary>
         public event Action<ushort[], DateTimeOffset>? CountsReceived;
-
-        /// <summary>
-        /// Fired when a processed display spectrum is available (ROI, correction, scaling, etc.).
-        /// </summary>
-        public event Action<Spectrum, DateTimeOffset>? SpectrumReceived;
 
         // Public API: lifecycle
 
@@ -374,6 +368,7 @@ namespace Backend.Devices.GoDirect
 
                 Session.IsCalibrated = true;
                 Session.IsReady = true;
+                _processor.Reset();
 
                 _log?.LogInformation("Calibration completed. t={T}ms, blank/dark average over {N} spectra, warmup={WarmupSeconds}s",
                 Session.IntegrationTime, CalibrationAverages, (int)_whiteOnStopwatch.Elapsed.TotalSeconds);
@@ -408,6 +403,7 @@ namespace Backend.Devices.GoDirect
 
                 Session.Mode = mode;
                 Session.IsCalibrated = false;
+                _processor.Reset();
                 _streamFaulted = false;
             }, ct).ConfigureAwait(false);
         }
@@ -425,6 +421,7 @@ namespace Backend.Devices.GoDirect
                 int echoed = await _proto.SetIntegrationTime(ClampIntegrationTime(ms, 1, 1000), ct).ConfigureAwait(false);
                 Session.IntegrationTime = echoed;
                 Session.IsCalibrated = false;
+                _processor.Reset();
                 _streamFaulted = false;
             }, ct).ConfigureAwait(false);
         }
@@ -432,27 +429,24 @@ namespace Backend.Devices.GoDirect
         /// <summary>
         /// Acquires one raw spectrum (exclusive protocol access, no streaming required).
         /// </summary>
-        public async Task<ushort[]> AcquireSingleSpectrum(CancellationToken ct = default)
+        public async Task AcquireSingleSpectrum(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            return await ExecuteExclusive(async () =>
-            {
-                return await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
-            }, ct).ConfigureAwait(false);
-        }
 
-        /// <summary>
-        /// Captures the last processed display spectrum into the session snapshots.
-        /// Returns false if no display spectrum is currently available.
-        /// </summary>
-        public bool CaptureDisplayedSpectrum(string? label = null)
-        {
-            if (_processor.TryGetLastDisplay(out var disp))
+            ushort[] raw = await ExecuteExclusive(() => _proto.AcquireRawCounts(ct), ct).ConfigureAwait(false);
+
+            DateTimeOffset timestamp = DateTimeOffset.UtcNow;
+
+            _processor.ProcessSingle(raw, timestamp);
+
+            try
             {
-                Session.AddSnapshot(disp, DateTimeOffset.UtcNow, label);
-                return true;
+                CountsReceived?.Invoke(raw, timestamp);
             }
-            return false;
+            catch (Exception ex)
+            {
+                _log?.LogWarning(ex, "CountsReceived handler threw.");
+            }
         }
 
         // Public API: streaming

@@ -1,7 +1,9 @@
 ﻿using Backend.Devices.GoDirect;
 using Backend.Discovery;
 using Backend.Measurements;
+using HidSharp;
 using Microsoft.Extensions.Logging;
+using ScottPlot;
 using ScottPlot.WinForms;
 using System.Globalization;
 
@@ -17,10 +19,10 @@ internal static class Program
     [STAThread]
     private static async Task Main(string[] args)
     {
-        using ILoggerFactory loggerFactory = LoggerFactory.Create(b =>
+        using ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
         {
-            b.SetMinimumLevel(LogLevel.Information);
-            b.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Information);
+            builder.AddConsole();
         });
 
         using DeviceManager deviceManager = new(loggerFactory);
@@ -54,27 +56,34 @@ internal static class Program
         while (true)
         {
             Console.Write("> ");
+
             string? userInput = Console.ReadLine();
-            if (string.IsNullOrEmpty(userInput))
+
+            if (string.IsNullOrWhiteSpace(userInput))
             {
                 continue;
             }
 
             string[] parts = userInput.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             string command = parts[0].ToLowerInvariant();
-            Spectrometer spectrometer = (Spectrometer)EnsureConnected(deviceManager);
+
+            Spectrometer? spectrometer = deviceManager.CurrentSpectrometer as Spectrometer;
 
             try
             {
                 switch (command)
                 {
                     case "help":
-                    case "?":
                         PrintHelp();
                         break;
 
                     case "exit":
                     case "quit":
+                        if (spectrometer is not null)
+                        {
+                            await deviceManager.Disconnect();
+                        }
+
                         return;
 
                     case "list":
@@ -82,73 +91,128 @@ internal static class Program
                         PrintDevices(devices);
                         break;
 
+                    case "select":
+                        RequireArgs(parts, 2);
+
+                        int index = int.Parse(parts[1], CultureInfo.InvariantCulture);
+
+                        devices = deviceManager.ListDevices();
+
+                        if (index < 0 || index >= devices.Count)
+                        {
+                            throw new ArgumentOutOfRangeException(
+                                nameof(index),
+                                $"Device index must be between 0 and {devices.Count - 1}.");
+                        }
+
+                        if (spectrometer is not null)
+                        {
+                            await deviceManager.Disconnect();
+                        }
+
+                        await deviceManager.Connect(index);
+
+                        spectrometer = EnsureConnected(deviceManager);
+
+                        Console.WriteLine(
+                            $"OK: connected to {spectrometer.DeviceName}.");
+
+                        PrintStatus(spectrometer);
+                        break;
+
+                    case "disconnect":
+                        if (spectrometer is null)
+                        {
+                            Console.WriteLine("No device is connected.");
+                            break;
+                        }
+
+                        await deviceManager.Disconnect();
+                        spectrometer = null;
+
+                        Console.WriteLine("OK: disconnected.");
+                        break;
+
                     case "status":
+                        spectrometer ??= EnsureConnected(deviceManager);
                         PrintStatus(spectrometer);
                         break;
 
                     case "init":
+                        spectrometer ??= EnsureConnected(deviceManager);
+
                         await spectrometer.Initialize();
+
                         Console.WriteLine("OK: initialized.");
                         PrintWarnings(spectrometer);
                         break;
 
                     case "mode":
                         RequireArgs(parts, 2);
-                        var mode = ParseMode(parts[1]);
+                        spectrometer ??= EnsureConnected(deviceManager);
+
+                        OperatingMode mode = ParseMode(parts[1]);
+
                         await spectrometer.SetOperatingMode(mode);
-                        Console.WriteLine($"OK: mode set to {mode}");
-                        break;
 
-                    case "cal":
-                    case "calibrate":
-                        await spectrometer.Calibrate();
-                        Console.WriteLine("OK: calibrated.");
-                        PrintWarnings(spectrometer);
-                        break;
-
-                    case "warmup":
-                        RequireArgs(parts, 2);
-                        Console.WriteLine($"OK: SkipWarmup set to {spectrometer.SkipWarmup} (true=skip warmup wait).");
+                        Console.WriteLine(
+                            $"OK: mode set to {spectrometer.Session.Mode}.");
                         break;
 
                     case "it":
                         RequireArgs(parts, 2);
-                        int ms = int.Parse(parts[1], CultureInfo.InvariantCulture);
-                        await spectrometer.SetIntegrationTime(ms);
-                        Console.WriteLine($"OK: integratin time set to {ms} ms (echoed stored in session).");
+                        spectrometer ??= EnsureConnected(deviceManager);
+
+                        int requestedMs = int.Parse(parts[1], CultureInfo.InvariantCulture);
+
+                        await spectrometer.SetIntegrationTime(requestedMs);
+
+                        Console.WriteLine($"OK: integration time set to " + $"{spectrometer.Session.IntegrationTime} ms.");
+                        break;
+
+                    case "warmup":
+                        RequireArgs(parts, 2);
+                        spectrometer ??= EnsureConnected(deviceManager);
+
+                        spectrometer.SkipWarmup = ParseOnOff(parts[1]);
+                        Console.WriteLine($"OK: warm-up skip is " + $"{(spectrometer.SkipWarmup ? "enabled" : "disabled")}.");
+                        break;
+
+                    case "cal":
+                    case "calibrate":
+                        spectrometer ??= EnsureConnected(deviceManager);
+
+                        await spectrometer.Calibrate();
+
+                        Console.WriteLine("OK: calibrated.");
+                        PrintWarnings(spectrometer);
                         break;
 
                     case "meas":
-                        ushort[] raw = await spectrometer.AcquireSingleSpectrum();
-                        Spectrum displaySpectrum = SpectrumConverter.Compute(spectrometer.Model, spectrometer.Session, raw);
+                        spectrometer ??= EnsureConnected(deviceManager);
 
-                        double[] x = displaySpectrum.WavelengthNm;
-                        double[] y = displaySpectrum.YAxis;
+                        await spectrometer.AcquireSingleSpectrum();
 
-                        (double[] xf, double[] yf) = FilterNaN(x, y);
+                        Spectrum spectrum =
+                            spectrometer.Session.CurrentSpectrum ?? throw new InvalidOperationException(
+                                "The measurement produced no processed spectrum.");
 
-                        ShowSpectrum(
-                            title: $"{spectrometer.DeviceName} - {spectrometer.Mode}",
-                            x: xf, y: yf,
-                            xLabel: "Wavelength [nm]",
-                            yLabel: displaySpectrum.Mode.ToString());
+                        ShowSpectrum(spectrometer, spectrum);
 
-                        Console.WriteLine("OK: measurement displayed.");
-                        break;
-
-                    case "disconnect":
-                        await deviceManager.Disconnect();
-                        Console.WriteLine("OK: disconnected.");
+                        Console.WriteLine(
+                            $"OK: {spectrum.Mode} measurement displayed.");
                         break;
 
                     default:
-                        Console.WriteLine("Unknown command. Type 'help'.");
+                        Console.WriteLine(
+                            "Unknown command. Type 'help'.");
                         break;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR: {ex.Message}");
+                Console.WriteLine(
+                    $"ERROR: {ex.Message}");
             }
         }
     }
@@ -239,45 +303,89 @@ internal static class Program
         };
     }
 
-    private static void ShowSpectrum(string title, double[] x, double[] y, string xLabel, string yLabel)
+    private static bool ParseOnOff(string value)
     {
-        using Form form = new()
+        return value.ToLowerInvariant() switch
+        {
+            "on" or "true" => true,
+            "off" or "false" => false,
+            _ => throw new ArgumentOutOfRangeException(nameof(value), "Expected 'on' or 'off'.")
+        };
+    }
+
+    private static void ShowSpectrum(Spectrometer spectrometer, Spectrum spectrum)
+    {
+        (double[] x, double[] y) = FilterFiniteValues(spectrum.WavelengthNm, spectrum.YAxis);
+
+        using Form form = CreatePlotForm($"{spectrometer.DeviceName} - {spectrum.Mode}");
+
+        FormsPlot plotControl = CreatePlotControl(spectrum.Mode);
+        plotControl.Plot.Add.Scatter(x, y);
+
+        form.Controls.Add(plotControl);
+        form.Shown += (_, __) => plotControl.Refresh();
+
+        Application.Run(form);
+    }
+
+    private static Form CreatePlotForm(string title)
+    {
+        return new Form
         {
             Text = title,
             Width = 950,
             Height = 650,
             StartPosition = FormStartPosition.CenterScreen
         };
-
-        FormsPlot plotControl = new() { Dock = DockStyle.Fill };
-        plotControl.Plot.Add.Scatter(x, y);
-        plotControl.Plot.XLabel(xLabel);
-        plotControl.Plot.YLabel(yLabel);
-        plotControl.Plot.Title(title);
-        form.Controls.Add(plotControl);
-
-        form.Shown += (_, __) => plotControl.Refresh();
-        form.FormClosed += (_, __) => Application.ExitThread();
-
-        Application.Run(form);
     }
 
-    private static (double[] x2, double[] y2) FilterNaN(double[] x, double[] y)
+    private static FormsPlot CreatePlotControl(OperatingMode mode)
     {
-        List<double> xs = new(y.Length);
-        List<double> ys = new(y.Length);
+        FormsPlot plotControl = new()
+        {
+            Dock = DockStyle.Fill
+        };
+
+        plotControl.Plot.XLabel("Wavelength [nm]");
+        plotControl.Plot.YLabel(GetYAxisLabel(mode));
+
+        return plotControl;
+    }
+
+    private static string GetYAxisLabel(OperatingMode mode)
+    {
+        return mode switch
+        {
+            OperatingMode.RawCounts => "Raw Counts",
+            OperatingMode.Intensity => "Relative Intensity",
+            OperatingMode.Fluorescence405 or OperatingMode.Fluorescence500 => "Relative fluorescence intensity",
+            OperatingMode.Transmission => "Transmission [%]",
+            OperatingMode.Absorbance => "Absorbance [a.u.]",
+            _ => mode.ToString()
+        };
+    }
+
+    private static (double[] x, double[] y) FilterFiniteValues(double[] x, double[] y)
+    {
+        if (x.Length != y.Length)
+        {
+            throw new ArgumentException("X and Y arrays must have equal length.");
+        }
+
+        List<double> filteredX = new(y.Length);
+        List<double> filteredY = new(y.Length);
 
         for (int i = 0; i < y.Length; i++)
         {
-            if (double.IsNaN(y[i]) || double.IsInfinity(y[i]))
+            if (!double.IsFinite(y[i]) || !double.IsFinite(x[i]))
             {
                 continue;
             }
 
-            xs.Add(x[i]);
-            ys.Add(y[i]);
+            filteredX.Add(x[i]);
+            filteredY.Add(y[i]);
         }
 
-        return (xs.ToArray(), ys.ToArray());
+        return (filteredX.ToArray(), filteredY.ToArray());
     }
 }
