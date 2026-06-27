@@ -23,7 +23,6 @@ namespace Backend.Measurements;
 public sealed class SpectrumProcessor
 {
     private const double MaximumRawCount = ushort.MaxValue;
-    private const double MinimumTransmission = 1e-3;
 
     /// <summary>
     /// Guards the moving-average window and processing operations.
@@ -299,7 +298,7 @@ public sealed class SpectrumProcessor
 
             correctedCounts = Math.Max(correctedCounts, 0.0);
 
-            result[i] = Math.Clamp(correctedCounts / MaximumRawCount, 0.0, 1.0);
+            result[i] = correctedCounts / MaximumRawCount;
         }
 
         return result;
@@ -315,35 +314,24 @@ public sealed class SpectrumProcessor
     {
         ValidateCalibrationReferences(rawCounts.Length, darkCounts, blankCounts, isCalibrated, OperatingMode.Transmission);
 
-        double[] transmission =
-            new double[pointCount];
+        double[] transmission = new double[pointCount];
 
         for (int i = 0; i < pointCount; i++)
         {
-            int pixel =
-                firstPixel + i;
+            int pixel = firstPixel + i;
 
-            double numerator =
-                rawCounts[pixel] -
-                darkCounts![pixel];
+            double numerator = rawCounts[pixel] - darkCounts![pixel];
 
-            double denominator =
-                blankCounts![pixel] -
-                darkCounts[pixel];
+            double denominator = blankCounts![pixel] - darkCounts[pixel];
 
             if (denominator <= 0.0)
             {
-                transmission[i] =
-                    double.NaN;
+                transmission[i] = double.NaN;
 
                 continue;
             }
 
-            transmission[i] =
-                Math.Clamp(
-                    numerator / denominator,
-                    0.0,
-                    1.0);
+            transmission[i] = numerator / denominator * 100.0;
         }
 
         return transmission;
@@ -354,7 +342,7 @@ public sealed class SpectrumProcessor
     ///
     /// A = -log10(T)
     /// </summary>
-    private static double[] CreateAbsorbanceAxis(double[] rawCounts, ushort[]? darkCounts, ushort[]? blankCounts, 
+    private static double[] CreateAbsorbanceAxis(double[] rawCounts, ushort[]? darkCounts, ushort[]? blankCounts,
     bool isCalibrated, int firstPixel, int pointCount)
     {
         ValidateCalibrationReferences(rawCounts.Length, darkCounts, blankCounts, isCalibrated, OperatingMode.Absorbance);
@@ -376,8 +364,14 @@ public sealed class SpectrumProcessor
             }
 
             double transmission = numerator / denominator;
-            double safeTransmission = Math.Clamp(transmission, MinimumTransmission, 1.0);
-            absorbance[i] = -Math.Log10(safeTransmission);
+            if(transmission <= 0.0)
+            {
+                absorbance[i] = 3.0;
+                continue;
+            }
+
+            double value = -Math.Log10(transmission);
+            absorbance[i] = Math.Min(value, 3.0);
         }
 
         return absorbance;
@@ -387,7 +381,7 @@ public sealed class SpectrumProcessor
     /// Verifies that dark and blank references required by calibrated
     /// operating modes are present and match the raw spectrum length.
     /// </summary>
-    private static void ValidateCalibrationReferences(int rawSpectrumLength, ushort[]? darkCounts, ushort[]? blankCounts, 
+    private static void ValidateCalibrationReferences(int rawSpectrumLength, ushort[]? darkCounts, ushort[]? blankCounts,
     bool isCalibrated, OperatingMode mode)
     {
         if (!isCalibrated)

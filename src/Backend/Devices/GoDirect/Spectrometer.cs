@@ -34,11 +34,11 @@ namespace Backend.Devices.GoDirect
         private const double TargetLo = 0.70;
         private const double TargetHi = 0.90;
 
-        /// <summary>
-        /// Required cumulative ON-time of the white lamp (excluding short OFF windows
-        /// during calibration dark capture).
-        /// </summary>
-        private static readonly TimeSpan RequiredWarmup = TimeSpan.FromMinutes(5);
+        // Required ON-time of the white lamp for sanity-check during initialization
+        private static readonly TimeSpan InitializationWarmup = TimeSpan.FromSeconds(5);
+
+        // Required cumulative ON-time of the white lamp for calibration.
+        private static readonly TimeSpan CalibrationWarmup = TimeSpan.FromMinutes(5);
         private bool _skipWarmup;
 
         // CCD linearity check parameters
@@ -234,6 +234,10 @@ namespace Backend.Devices.GoDirect
             // Ensure measurement data stream loop is not running during initialization
             await StopStreaming(ct).ConfigureAwait(false);
 
+            // The device expects 00 00 00 as the first protocol command.
+            // This command does not produce a response.
+            await _proto.WakeUp(ct).ConfigureAwait(false);
+
             // 1) Model code (optional sanity check)
             ushort modelCode = await _proto.GetModelCode(ct).ConfigureAwait(false);
             _log?.LogInformation("Device reported model code 0x{Code:X4} (PID=0x{Pid:X4}, Name={Name})",
@@ -258,6 +262,8 @@ namespace Backend.Devices.GoDirect
             }
 
             // 3) Dark noise sanity at two integration times
+            await SetLampMode(LampMode.Off, ct).ConfigureAwait(false);
+
             int integrationTime1 = ClampIntegrationTime(_model.IntegrationTimeMsMean, 1, 1000);
             int integrationTime2 = ClampIntegrationTime(Math.Max(integrationTime1 + 50, 10), 1, 1000);
 
@@ -297,6 +303,7 @@ namespace Backend.Devices.GoDirect
             if (_model.HasWhiteLamp)
             {
                 // Compare dark spectrum from above with light spectrum
+                await Task.Delay(InitializationWarmup, ct).ConfigureAwait(false);
                 ushort[] lightSpectrum = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
                 if (!MeanInRoiIsHigher(lightSpectrum, darkSpectrum3, factor: 2.0))
                 {
@@ -672,12 +679,12 @@ namespace Backend.Devices.GoDirect
             }
 
             TimeSpan onTime = _whiteOnStopwatch.Elapsed;
-            if (onTime >= RequiredWarmup)
+            if (onTime >= CalibrationWarmup)
             {
                 return;
             }
 
-            TimeSpan remaining = RequiredWarmup - onTime;
+            TimeSpan remaining = CalibrationWarmup - onTime;
             _log?.LogInformation("White lamp warm-up: elapsed={Elapsed}s, remaining={Remaining}s",
                 (int)onTime.TotalSeconds, (int)remaining.TotalSeconds);
 

@@ -228,7 +228,7 @@ internal static class Program
         Console.WriteLine(" mode<abs|trans|f405|f500|int|raw>   - select operating mode");
         Console.WriteLine(" it <ms>                             - set integration time");
         Console.WriteLine(" cal                                 - calibrate (abs/trans only, needs white lamp and blank)");
-        Console.WriteLine(" warmup <on|off>                     - skip white lamp warmup wait (on=skip, off=normal)");
+        Console.WriteLine(" warmup <on|off>                     - skip white lamp warmup wait (on=normal, off=skip)");
         Console.WriteLine(" meas                                - acquire single spectrum + show chart");
         Console.WriteLine(" disconnect                          - disconnect current device");
         Console.WriteLine(" help                                - show help");
@@ -307,8 +307,8 @@ internal static class Program
     {
         return value.ToLowerInvariant() switch
         {
-            "on" or "true" => true,
-            "off" or "false" => false,
+            "on" or "true" => false,
+            "off" or "false" => true,
             _ => throw new ArgumentOutOfRangeException(nameof(value), "Expected 'on' or 'off'.")
         };
     }

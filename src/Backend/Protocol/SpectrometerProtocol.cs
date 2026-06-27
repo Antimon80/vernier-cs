@@ -24,6 +24,17 @@ namespace Backend.Protocol
 
         // Public protocol methods
 
+        /// <summary>
+        /// Sends the initial protocol wake-up command.
+        ///
+        /// This must be the first command sent after opening the transport.
+        /// The device does not return a response for this command.
+        /// </summary>
+        public Task WakeUp(CancellationToken ct = default)
+        {
+            return SendCommand(0x00, 0x00, 0x00, ct);
+        }
+
         public async Task<ushort> GetModelCode(CancellationToken ct = default)
         {
             byte[] reply = await SendAndReadSingle(0x01, 0x00, 0x00, ct).ConfigureAwait(false);
@@ -83,9 +94,9 @@ namespace Backend.Protocol
 
             byte[] reply = await SendAndReadSingle(command, value, 0x00, ct).ConfigureAwait(false);
 
-            if (reply[0] != value || reply[1] != 0x00)
+            if (reply[1] != 0x00)
             {
-                throw new InvalidOperationException($"Lamp echo mismatch for command 0x{command:X2}: expected [{value:X2} 00], got [{reply[0]:X2} {reply[1]:X2}]");
+                throw new InvalidOperationException($"No lamp echo received.");
             }
 
             return on;
