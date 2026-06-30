@@ -26,7 +26,7 @@ namespace Backend.Devices.GoDirect {
         /// <summary>
         /// Result of the CCD linearity evaluation.
         /// </summary>
-        public sealed record CCDLinResult(
+        public sealed record CcdLinResult(
             Levels Level,
             int TotalU16,
             int CoreStartIndex,
@@ -43,9 +43,9 @@ namespace Backend.Devices.GoDirect {
         ///
         /// The input data is expected to contain consecutive little-endian u16 values.
         /// </summary>
-        public static CCDLinResult Evaluate(byte[] rawBytes, int tolerance, int minRunLength) {
+        public static CcdLinResult Evaluate(byte[] rawBytes, int tolerance, int minRunLength) {
             if (rawBytes.Length < 4) {
-                return new CCDLinResult(
+                return new CcdLinResult(
                     Levels.Fail,
                     TotalU16: 0,
                     CoreStartIndex: -1,
@@ -58,7 +58,7 @@ namespace Backend.Devices.GoDirect {
             }
 
             if ((rawBytes.Length % 2) != 0) {
-                return new CCDLinResult(
+                return new CcdLinResult(
                     Levels.Fail,
                     TotalU16: rawBytes.Length / 2,
                     CoreStartIndex: -1,
@@ -73,7 +73,7 @@ namespace Backend.Devices.GoDirect {
             int[] values = DecodeU16LittleEndian(rawBytes);
 
             if (values.Length == 0) {
-                return new CCDLinResult(
+                return new CcdLinResult(
                     Levels.Fail,
                     TotalU16: 0,
                     CoreStartIndex: -1,
@@ -88,7 +88,7 @@ namespace Backend.Devices.GoDirect {
             List<Run> increasingRuns = FindStrictlyIncreasingRuns(values);
 
             if (increasingRuns.Count == 0) {
-                return new CCDLinResult(
+                return new CcdLinResult(
                     Levels.Fail,
                     TotalU16: values.Length,
                     CoreStartIndex: -1,
@@ -117,7 +117,7 @@ namespace Backend.Devices.GoDirect {
                     $"outTol={core.OutOfToleranceSteps}, " +
                     $"stepMad={core.StepMad}";
 
-                return new CCDLinResult(
+                return new CcdLinResult(
                     Levels.Fail,
                     TotalU16: values.Length,
                     CoreStartIndex: core.StartIndex,
@@ -137,7 +137,7 @@ namespace Backend.Devices.GoDirect {
                     $"stepMad={core.StepMad}, " +
                     $"outTol={core.OutOfToleranceSteps}";
 
-                return new CCDLinResult(
+                return new CcdLinResult(
                     Levels.Pass,
                     TotalU16: values.Length,
                     CoreStartIndex: core.StartIndex,
@@ -156,7 +156,7 @@ namespace Backend.Devices.GoDirect {
                     $"outTol={core.OutOfToleranceSteps} " +
                     $"(tol=±{tolerance})";
 
-                return new CCDLinResult(
+                return new CcdLinResult(
                     Levels.Warn,
                     TotalU16: values.Length,
                     CoreStartIndex: core.StartIndex,

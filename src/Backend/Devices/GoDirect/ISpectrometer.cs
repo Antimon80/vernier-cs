@@ -16,8 +16,6 @@ public interface ISpectrometer : IDevice
 {
     SpectrometerModel Model { get; }
     SpectrometerSession Session { get; }
-    IReadOnlyList<string> Warnings {get;}
-
 
     Task Initialize(CancellationToken ct = default);
     Task Calibrate(CancellationToken ct = default);

@@ -1,4 +1,6 @@
-namespace Backend.Devices.GoDirect;
+namespace Backend.Devices;
+
+using Backend.Devices.GoDirect;
 
 public static class DeviceCatalog
 {

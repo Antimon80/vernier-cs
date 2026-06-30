@@ -5,7 +5,7 @@ Beim Start der App wird eine Sequenz von Commands an das Gerät geschickt, die m
 
 | Command | Anzahl Antwortpakete | Inhalt Antwortpakete | Interpretation |
 | ----- | ----- | ----- | ----- |
-| 0x00 00 00 | --- | --- | unklar |
+| 0x00 00 00 | --- | --- | Das Gerät wird mit diesem Command "aufgeweckt". |
 | 0x01 00 00 | 1 | Die ersten beiden Bytes sind immer gleich und spezifisch für das jeweilige Gerätemodell. | Validierung des angeschlossenen Modells |
 | 0x02 00 00 | 128 (SpectroVis) bzw. 56 (alle übrigen Modelle) | u16-decodiert streng monoton ansteigende Zahlensequenz im Big-Endian-Format | Überprüfung der Linearität des CCD-Sensors, Validierung der Endianess |
 | 0x04 28 00 | 1 | Der Command `0x04` setzt grundsätzlich die Integrationszeit, die nachfolgenden beiden Bytes codieren im Little-Endian-Format den Betrag in [ms]; in der Antwort des Geräts wird in den ersten beiden Bytes der Betrag in [ms] kopiert, alle nachfolgenden Bytes sind identisch zum letzten Paket der Antwort auf den Command `0x02 00 00`. | Bestätigung des eingehenden Commands |

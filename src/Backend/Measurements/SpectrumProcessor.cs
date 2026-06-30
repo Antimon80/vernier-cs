@@ -62,7 +62,7 @@ public sealed class SpectrumProcessor
     /// <param name="windowSpectra">
     /// Number of consecutive raw spectra to average.
     /// </param>
-    public SpectrumProcessor(SpectrometerModel model, SpectrometerSession session, int windowSpectra = 4)
+    public SpectrumProcessor(SpectrometerModel model, SpectrometerSession session, int windowSpectra = 5)
     {
         _model = model ?? throw new ArgumentNullException(nameof(model));
         _session = session ?? throw new ArgumentNullException(nameof(session));

@@ -52,9 +52,6 @@ namespace Backend.Devices.GoDirect
         private readonly ILogger<Spectrometer>? _log;
 
         // Session state and diagnostics
-        private readonly List<string> _warnings = [];
-
-        private bool _isInitialized;
         private readonly Stopwatch _whiteOnStopwatch = new();
         private bool _whiteIsOn;
         private LampMode _lampMode = LampMode.Off;
@@ -68,11 +65,6 @@ namespace Backend.Devices.GoDirect
         private volatile bool _streamFaulted;
         private bool IsStreamingActive => _streamTask is not null && !_streamTask.IsCompleted;
 
-        // Latest spectrum cache for UI pull-model
-        private readonly object _latestLock = new();
-        private ushort[]? _latestSpectrum;
-        private DateTimeOffset _latestSpectrumAt;
-
         // Processing
         private readonly SpectrumProcessor _processor;
 
@@ -82,16 +74,17 @@ namespace Backend.Devices.GoDirect
         /// <param name="transport">Underlying transport (HID, etc.). Must be connected via <see cref="Connect"/>.</param>
         /// <param name="model">Static model description (pixel mapping, lamp presence, PID, etc.).</param>
         /// <param name="log">Optional logger.</param>
-        public Spectrometer(ITransport transport, SpectrometerModel model, ILogger<Spectrometer>? log = null)
+        public Spectrometer(ITransport transport, SpectrometerModel model, ILoggerFactory? loggerFactory = null)
         {
             _transport = transport ?? throw new ArgumentNullException(nameof(transport));
             _model = model;
             _proto = new SpectrometerProtocol(_transport, _model);
+            Session = new SpectrometerSession(loggerFactory?.CreateLogger<SpectrometerSession>());
 
             // Processor uses the current Session (mode, dark/blank, etc.) and emits display spectra.
             _processor = new SpectrumProcessor(_model, Session, windowSpectra: 4);
 
-            _log = log;
+            _log = loggerFactory?.CreateLogger<Spectrometer>();
         }
 
         // Public properties
@@ -100,7 +93,7 @@ namespace Backend.Devices.GoDirect
         /// <summary>
         /// Mutable runtime session state (integration time, mode, blank/dark, snapshots, flags).
         /// </summary>
-        public SpectrometerSession Session { get; } = new();
+        public SpectrometerSession Session { get; }
 
         public OperatingMode Mode => Session.Mode;
         public LampMode LampMode => _lampMode;
@@ -117,8 +110,6 @@ namespace Backend.Devices.GoDirect
         /// <summary>
         /// Non-fatal issues found during initialization/calibration (echo mismatch, weak lamp check, etc.).
         /// </summary>
-        public IReadOnlyList<string> Warnings => _warnings;
-
         public ushort Vid => DeviceCatalog.VernierVid;
         public ushort Pid => _model.Pid;
         public string DeviceName => _model.Name;
@@ -142,13 +133,15 @@ namespace Backend.Devices.GoDirect
         {
             ct.ThrowIfCancellationRequested();
 
-            if (IsConnected && _isInitialized)
+            if (!IsConnected)
             {
-                return;
+                await _transport.Connect(ct).ConfigureAwait(false);
             }
 
-            await _transport.Connect(ct).ConfigureAwait(false);
-            await Initialize(ct).ConfigureAwait(false);
+            if (!Session.IsInitialized)
+            {
+                await Initialize(ct).ConfigureAwait(false);
+            }
         }
 
         /// <summary>
@@ -188,9 +181,8 @@ namespace Backend.Devices.GoDirect
                     _whiteOnStopwatch.Stop();
                 }
 
-                Session.IsReady = false;
                 Session.IsCalibrated = false;
-                _isInitialized = false;
+                Session.IsInitialized = false;
                 _streamFaulted = false;
             }
             finally
@@ -229,95 +221,56 @@ namespace Backend.Devices.GoDirect
         public async Task Initialize(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
-            _warnings.Clear();
+
+            Session.IsInitialized = false;
+            Session.IsCalibrated = false;
+            Session.ModelCode = null;
+            Session.ClearDiagnostics(DiagnosticCategory.Initialization);
+            _streamFaulted = false;
 
             // Ensure measurement data stream loop is not running during initialization
             await StopStreaming(ct).ConfigureAwait(false);
 
-            // The device expects 00 00 00 as the first protocol command.
-            // This command does not produce a response.
-            await _proto.WakeUp(ct).ConfigureAwait(false);
-
-            // 1) Model code (optional sanity check)
-            ushort modelCode = await _proto.GetModelCode(ct).ConfigureAwait(false);
-            _log?.LogInformation("Device reported model code 0x{Code:X4} (PID=0x{Pid:X4}, Name={Name})",
-                modelCode, _model.Pid, _model.Name);
-
-            // 2) CCD linearity: raw bytes + auto-decoder
-            byte[] linBytes = await _proto.ReadLinearitySequence(ct).ConfigureAwait(false);
-            var linRes = CcdLinearity.Evaluate(linBytes, tolerance: LinearityTolerance, minRunLength: LinearityMinRun);
-
-            _log?.LogInformation(
-                "CCD linearity: {Level} (coreLen={CoreLen}, outTol={OutTol}, stepMedian={StepMedian}, stepMad={StepMad}, start={Start})",
-                linRes.Level, linRes.CoreLength, linRes.OutOfToleranceSteps, linRes.StepMedian, linRes.StepMad, linRes.CoreStartIndex);
-
-            if (linRes.Level == CcdLinearity.Levels.Fail)
+            // 1) Wake up device and switch off all lamps
+            if (!await PrepareInitialization(ct).ConfigureAwait(false))
             {
-                throw new InvalidOperationException($"CCD linearity check failed: {linRes.Message}");
+                return;
             }
 
-            if (linRes.Level == CcdLinearity.Levels.Warn)
+            // 2) Read model code
+            if (!await ReadAndStoreModelCode(ct).ConfigureAwait(false))
             {
-                _warnings.Add($"CCD linearity warning: {linRes.Message}");
+                return;
             }
 
-            // 3) Dark noise sanity at two integration times
-            await SetLampMode(LampMode.Off, ct).ConfigureAwait(false);
-
-            int integrationTime1 = ClampIntegrationTime(_model.IntegrationTimeMsMean, 1, 1000);
-            int integrationTime2 = ClampIntegrationTime(Math.Max(integrationTime1 + 50, 10), 1, 1000);
-
-            int echoed1 = await _proto.SetIntegrationTime(integrationTime1, ct).ConfigureAwait(false);
-            if (echoed1 != integrationTime1)
+            // 3) CCD linearity: raw bytes + auto-decoder
+            if (!await CheckCcdLinearity(ct).ConfigureAwait(false))
             {
-                _warnings.Add($"Integration time echo mismatch (expected {integrationTime1} ms, got {echoed1} ms).");
+                return;
             }
 
-            ushort[] darkSpectrum1 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
-            EnsureCcdAlive(darkSpectrum1, "dark-noise@integrationTime1");
+            // 4) Dark noise sanity at two integration times
+            // restore 30 ms and acquire the dark reference at 30 ms
+            (bool noiseCheckSucceeded, ushort[]? darkSpectrum) = await CheckDarkNoise(ct).ConfigureAwait(false);
 
-            int echoed2 = await _proto.SetIntegrationTime(integrationTime2, ct).ConfigureAwait(false);
-            if (echoed2 != integrationTime2)
+            if (!noiseCheckSucceeded || darkSpectrum is null)
             {
-                _warnings.Add($"Integration time echo mismatched (expected {integrationTime2} ms, got {echoed2} ms).");
+                return;
             }
 
-            ushort[] darkSpectrum2 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
-            EnsureCcdAlive(darkSpectrum2, "dark-noise@integrationTime2");
-
-            // 4) Set default integration time (30 ms)
-            int echoedDefault = await _proto.SetIntegrationTime(DefaultIntegrationTime, ct).ConfigureAwait(false);
-            if (echoedDefault != DefaultIntegrationTime)
+            // 5) Light-vs-dark sanity check (only if white lamp exists).
+            if (_model.HasWhiteLamp && !await CheckWhiteLampResponse(darkSpectrum, ct).ConfigureAwait(false))
             {
-                _warnings.Add($"Integration time echo mismatch (expected {DefaultIntegrationTime} ms, got {echoedDefault} ms).");
+                return;
             }
-            ushort[] darkSpectrum3 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
-            Session.IntegrationTime = echoedDefault;
 
-            // 5) Lamp checks: switch OFF all lamps (where present) and validate echo.
-            //  Then switch ON white lamp (where present) as default mode.
-            await InitializeLamps(ct).ConfigureAwait(false);
             Session.Mode = OperatingMode.RawCounts;
-
-            // 6) Light-vs-dark sanity check (only if white lamp exists).
-            if (_model.HasWhiteLamp)
-            {
-                // Compare dark spectrum from above with light spectrum
-                await Task.Delay(InitializationWarmup, ct).ConfigureAwait(false);
-                ushort[] lightSpectrum = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
-                if (!MeanInRoiIsHigher(lightSpectrum, darkSpectrum3, factor: 2.0))
-                {
-                    _warnings.Add("White lamp check: light spectrum is not significantly higher than dark spectrum (ROI mean factor < 2). Lamp may be weak or optical path blocked.");
-                }
-            }
-
-            Session.IsReady = true;
             Session.IsCalibrated = false;
-            _isInitialized = true;
+            Session.IsInitialized = true;
             _streamFaulted = false;
 
-            _log?.LogInformation("Spectrometer initialized. Ready={Ready}, Calibrated={Calibrated}, WhiteOn={WhiteOn}, Warmup={WarmupSeconds}s, Warnings={WarningsCount}",
-                Session.IsReady, Session.IsCalibrated, _whiteIsOn, (int)_whiteOnStopwatch.Elapsed.TotalSeconds, _warnings.Count);
+            _log?.LogInformation("Spectrometer initialized. ModelCode={ModelCode:X4}, Calibrated={Calibrated}, WhiteOn={WhiteOn}, Warmup={WarmupSeconds}s",
+                Session.ModelCode, Session.IsCalibrated, _whiteIsOn, (int)_whiteOnStopwatch.Elapsed.TotalSeconds);
         }
 
         /// <summary>
@@ -331,7 +284,7 @@ namespace Backend.Devices.GoDirect
             await RunWithStreamingPaused(async () =>
             {
                 ct.ThrowIfCancellationRequested();
-                if (!_isInitialized)
+                if (!Session.IsInitialized)
                 {
                     throw new InvalidOperationException("Device is not initialized. Call Initialize() first.");
                 }
@@ -355,8 +308,15 @@ namespace Backend.Devices.GoDirect
 
                 if (!inBand)
                 {
-                    _warnings.Add($"Calibration: ROI target band [{TargetLo:P0}..{TargetHi:P0}] not reached. " +
-                    $"Using best-efford t={echoedFinal} ms (ratio={ratio:P1}).");
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.CALIBRATION.TARGET_BAND_NOT_REACED",
+                        severity: DiagnosticSeverity.Waring,
+                        category: DiagnosticCategory.Calibration,
+                        message: "The calibration target range could not be reached",
+                        technicalDetails: $"Target={TargetLo:P0}..{TargetHi:P0}; selected integration time={echoedFinal} ms; ratio={ratio:P1}.",
+                        operation: nameof(Calibrate),
+                        source: nameof(Spectrometer)
+                    );
                 }
 
 
@@ -374,7 +334,6 @@ namespace Backend.Devices.GoDirect
                 await SetWhiteLamp(on: true, countWarmupTime: true, ct).ConfigureAwait(false);
 
                 Session.IsCalibrated = true;
-                Session.IsReady = true;
                 _processor.Reset();
 
                 _log?.LogInformation("Calibration completed. t={T}ms, blank/dark average over {N} spectra, warmup={WarmupSeconds}s",
@@ -464,7 +423,7 @@ namespace Backend.Devices.GoDirect
         /// </summary>
         public void StartStreaming()
         {
-            if (!_isInitialized)
+            if (!Session.IsInitialized)
             {
                 throw new InvalidOperationException("Device not initialized. Call Initialize() first.");
             }
@@ -517,37 +476,6 @@ namespace Backend.Devices.GoDirect
         }
 
         // Private helpers: lamps and warmup
-
-        /// <summary>
-        /// Sets a safe initial lamp configuration:
-        /// - Turn everything off (where present).
-        /// - Turn white lamp on (if present) as default.
-        /// </summary>
-        private async Task InitializeLamps(CancellationToken ct)
-        {
-            if (_model.HasWhiteLamp)
-            {
-                await SetWhiteLamp(on: false, countWarmupTime: true, ct).ConfigureAwait(false);
-            }
-            if (_model.HasLed405)
-            {
-                await _proto.SetLamp(LampMode.Fluo405, false, ct).ConfigureAwait(false);
-            }
-            if (_model.HasLed500)
-            {
-                await _proto.SetLamp(LampMode.Fluo500, false, ct).ConfigureAwait(false);
-            }
-
-            if (_model.HasWhiteLamp)
-            {
-                await SetWhiteLamp(on: true, countWarmupTime: true, ct).ConfigureAwait(false);
-                _lampMode = LampMode.White;
-            }
-            else
-            {
-                _lampMode = LampMode.Off;
-            }
-        }
 
         /// <summary>
         /// Sets the requested lamp mode. This always switches all lamps off first
@@ -742,13 +670,6 @@ namespace Backend.Devices.GoDirect
                         DateTimeOffset timeStamp = DateTimeOffset.UtcNow;
                         _processor.PushRaw(raw, timeStamp);
 
-                        // Cache last raw spectrum for UI pull-model
-                        lock (_latestLock)
-                        {
-                            _latestSpectrum = raw;
-                            _latestSpectrumAt = timeStamp;
-                        }
-
                         // Notify listeners
                         try
                         {
@@ -838,44 +759,453 @@ namespace Backend.Devices.GoDirect
 
         // Private helpers: sanity checks
 
+        private async Task<bool> PrepareInitialization(CancellationToken ct)
+        {
+            try
+            {
+                await _proto.WakeUp(ct).ConfigureAwait(false);
+                await SetLampMode(LampMode.Off, ct).ConfigureAwait(false);
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Session.AddDiagnostic(
+                    code: "SPECTROVIS.INIT.COMMUNICATION_FAILED",
+                    severity: DiagnosticSeverity.Error,
+                    category: DiagnosticCategory.Initialization,
+                    message: "Communication with the spectrometer failed during initialization.",
+                    technicalDetails: ex.Message,
+                    operation: "Wake up device and switch off lamps",
+                    source: nameof(Spectrometer),
+                    exception: ex
+                );
+
+                return false;
+            }
+        }
+
+        private async Task<bool> ReadAndStoreModelCode(CancellationToken ct)
+        {
+            try
+            {
+                Session.ModelCode = await _proto.GetModelCode(ct).ConfigureAwait(false);
+
+                _log?.LogInformation("Devicd reported model code 0x{Code:X4} (PID=0x{Pid:X4}, Name={Name}).",
+                Session.ModelCode, _model.Pid, _model.Name);
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Session.AddDiagnostic(
+                    code: "SPECTROVIS.INIT.MODEL_CODE_READ_FAILED",
+                    severity: DiagnosticSeverity.Error,
+                    category: DiagnosticCategory.Initialization,
+                    message: "The device model code could not be read.",
+                    technicalDetails: ex.Message,
+                    operation: "Read model code",
+                    exception: ex
+                );
+
+                return false;
+            }
+        }
+
+        private async Task<bool> CheckCcdLinearity(CancellationToken ct)
+        {
+            try
+            {
+                byte[] rawBytes = await _proto.ReadLinearitySequence(ct).ConfigureAwait(false);
+                CcdLinearity.CcdLinResult result = CcdLinearity.Evaluate(rawBytes, tolerance: LinearityTolerance, minRunLength: LinearityMinRun);
+
+                _log?.LogInformation(
+                    "CCD linearity: {Level} (coreLen={CoreLen}, outTol={OutTol}, stepMedian={StepMedian}, stepMad={StepMad}, start={Start}).",
+                    result.Level, result.CoreLength, result.OutOfToleranceSteps, result.StepMedian, result.StepMad, result.CoreStartIndex);
+
+                if (result.Level == CcdLinearity.Levels.Fail)
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT:LINEARITY_CHECK_FAILED",
+                        severity: DiagnosticSeverity.Error,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The CCD linearity check failed",
+                        technicalDetails: result.Message,
+                        operation: "CCD linearity check",
+                        source: nameof(Spectrometer)
+                    );
+
+                    return false;
+                }
+
+                if (result.Level == CcdLinearity.Levels.Warn)
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.LINEARITY_CHECK_WARNING",
+                        severity: DiagnosticSeverity.Waring,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The CCD linearity check returned a warning.",
+                        operation: "CCD linearity check",
+                        source: nameof(Spectrometer)
+                    );
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Session.AddDiagnostic(
+
+                    code: "SPECTROVIS.INIT.LINEARITY_CHECK_FAILED",
+                    severity: DiagnosticSeverity.Error,
+                    category: DiagnosticCategory.Initialization,
+                    message: "The CCD linearity check could not be completed.",
+                    technicalDetails: ex.Message,
+                    operation: "CCD linearity check",
+                    source: nameof(Spectrometer),
+                    exception: ex
+                );
+
+                return false;
+            }
+        }
+
+        private async Task<(bool Succeeded, ushort[]? DarkSpectrum)> CheckDarkNoise(CancellationToken ct)
+        {
+            try
+            {
+                await SetLampMode(LampMode.Off, ct).ConfigureAwait(false);
+
+                int integrationTime1 = ClampIntegrationTime(40, 1, 1000);
+
+                int integrationTime2 = ClampIntegrationTime(90, 1, 1000);
+
+                // First dark spectrum
+                if (!await SetAndVerifyIntegrationTime(integrationTime1, "first dark-noise measurement", ct).ConfigureAwait(false))
+                {
+                    return (false, null);
+                }
+
+                ushort[] darkSpectrum1 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
+
+                if (!ValidateCcdSpectrum(darkSpectrum1, "dark-noise@integrationTime1", out string? firstError, out bool firstWarning))
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_FAILED",
+                        severity: DiagnosticSeverity.Error,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The CCD returned invalid values during the first dark-noise check.",
+                        technicalDetails: firstError,
+                        operation: "First dark-noise check",
+                        source: nameof(Spectrometer));
+
+                    return (false, null);
+                }
+
+                if (firstWarning)
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_WARNING",
+                        severity: DiagnosticSeverity.Waring,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The CCD values varied only minimally during the first dark-noise check.",
+                        technicalDetails: firstError,
+                        operation: "First dark-noise check",
+                        source: nameof(Spectrometer));
+                }
+
+                // Second dark spectrum
+                if (!await SetAndVerifyIntegrationTime(integrationTime2, "second dark-noise measurement", ct).ConfigureAwait(false))
+                {
+                    return (false, null);
+                }
+
+                ushort[] darkSpectrum2 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
+
+                if (!ValidateCcdSpectrum(darkSpectrum2, "dark-noise@integrationTime2", out string? secondError, out bool secondWarning))
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_FAILED",
+                        severity: DiagnosticSeverity.Error,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The CCD returned invalid values during the second dark-noise check.",
+                        technicalDetails: secondError,
+                        operation: "Second dark-noise check",
+                        source: nameof(Spectrometer));
+
+                    return (false, null);
+                }
+
+                if (secondWarning)
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_WARNING",
+                        severity: DiagnosticSeverity.Waring,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The CCD values varied only minimally during the second dark-noise check.",
+                        technicalDetails: secondError,
+                        operation: "Second dark-noise check",
+                        source: nameof(Spectrometer));
+                }
+
+                // Restore the common default integration time of 30 ms.
+                if (!await SetAndVerifyIntegrationTime(DefaultIntegrationTime, "default integration time", ct).ConfigureAwait(false))
+                {
+                    return (false, null);
+                }
+
+                ushort[] darkSpectrum3 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
+
+                if (!ValidateCcdSpectrum(darkSpectrum3, "dark spectrum at default integration time", out string? defaultError, out bool defaultWarning))
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.CCD_DARK_REFERENCE_INVALID",
+                        severity: DiagnosticSeverity.Error,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The CCD returned an invalid dark spectrum at the default integration time.",
+                        technicalDetails: defaultError,
+                        operation: "Acquire dark reference at 30 ms",
+                        source: nameof(Spectrometer));
+
+                    return (false, null);
+                }
+
+                if (defaultWarning)
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.CCD_DARK_REFERENCE_WARNING",
+                        severity: DiagnosticSeverity.Waring,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The dark spectrum at the default integration time showed very little variation.",
+                        technicalDetails: defaultError,
+                        operation: "Acquire dark reference at 30 ms",
+                        source: nameof(Spectrometer));
+                }
+
+                Session.IntegrationTime = DefaultIntegrationTime;
+
+                return (true, darkSpectrum3);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Session.AddDiagnostic(
+                    code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_FAILED",
+                    severity: DiagnosticSeverity.Error,
+                    category: DiagnosticCategory.Initialization,
+                    message: "The CCD dark-noise check could not be completed.",
+                    technicalDetails: ex.Message,
+                    operation: "CCD dark-noise check",
+                    source: nameof(Spectrometer),
+                    exception: ex);
+
+                return (false, null);
+            }
+        }
+
+        private async Task<bool> SetAndVerifyIntegrationTime(int requestedMs, string context, CancellationToken ct)
+        {
+            try
+            {
+                int echoedMs = await _proto.SetIntegrationTime(requestedMs, ct).ConfigureAwait(false);
+
+                if (echoedMs != requestedMs)
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.INTEGRATION_TIME_CHECK_FAILED",
+                        severity: DiagnosticSeverity.Error,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The device did not confirm the requested integration time.",
+                        technicalDetails: $"Context={context}; requested={requestedMs} ms; reported={echoedMs} ms",
+                        operation: "Set and verify integration time.",
+                        source: nameof(Spectrometer)
+                    );
+
+                    return false;
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Session.AddDiagnostic(
+                    code: "SPECTROVIS.INIT.INTEGRATION_TIME_CHECK_FAILED",
+                    severity: DiagnosticSeverity.Error,
+                    category: DiagnosticCategory.Initialization,
+                    message: "The integration time could not be set or queried.",
+                    technicalDetails: $"Context={context}; requested={requestedMs} ms; error={ex.Message}",
+                    operation: "Set and verify integration time",
+                    source: nameof(Spectrometer),
+                    exception: ex
+                );
+
+                return false;
+            }
+        }
+
+        private async Task<bool> CheckWhiteLampResponse(ushort[] darkSpectrum, CancellationToken ct)
+        {
+            try
+            {
+                await SetLampMode(LampMode.White, ct).ConfigureAwait(false);
+
+                // Mandatory initialization warm-up.
+                await Task.Delay(InitializationWarmup, ct).ConfigureAwait(false);
+
+                ushort[] lightSpectrum = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
+
+                if (!ValidateCcdSpectrum(lightSpectrum, "white-lamp light spectrum", out string? lightDetails, out bool lightWarning))
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.LIGHT_RESPONSE_CHECK_FAILED",
+                        severity: DiagnosticSeverity.Error,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The CCD returned invalid values during the white-lamp check.",
+                        technicalDetails: lightDetails,
+                        operation: "White-lamp response check",
+                        source: nameof(Spectrometer));
+
+                    return false;
+                }
+
+                if (lightWarning)
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.LIGHT_RESPONSE_CHECK_WARNING",
+                        severity: DiagnosticSeverity.Waring,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The white-light spectrum showed very little variation.",
+                        technicalDetails: lightDetails,
+                        operation: "White-lamp response check",
+                        source: nameof(Spectrometer));
+                }
+
+                double darkMean = MeanInRoi(darkSpectrum);
+                double lightMean = MeanInRoi(lightSpectrum);
+                double ratio = darkMean > 0 ? lightMean / darkMean : double.PositiveInfinity;
+
+                if (!MeanInRoiIsHigher(lightSpectrum, darkSpectrum, factor: 5.0))
+                {
+                    Session.AddDiagnostic(
+                        code: "SPECTROVIS.INIT.LIGHT_RESPONSE_CHECK_FAILED",
+                        severity: DiagnosticSeverity.Error,
+                        category: DiagnosticCategory.Initialization,
+                        message: "The white lamp produced insufficient CCD response.",
+                        technicalDetails:
+                            $"Dark ROI mean={darkMean:F2}; " +
+                            $"light ROI mean={lightMean:F2}; " +
+                            $"ratio={ratio:F2}; required ratio>=5.00.",
+                        operation: "White-lamp response check",
+                        source: nameof(Spectrometer));
+
+                    return false;
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Session.AddDiagnostic(
+                    code: "SPECTROVIS.INIT.LIGHT_RESPONSE_CHECK_FAILED",
+                    severity: DiagnosticSeverity.Error,
+                    category: DiagnosticCategory.Initialization,
+                    message: "The white-lamp response check could not be completed.",
+                    technicalDetails: ex.Message,
+                    operation: "White-lamp response check",
+                    source: nameof(Spectrometer),
+                    exception: ex);
+
+                return false;
+            }
+        }
+
         /// <summary>
         /// Basic CCD "alive" check: rejects empty spectra and constant 0/65535 outputs.
         /// Also emits a warning if ROI variation is extremely small.
         /// </summary>
-        private void EnsureCcdAlive(ushort[] counts, string context)
+        private bool ValidateCcdSpectrum(ushort[]? counts, string context, out string? diagnosticDetails, out bool hasWarning)
         {
-            if (counts.Length == 0)
+            diagnosticDetails = null;
+            hasWarning = false;
+
+            if (counts is null)
             {
-                throw new InvalidOperationException($"CCD check failed ({context}): empty spectrum.");
+                diagnosticDetails = $"CCD check failed ({context}): no spectrum was recorded.";
+
+                return false;
             }
 
-            bool allZero = counts.All(v => v == 0);
-            bool allMax = counts.All(v => v == ushort.MaxValue);
-
-            if (allZero || allMax)
+            if (counts.Length == 0)
             {
-                throw new InvalidOperationException($"CCD check failed ({context}): spectrum is constant {(allZero ? "0" : "65535")} (likely defective CCD or protocol mismatch).");
+                diagnosticDetails = $"CCD check failed ({context}): the spectrum is empty.";
+
+                return false;
+            }
+
+            bool allZero = counts.All(value => value == 0);
+            bool allMaximum = counts.All(value => value == ushort.MaxValue);
+
+            if (allZero || allMaximum)
+            {
+                diagnosticDetails = $"CCD check failed ({context}): spectrum is constant " +
+                    $"{(allZero ? "0" : "65535")} " + "(likely defective CCD or protocol mismatch).";
+
+                return false;
             }
 
             (int lo, int hi) = GetRoi(counts.Length);
-            ushort min = ushort.MaxValue, max = 0;
+
+            ushort minimum = ushort.MaxValue;
+            ushort maximum = ushort.MinValue;
+
             for (int i = lo; i <= hi; i++)
             {
-                ushort v = counts[i];
-                if (v < min)
+                ushort value = counts[i];
+
+                if (value < minimum)
                 {
-                    min = v;
+                    minimum = value;
                 }
-                if (v > max)
+
+                if (value > maximum)
                 {
-                    max = v;
+                    maximum = value;
                 }
             }
 
-            if (max - min < 2)
+            int range = maximum - minimum;
+
+            if (range < 2)
             {
-                _warnings.Add($"CCD check warning ({context}): ROI variation extremely small (max-min={max - min}).");
+                diagnosticDetails = $"CCD check warning ({context}): ROI variation is extremely small " +
+                    $"(maximum - minimum = {range}, minimum = {minimum}, maximum = {maximum}).";
+
+                hasWarning = true;
             }
+
+            return true;
         }
 
         // Private helpers: integration time search

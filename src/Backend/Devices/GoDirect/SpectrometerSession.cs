@@ -1,4 +1,5 @@
 using Backend.Measurements;
+using Microsoft.Extensions.Logging;
 
 namespace Backend.Devices.GoDirect;
 
@@ -13,16 +14,19 @@ namespace Backend.Devices.GoDirect;
 /// - the latest processed live spectrum,
 /// - processed spectra captured for comparison, overlay or export.
 /// </summary>
-public sealed class SpectrometerSession
+public sealed class SpectrometerSession(ILogger<SpectrometerSession>? log = null)
 {
+    private readonly ILogger<SpectrometerSession>? _log = log;
     /// <summary>
     /// In-memory list of captured and processed spectra with timestamp and optional label.
     /// Used for manual captures (e.g., "before/after") or later export.
     /// </summary>
     private readonly List<Spectrum> _snapshots = [];
-    private readonly object _spectrumLock = new();
+    private readonly Lock _spectrumLock = new();
 
     private Spectrum? _currentSpectrum;
+
+    private readonly List<DiagnosticEntry> _diagnostics = [];
 
     /// <summary>
     /// Current device integration time in milliseconds (as last echoed/applied by the device).
@@ -49,14 +53,17 @@ public sealed class SpectrometerSession
     public ushort[]? BlankCounts { get; set; }
 
     /// <summary>
-    /// True if the session is in a usable state (transport connected + initialization succeeded).
+    /// True if the session is in a usable state (initialization succeeded).
     /// </summary>
-    public bool IsReady { get; set; }
+    public bool IsInitialized { get; internal set; }
 
     /// <summary>
     /// True if blank/dark references are available and consistent with the current integration time.
     /// </summary>
-    public bool IsCalibrated { get; set; }
+    public bool IsCalibrated { get; internal set; }
+
+    public ushort? ModelCode { get; internal set; }
+    public IReadOnlyList<DiagnosticEntry> Diagnostics => _diagnostics;
 
     /// <summary>
     /// Latest fully processed live spectrum.
@@ -96,27 +103,6 @@ public sealed class SpectrometerSession
     /// Raised whenever a new processed live spectrum is stored.
     /// </summary>
     public event Action<Spectrum>? CurrentSpectrumChanged;
-
-    /// <summary>
-    /// Stores a newly processed live spectrum in the session.
-    ///
-    /// This method is intended to be called by SpectrumProcessor.
-    /// </summary>
-    internal void UpdateCurrentSpectrum(Spectrum spectrum)
-    {
-        ArgumentNullException.ThrowIfNull(spectrum);
-
-        Spectrum storedSpectrum = CopySpectrum(spectrum);
-        Spectrum eventSpectrum;
-
-        lock (_spectrumLock)
-        {
-            _currentSpectrum = storedSpectrum;
-            eventSpectrum = CopySpectrum(storedSpectrum);
-        }
-
-        CurrentSpectrumChanged?.Invoke(eventSpectrum);
-    }
 
     /// <summary>
     /// Captures the current processed live spectrum for later overlay,
@@ -206,6 +192,27 @@ public sealed class SpectrometerSession
     }
 
     /// <summary>
+    /// Stores a newly processed live spectrum in the session.
+    ///
+    /// This method is intended to be called by SpectrumProcessor.
+    /// </summary>
+    internal void UpdateCurrentSpectrum(Spectrum spectrum)
+    {
+        ArgumentNullException.ThrowIfNull(spectrum);
+
+        Spectrum storedSpectrum = CopySpectrum(spectrum);
+        Spectrum eventSpectrum;
+
+        lock (_spectrumLock)
+        {
+            _currentSpectrum = storedSpectrum;
+            eventSpectrum = CopySpectrum(storedSpectrum);
+        }
+
+        CurrentSpectrumChanged?.Invoke(eventSpectrum);
+    }
+
+    /// <summary>
     /// Clears the current live spectrum without deleting captured
     /// spectra.
     /// </summary>
@@ -229,5 +236,36 @@ public sealed class SpectrometerSession
             WavelengthNm = (double[])spectrum.WavelengthNm.Clone(),
             YAxis = (double[])spectrum.YAxis.Clone()
         };
+    }
+
+    internal void AddDiagnostic(string code, DiagnosticSeverity severity, DiagnosticCategory category,
+    string message, string? technicalDetails = null, string? operation = null, string? source = null, Exception? exception = null)
+    {
+        DiagnosticEntry entry = new(
+            Code: code,
+            Severity: severity,
+            Category: category,
+            Message: message,
+            TechnicalDetails: technicalDetails,
+            Operation: operation,
+            Source: source);
+        ArgumentNullException.ThrowIfNull(entry);
+        _diagnostics.Add(entry);
+
+        if(exception is not null)
+        {
+            _log?.LogError(exception, "{Code}: {Message}. Details: {Details}",
+            code, message, technicalDetails);
+        }
+    }
+
+    internal void ClearDiagnostics(DiagnosticCategory category)
+    {
+        _diagnostics.RemoveAll(entry => entry.Category == category);
+    }
+
+    internal void ClearDiagnostics()
+    {
+        _diagnostics.Clear();
     }
 }

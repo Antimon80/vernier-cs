@@ -41,7 +41,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// <summary>
     /// Cached last discovery result (device descriptors).
     /// </summary>
-    private List<DeviceDescriptor> _devices = new();
+    private List<DeviceDescriptor> _devices = [];
 
     /// <summary>
     /// Currently connected device instance (also implements <see cref="IDisposable"/>).
@@ -77,7 +77,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// </summary>
     public async Task ConnectSingleOrThrow(CancellationToken ct = default)
     {
-        var devices = ListDevices();
+        IReadOnlyList<DeviceDescriptor> devices = ListDevices();
 
         if (devices.Count == 0)
         {
@@ -120,7 +120,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
             // Ensure only one active device at a time.
             await DisconnectPrevious(ct).ConfigureAwait(false);
 
-            var dd = _devices[deviceIndex];
+            DeviceDescriptor dd = _devices[deviceIndex];
 
             // Resolve the static model from the catalog for this PID.
             if (!DeviceCatalog.SpectrometerModels.TryGetValue(dd.Pid, out var model))
@@ -130,10 +130,8 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
             // Build transport and spectrometer instances and connect.
             ILogger<HidTransport>? tlog = _loggerFactory?.CreateLogger<HidTransport>();
-            var transport = new HidTransport(dd.DevicePath, dd.Vid, dd.Pid, tlog);
-
-            ILogger<Spectrometer>? slog = _loggerFactory?.CreateLogger<Spectrometer>();
-            ISpectrometer spec = new Spectrometer(transport, model, slog);
+            HidTransport transport = new(dd.DevicePath, dd.Vid, dd.Pid, tlog);
+            Spectrometer spec = new(transport, model, _loggerFactory);
 
             await spec.Connect(ct).ConfigureAwait(false);
 
