@@ -5,6 +5,7 @@ using Backend.Devices.GoDirect;
 public static class DeviceCatalog
 {
     public const ushort VernierVid = 0x08f7;
+    public const ushort LabQuestMiniPid = 0x0008;
 
     public static readonly IReadOnlyDictionary<ushort, SpectrometerModel> SpectrometerModels = new Dictionary<ushort, SpectrometerModel>
     {
@@ -98,9 +99,4 @@ public static class DeviceCatalog
             )
         },
     };
-
-    public static bool IsSpectrometerPid(ushort pid) => SpectrometerModels.ContainsKey(pid);
-
-    public static SpectrometerModel GetModel(ushort pid) => SpectrometerModels.TryGetValue(pid, out var model)
-        ? model : throw new ArgumentOutOfRangeException(nameof(pid), $"Unknown spectrometer PID 0x{pid:X4}");
 }

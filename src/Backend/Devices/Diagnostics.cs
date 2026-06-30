@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace Backend.Devices;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace Backend.Devices;
 public enum DiagnosticSeverity
 {
     Information,
-    Waring,
+    Warning,
     Error,
     Critical
 }
@@ -39,5 +41,39 @@ public sealed record DiagnosticEntry(
     string? Source = null,
     DateTimeOffset? Timestamp = null)
 {
-    public DateTimeOffset OccuredAt { get; } = Timestamp ?? DateTimeOffset.UtcNow;
+    public DateTimeOffset OccurredAt { get; } = Timestamp ?? DateTimeOffset.UtcNow;
+
+
+    internal static void AddDiagnostic(List<DiagnosticEntry> diagnostics, string code, DiagnosticSeverity severity, DiagnosticCategory category,
+        string message, string? technicalDetails = null, string? operation = null, string? source = null,
+        Exception? exception = null, ILogger? logger = null)
+    {
+        DiagnosticEntry entry = new(
+            Code: code,
+            Severity: severity,
+            Category: category,
+            Message: message,
+            TechnicalDetails: technicalDetails,
+            Operation: operation,
+            Source: source);
+        ArgumentNullException.ThrowIfNull(entry);
+        diagnostics.Add(entry);
+
+        if (exception is not null)
+        {
+            logger?.LogError(exception, "{Code}: {Message}. Details: {Details}",
+            code, message, technicalDetails);
+        }
+    }
+
+    internal static void ClearDiagnostics(List<DiagnosticEntry> diagnostics, DiagnosticCategory category)
+    {
+        diagnostics.RemoveAll(entry => entry.Category == category);
+    }
+
+    internal static void ClearDiagnostics(List<DiagnosticEntry> diagnostics)
+    {
+        diagnostics.Clear();
+    }
+
 }

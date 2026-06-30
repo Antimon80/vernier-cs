@@ -63,7 +63,7 @@ public sealed class SpectrometerSession(ILogger<SpectrometerSession>? log = null
     public bool IsCalibrated { get; internal set; }
 
     public ushort? ModelCode { get; internal set; }
-    public IReadOnlyList<DiagnosticEntry> Diagnostics => _diagnostics;
+    public List<DiagnosticEntry> Diagnostics => _diagnostics;
 
     /// <summary>
     /// Latest fully processed live spectrum.
@@ -236,36 +236,5 @@ public sealed class SpectrometerSession(ILogger<SpectrometerSession>? log = null
             WavelengthNm = (double[])spectrum.WavelengthNm.Clone(),
             YAxis = (double[])spectrum.YAxis.Clone()
         };
-    }
-
-    internal void AddDiagnostic(string code, DiagnosticSeverity severity, DiagnosticCategory category,
-    string message, string? technicalDetails = null, string? operation = null, string? source = null, Exception? exception = null)
-    {
-        DiagnosticEntry entry = new(
-            Code: code,
-            Severity: severity,
-            Category: category,
-            Message: message,
-            TechnicalDetails: technicalDetails,
-            Operation: operation,
-            Source: source);
-        ArgumentNullException.ThrowIfNull(entry);
-        _diagnostics.Add(entry);
-
-        if(exception is not null)
-        {
-            _log?.LogError(exception, "{Code}: {Message}. Details: {Details}",
-            code, message, technicalDetails);
-        }
-    }
-
-    internal void ClearDiagnostics(DiagnosticCategory category)
-    {
-        _diagnostics.RemoveAll(entry => entry.Category == category);
-    }
-
-    internal void ClearDiagnostics()
-    {
-        _diagnostics.Clear();
     }
 }

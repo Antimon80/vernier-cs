@@ -1,6 +1,7 @@
 ﻿using Backend.Devices.GoDirect;
 using Backend.Discovery;
 using Backend.Measurements;
+using HidSharp;
 using Microsoft.Extensions.Logging;
 using ScottPlot.WinForms;
 using System.Globalization;
@@ -25,7 +26,7 @@ internal static class Program
 
         using DeviceManager deviceManager = new(loggerFactory);
 
-        Console.WriteLine("Spectrometer Testing CLI");
+        Console.WriteLine("Vernier Testing CLI");
         Console.WriteLine("Discovering devices ...");
 
         IReadOnlyList<DeviceDescriptor> devices = deviceManager.ListDevices();
@@ -40,8 +41,17 @@ internal static class Program
             Console.WriteLine($"Found 1 device: {devices[0].Name}");
             await deviceManager.Connect(0);
 
-            Spectrometer spectrometer = EnsureConnected(deviceManager);
-            PrintStatus(spectrometer);
+            if (deviceManager.CurrentSpectrometer is Spectrometer spectrometer)
+            {
+                PrintStatus(spectrometer);
+            }
+            else if (deviceManager.CurrentDevice is not null)
+            {
+                Console.WriteLine(
+                    $"Connected: {deviceManager.CurrentDevice.DeviceName} " +
+                    $"VID=0x{deviceManager.CurrentDevice.Vid:X4} " +
+                    $"PID=0x{deviceManager.CurrentDevice.Pid:X4}");
+            }
         }
         else
         {
@@ -77,7 +87,7 @@ internal static class Program
 
                     case "exit":
                     case "quit":
-                        if (spectrometer is not null)
+                        if (deviceManager.CurrentDevice is not null)
                         {
                             await deviceManager.Disconnect();
                         }
@@ -110,16 +120,26 @@ internal static class Program
 
                         await deviceManager.Connect(index);
 
-                        spectrometer = EnsureConnected(deviceManager);
+                        if (deviceManager.CurrentSpectrometer is Spectrometer selectedSpectrometer)
+                        {
+                            spectrometer = selectedSpectrometer;
 
-                        Console.WriteLine(
-                            $"OK: connected to {spectrometer.DeviceName}.");
+                            Console.WriteLine(
+                                $"OK: connected to {spectrometer.DeviceName}.");
 
-                        PrintStatus(spectrometer);
+                            PrintStatus(spectrometer);
+                        }
+                        else if (deviceManager.CurrentDevice is not null)
+                        {
+                            spectrometer = null;
+
+                            Console.WriteLine(
+                                $"OK: connected to {deviceManager.CurrentDevice.DeviceName}.");
+                        }
                         break;
 
                     case "disconnect":
-                        if (spectrometer is null)
+                        if (deviceManager.CurrentDevice is null)
                         {
                             Console.WriteLine("No device is connected.");
                             break;
@@ -132,12 +152,12 @@ internal static class Program
                         break;
 
                     case "status":
-                        spectrometer ??= EnsureConnected(deviceManager);
+                        spectrometer ??= EnsureSpectrometerConnected(deviceManager);
                         PrintStatus(spectrometer);
                         break;
 
                     case "init":
-                        spectrometer ??= EnsureConnected(deviceManager);
+                        spectrometer ??= EnsureSpectrometerConnected(deviceManager);
 
                         await spectrometer.Initialize();
 
@@ -147,7 +167,7 @@ internal static class Program
 
                     case "mode":
                         RequireArgs(parts, 2);
-                        spectrometer ??= EnsureConnected(deviceManager);
+                        spectrometer ??= EnsureSpectrometerConnected(deviceManager);
 
                         OperatingMode mode = ParseMode(parts[1]);
 
@@ -159,7 +179,7 @@ internal static class Program
 
                     case "it":
                         RequireArgs(parts, 2);
-                        spectrometer ??= EnsureConnected(deviceManager);
+                        spectrometer ??= EnsureSpectrometerConnected(deviceManager);
 
                         int requestedMs = int.Parse(parts[1], CultureInfo.InvariantCulture);
 
@@ -170,7 +190,7 @@ internal static class Program
 
                     case "warmup":
                         RequireArgs(parts, 2);
-                        spectrometer ??= EnsureConnected(deviceManager);
+                        spectrometer ??= EnsureSpectrometerConnected(deviceManager);
 
                         spectrometer.SkipWarmup = ParseOnOff(parts[1]);
                         Console.WriteLine($"OK: warm-up skip is " + $"{(spectrometer.SkipWarmup ? "enabled" : "disabled")}.");
@@ -178,7 +198,7 @@ internal static class Program
 
                     case "cal":
                     case "calibrate":
-                        spectrometer ??= EnsureConnected(deviceManager);
+                        spectrometer ??= EnsureSpectrometerConnected(deviceManager);
 
                         await spectrometer.Calibrate();
 
@@ -187,7 +207,7 @@ internal static class Program
                         break;
 
                     case "meas":
-                        spectrometer ??= EnsureConnected(deviceManager);
+                        spectrometer ??= EnsureSpectrometerConnected(deviceManager);
 
                         await spectrometer.AcquireSingleSpectrum();
 
@@ -260,7 +280,7 @@ internal static class Program
         }
     }
 
-    private static Spectrometer EnsureConnected(DeviceManager deviceManager)
+    private static Spectrometer EnsureSpectrometerConnected(DeviceManager deviceManager)
     {
         if (deviceManager.CurrentSpectrometer is not Spectrometer spec || !spec.IsConnected)
         {

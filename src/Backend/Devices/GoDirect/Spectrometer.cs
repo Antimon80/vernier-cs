@@ -225,7 +225,7 @@ namespace Backend.Devices.GoDirect
             Session.IsInitialized = false;
             Session.IsCalibrated = false;
             Session.ModelCode = null;
-            Session.ClearDiagnostics(DiagnosticCategory.Initialization);
+            DiagnosticEntry.ClearDiagnostics(Session.Diagnostics, DiagnosticCategory.Initialization);
             _streamFaulted = false;
 
             // Ensure measurement data stream loop is not running during initialization
@@ -308,15 +308,15 @@ namespace Backend.Devices.GoDirect
 
                 if (!inBand)
                 {
-                    Session.AddDiagnostic(
-                        code: "SPECTROVIS.CALIBRATION.TARGET_BAND_NOT_REACED",
-                        severity: DiagnosticSeverity.Waring,
-                        category: DiagnosticCategory.Calibration,
-                        message: "The calibration target range could not be reached",
-                        technicalDetails: $"Target={TargetLo:P0}..{TargetHi:P0}; selected integration time={echoedFinal} ms; ratio={ratio:P1}.",
-                        operation: nameof(Calibrate),
-                        source: nameof(Spectrometer)
-                    );
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
+                            code: "SPECTROVIS.CALIBRATION.TARGET_BAND_NOT_REACED",
+                            severity: DiagnosticSeverity.Warning,
+                            category: DiagnosticCategory.Calibration,
+                            message: "The calibration target range could not be reached",
+                            technicalDetails: $"Target={TargetLo:P0}..{TargetHi:P0}; selected integration time={echoedFinal} ms; ratio={ratio:P1}.",
+                            operation: nameof(Calibrate),
+                            source: nameof(Spectrometer)
+                        );
                 }
 
 
@@ -720,6 +720,28 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Executes an asynchronous protocol operation under exclusive access and returns its result.
+        /// </summary>
+        private async Task<T> ExecuteExclusive<T>(Func<Task<T>> op, CancellationToken ct)
+        {
+            await _exclusive.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                return await op().ConfigureAwait(false);
+            }
+            finally
+            {
+                _exclusive.Release();
+            }
+        }
+
+        /// <summary>
+        /// Temporarily stops streaming, executes an exclusive protocol operation and
+        /// resumes streaming afterwards unless the stream entered a faulted state.
+        /// </summary>
+        /// <param name="op">Operation that requires uninterrupted protocol access.</param>
+        /// <param name="ct">Token used while stopping the stream and acquiring exclusivity.</param>
         private async Task RunWithStreamingPaused(Func<Task> op, CancellationToken ct)
         {
             bool wasStreaming = IsStreamingActive;
@@ -741,24 +763,14 @@ namespace Backend.Devices.GoDirect
             }
         }
 
-        /// <summary>
-        /// Executes an asynchronous protocol operation under exclusive access and returns its result.
-        /// </summary>
-        private async Task<T> ExecuteExclusive<T>(Func<Task<T>> op, CancellationToken ct)
-        {
-            await _exclusive.WaitAsync(ct).ConfigureAwait(false);
-            try
-            {
-                return await op().ConfigureAwait(false);
-            }
-            finally
-            {
-                _exclusive.Release();
-            }
-        }
+
 
         // Private helpers: sanity checks
 
+        /// <summary>
+        /// Wakes the device and establishes a safe initial state with all lamps off.
+        /// Communication failures are converted into initialization diagnostics.
+        /// </summary>
         private async Task<bool> PrepareInitialization(CancellationToken ct)
         {
             try
@@ -773,7 +785,7 @@ namespace Backend.Devices.GoDirect
             }
             catch (Exception ex)
             {
-                Session.AddDiagnostic(
+                DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                     code: "SPECTROVIS.INIT.COMMUNICATION_FAILED",
                     severity: DiagnosticSeverity.Error,
                     category: DiagnosticCategory.Initialization,
@@ -788,6 +800,9 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Reads the model code reported by the device and stores it in the session.
+        /// </summary>
         private async Task<bool> ReadAndStoreModelCode(CancellationToken ct)
         {
             try
@@ -805,7 +820,7 @@ namespace Backend.Devices.GoDirect
             }
             catch (Exception ex)
             {
-                Session.AddDiagnostic(
+                DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                     code: "SPECTROVIS.INIT.MODEL_CODE_READ_FAILED",
                     severity: DiagnosticSeverity.Error,
                     category: DiagnosticCategory.Initialization,
@@ -819,6 +834,10 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Reads and evaluates the device's CCD linearity sequence.
+        /// Failures and suspicious results are recorded as initialization diagnostics.
+        /// </summary>
         private async Task<bool> CheckCcdLinearity(CancellationToken ct)
         {
             try
@@ -832,7 +851,7 @@ namespace Backend.Devices.GoDirect
 
                 if (result.Level == CcdLinearity.Levels.Fail)
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT:LINEARITY_CHECK_FAILED",
                         severity: DiagnosticSeverity.Error,
                         category: DiagnosticCategory.Initialization,
@@ -847,9 +866,9 @@ namespace Backend.Devices.GoDirect
 
                 if (result.Level == CcdLinearity.Levels.Warn)
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.LINEARITY_CHECK_WARNING",
-                        severity: DiagnosticSeverity.Waring,
+                        severity: DiagnosticSeverity.Warning,
                         category: DiagnosticCategory.Initialization,
                         message: "The CCD linearity check returned a warning.",
                         operation: "CCD linearity check",
@@ -865,8 +884,7 @@ namespace Backend.Devices.GoDirect
             }
             catch (Exception ex)
             {
-                Session.AddDiagnostic(
-
+                DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                     code: "SPECTROVIS.INIT.LINEARITY_CHECK_FAILED",
                     severity: DiagnosticSeverity.Error,
                     category: DiagnosticCategory.Initialization,
@@ -881,6 +899,10 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Validates dark CCD output at two integration times, restores the default
+        /// integration time and returns a dark spectrum for the lamp-response check.
+        /// </summary>
         private async Task<(bool Succeeded, ushort[]? DarkSpectrum)> CheckDarkNoise(CancellationToken ct)
         {
             try
@@ -901,7 +923,7 @@ namespace Backend.Devices.GoDirect
 
                 if (!ValidateCcdSpectrum(darkSpectrum1, "dark-noise@integrationTime1", out string? firstError, out bool firstWarning))
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_FAILED",
                         severity: DiagnosticSeverity.Error,
                         category: DiagnosticCategory.Initialization,
@@ -915,9 +937,9 @@ namespace Backend.Devices.GoDirect
 
                 if (firstWarning)
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_WARNING",
-                        severity: DiagnosticSeverity.Waring,
+                        severity: DiagnosticSeverity.Warning,
                         category: DiagnosticCategory.Initialization,
                         message: "The CCD values varied only minimally during the first dark-noise check.",
                         technicalDetails: firstError,
@@ -935,7 +957,7 @@ namespace Backend.Devices.GoDirect
 
                 if (!ValidateCcdSpectrum(darkSpectrum2, "dark-noise@integrationTime2", out string? secondError, out bool secondWarning))
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_FAILED",
                         severity: DiagnosticSeverity.Error,
                         category: DiagnosticCategory.Initialization,
@@ -949,9 +971,9 @@ namespace Backend.Devices.GoDirect
 
                 if (secondWarning)
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_WARNING",
-                        severity: DiagnosticSeverity.Waring,
+                        severity: DiagnosticSeverity.Warning,
                         category: DiagnosticCategory.Initialization,
                         message: "The CCD values varied only minimally during the second dark-noise check.",
                         technicalDetails: secondError,
@@ -969,7 +991,7 @@ namespace Backend.Devices.GoDirect
 
                 if (!ValidateCcdSpectrum(darkSpectrum3, "dark spectrum at default integration time", out string? defaultError, out bool defaultWarning))
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.CCD_DARK_REFERENCE_INVALID",
                         severity: DiagnosticSeverity.Error,
                         category: DiagnosticCategory.Initialization,
@@ -983,9 +1005,9 @@ namespace Backend.Devices.GoDirect
 
                 if (defaultWarning)
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.CCD_DARK_REFERENCE_WARNING",
-                        severity: DiagnosticSeverity.Waring,
+                        severity: DiagnosticSeverity.Warning,
                         category: DiagnosticCategory.Initialization,
                         message: "The dark spectrum at the default integration time showed very little variation.",
                         technicalDetails: defaultError,
@@ -1003,7 +1025,7 @@ namespace Backend.Devices.GoDirect
             }
             catch (Exception ex)
             {
-                Session.AddDiagnostic(
+                DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                     code: "SPECTROVIS.INIT.CCD_NOISE_CHECK_FAILED",
                     severity: DiagnosticSeverity.Error,
                     category: DiagnosticCategory.Initialization,
@@ -1017,6 +1039,12 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Sets an integration time and verifies that the device echoes the same value.
+        /// </summary>
+        /// <param name="requestedMs">Requested integration time in milliseconds.</param>
+        /// <param name="context">Description included in diagnostics on failure.</param>
+        /// <param name="ct">Cancellation token for the protocol operation.</param>
         private async Task<bool> SetAndVerifyIntegrationTime(int requestedMs, string context, CancellationToken ct)
         {
             try
@@ -1025,7 +1053,7 @@ namespace Backend.Devices.GoDirect
 
                 if (echoedMs != requestedMs)
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.INTEGRATION_TIME_CHECK_FAILED",
                         severity: DiagnosticSeverity.Error,
                         category: DiagnosticCategory.Initialization,
@@ -1046,7 +1074,7 @@ namespace Backend.Devices.GoDirect
             }
             catch (Exception ex)
             {
-                Session.AddDiagnostic(
+                DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                     code: "SPECTROVIS.INIT.INTEGRATION_TIME_CHECK_FAILED",
                     severity: DiagnosticSeverity.Error,
                     category: DiagnosticCategory.Initialization,
@@ -1061,6 +1089,10 @@ namespace Backend.Devices.GoDirect
             }
         }
 
+        /// <summary>
+        /// Compares a white-lamp spectrum with the supplied dark reference and verifies
+        /// that illumination produces a sufficiently strong CCD response.
+        /// </summary>
         private async Task<bool> CheckWhiteLampResponse(ushort[] darkSpectrum, CancellationToken ct)
         {
             try
@@ -1074,7 +1106,7 @@ namespace Backend.Devices.GoDirect
 
                 if (!ValidateCcdSpectrum(lightSpectrum, "white-lamp light spectrum", out string? lightDetails, out bool lightWarning))
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.LIGHT_RESPONSE_CHECK_FAILED",
                         severity: DiagnosticSeverity.Error,
                         category: DiagnosticCategory.Initialization,
@@ -1088,9 +1120,9 @@ namespace Backend.Devices.GoDirect
 
                 if (lightWarning)
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.LIGHT_RESPONSE_CHECK_WARNING",
-                        severity: DiagnosticSeverity.Waring,
+                        severity: DiagnosticSeverity.Warning,
                         category: DiagnosticCategory.Initialization,
                         message: "The white-light spectrum showed very little variation.",
                         technicalDetails: lightDetails,
@@ -1104,7 +1136,7 @@ namespace Backend.Devices.GoDirect
 
                 if (!MeanInRoiIsHigher(lightSpectrum, darkSpectrum, factor: 5.0))
                 {
-                    Session.AddDiagnostic(
+                    DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                         code: "SPECTROVIS.INIT.LIGHT_RESPONSE_CHECK_FAILED",
                         severity: DiagnosticSeverity.Error,
                         category: DiagnosticCategory.Initialization,
@@ -1127,7 +1159,7 @@ namespace Backend.Devices.GoDirect
             }
             catch (Exception ex)
             {
-                Session.AddDiagnostic(
+                DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
                     code: "SPECTROVIS.INIT.LIGHT_RESPONSE_CHECK_FAILED",
                     severity: DiagnosticSeverity.Error,
                     category: DiagnosticCategory.Initialization,
