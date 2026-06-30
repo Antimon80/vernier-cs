@@ -1,9 +1,7 @@
 ﻿using Backend.Devices.GoDirect;
 using Backend.Discovery;
 using Backend.Measurements;
-using HidSharp;
 using Microsoft.Extensions.Logging;
-using ScottPlot;
 using ScottPlot.WinForms;
 using System.Globalization;
 
@@ -241,7 +239,7 @@ internal static class Program
         Console.WriteLine($"Connected: {spectrometer.DeviceName} VID=0x{spectrometer.Vid:X4} PID=0x{spectrometer.Pid:X4} Mode={spectrometer.Mode} Connected={spectrometer.IsConnected}");
         Console.WriteLine($"Model: packets={spectrometer.Model.PacketCount}, payloadBytes={spectrometer.Model.PacketPayloadBytes}, white={spectrometer.Model.HasWhiteLamp}, 405={spectrometer.Model.HasLed405}, 500={spectrometer.Model.HasLed500}");
         Console.WriteLine($"ROI: [{spectrometer.Model.CCDPixelIndexMin}..{spectrometer.Model.CCDPixelIndexMax}]  nm=[{spectrometer.Model.WavelengthMinNm:F1}..{spectrometer.Model.WavelengthMaxNm:F1}]");
-        Console.WriteLine($"Session: ready={spectrometer.Session.IsReady}, calibrated={spectrometer.Session.IsCalibrated}, it={spectrometer.Session.IntegrationTime}ms");
+        Console.WriteLine($"Session: ready={spectrometer.Session.IsInitialized}, calibrated={spectrometer.Session.IsCalibrated}, it={spectrometer.Session.IntegrationTime}ms");
         PrintWarnings(spectrometer);
     }
 
@@ -259,15 +257,6 @@ internal static class Program
         if (spectrometer is null)
         {
             return;
-        }
-
-        if (spectrometer.Warnings.Count > 0)
-        {
-            Console.WriteLine("Warnings:");
-            foreach (string warning in spectrometer.Warnings)
-            {
-                Console.WriteLine($" - {warning}");
-            }
         }
     }
 
