@@ -14,7 +14,7 @@ public enum DiagnosticSeverity
 }
 
 /// <summary>
-/// Broad area in which a diagnistic occured.
+/// Broad area in which a diagnostic occured.
 /// </summary>
 public enum DiagnosticCategory
 {

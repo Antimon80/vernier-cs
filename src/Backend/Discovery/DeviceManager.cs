@@ -391,7 +391,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
         {
             using UsbContext context = new();
 
-            foreach (UsbDevice device in context.List())
+            foreach (UsbDevice device in context.List().Cast<UsbDevice>())
             {
                 if (device.VendorId != DeviceCatalog.VernierVid || device.ProductId != DeviceCatalog.LabQuestMiniPid)
                 {
