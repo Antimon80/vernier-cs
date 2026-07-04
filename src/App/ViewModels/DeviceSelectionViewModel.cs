@@ -136,14 +136,6 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
     {
         Diagnostics.Clear();
 
-        Diagnostics.Add(new UiDiagnostics(
-            Severity: "Test",
-            Category: "Test",
-            Code: "DEBUG",
-            Message: "Dieser Eintrag kommt aus dem DeviceSelectionViewModel",
-            TechnicalDetails: "Test"
-        ));
-
         foreach (var diagnostic in _deviceManager.Diagnostics)
         {
             Diagnostics.Add(new UiDiagnostics(

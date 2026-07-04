@@ -22,8 +22,7 @@ namespace Backend.Discovery;
 /// Device-specific initialization and hardware diagnostics are the
 /// responsibility of the concrete device implementation.
 /// </summary>
-public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDeviceManager
-{
+public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDeviceManager {
     private readonly ILoggerFactory? _loggerFactory = loggerFactory;
     private readonly ILogger<DeviceManager>? _log = loggerFactory?.CreateLogger<DeviceManager>();
 
@@ -69,12 +68,9 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// <summary>
     /// Snapshot of all manager-level diagnostics.
     /// </summary>
-    public IReadOnlyList<DiagnosticEntry> Diagnostics
-    {
-        get
-        {
-            lock (_diagnosticLock)
-            {
+    public IReadOnlyList<DiagnosticEntry> Diagnostics {
+        get {
+            lock (_diagnosticLock) {
                 return [.. _diagnostics];
             }
         }
@@ -82,12 +78,9 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
     public event Action<IReadOnlyList<DeviceDescriptor>>? DevicesChanged;
 
-    public IReadOnlyList<DeviceDescriptor> Devices
-    {
-        get
-        {
-            lock (_deviceSnapshotLock)
-            {
+    public IReadOnlyList<DeviceDescriptor> Devices {
+        get {
+            lock (_deviceSnapshotLock) {
                 return [.. _devices];
             }
         }
@@ -100,24 +93,19 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// is discovered separately under PID 0x0008, although its attached sensor
     /// cannot yet be identified by this manager.
     /// </summary>
-    public IReadOnlyList<DeviceDescriptor> ListDevices()
-    {
+    public IReadOnlyList<DeviceDescriptor> ListDevices() {
         ThrowIfDisposed();
 
         _gate.Wait();
-        try
-        {
+        try {
             DiagnosticEntry.ClearDiagnostics(_diagnostics, DiagnosticCategory.Discovery);
             List<DeviceDescriptor> discovered = [];
 
-            foreach ((ushort pid, SpectrometerModel model) in DeviceCatalog.SpectrometerModels)
-            {
-                try
-                {
+            foreach ((ushort pid, SpectrometerModel model) in DeviceCatalog.SpectrometerModels) {
+                try {
                     IEnumerable<HidDevice> hidDevices = DeviceList.Local.GetHidDevices(DeviceCatalog.VernierVid, pid);
 
-                    foreach (HidDevice hidDevice in hidDevices)
-                    {
+                    foreach (HidDevice hidDevice in hidDevices) {
                         discovered.Add(
                             new DeviceDescriptor(
                                 Vid: DeviceCatalog.VernierVid,
@@ -129,8 +117,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
                         );
                     }
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     DiagnosticEntry.AddDiagnostic(_diagnostics,
                         code: "DEVICE.DISCOVERY.SPECTROMETER_ENUMERATION_FAILED",
                         severity: DiagnosticSeverity.Warning,
@@ -152,8 +139,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
             bool changed;
             IReadOnlyList<DeviceDescriptor> snapshot;
 
-            lock (_deviceSnapshotLock)
-            {
+            lock (_deviceSnapshotLock) {
                 changed = !SameDevices(_devices, discovered);
                 _devices = [.. discovered];
                 snapshot = [.. _devices];
@@ -161,27 +147,23 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
             _log?.LogInformation("Device discovery completed. Found {Count} supported devices(s).", _devices.Count);
 
-            if (changed)
-            {
+            if (changed) {
                 DevicesChanged?.Invoke(snapshot);
             }
 
             return snapshot;
         }
-        finally
-        {
+        finally {
             _gate.Release();
         }
     }
 
-    public void NotifyDeviceTopologyChanged()
-    {
+    public void NotifyDeviceTopologyChanged() {
         ThrowIfDisposed();
 
         CancellationToken token;
 
-        lock (_refreshDebounceLock)
-        {
+        lock (_refreshDebounceLock) {
             _refreshDebounceCts?.Cancel();
             _refreshDebounceCts?.Dispose();
 
@@ -189,21 +171,16 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
             token = _refreshDebounceCts.Token;
         }
 
-        _ = Task.Run(async () =>
-        {
-            try
-            {
+        _ = Task.Run(async () => {
+            try {
                 await Task.Delay(1000, token).ConfigureAwait(false);
                 ListDevices();
             }
-            catch (OperationCanceledException)
-            {
+            catch (OperationCanceledException) {
                 // Restart debounce.
             }
-            catch (Exception ex)
-            {
-                lock (_diagnosticLock)
-                {
+            catch (Exception ex) {
+                lock (_diagnosticLock) {
                     DiagnosticEntry.AddDiagnostic(
                         _diagnostics,
                         code: "DEVICE.DISCOVERY.HOTPLUG_REFRESH_FAILED",
@@ -224,8 +201,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// Convenience helper: if exactly one supported device is connected, connect to it.
     /// Throws if zero or more than one device is found.
     /// </summary>
-    public async Task ConnectSingle(CancellationToken ct = default)
-    {
+    public async Task ConnectSingle(CancellationToken ct = default) {
         ThrowIfDisposed();
         ct.ThrowIfCancellationRequested();
 
@@ -233,8 +209,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
         const string message = "No supported Vernier device was found";
 
-        if (devices.Count == 0)
-        {
+        if (devices.Count == 0) {
             DiagnosticEntry.AddDiagnostic(_diagnostics,
                 code: "DEVICE.CONNECTION.NO_DEVICE_FOUND",
                 severity: DiagnosticSeverity.Error,
@@ -247,8 +222,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
             throw new InvalidOperationException(message);
         }
 
-        if (devices.Count > 1)
-        {
+        if (devices.Count > 1) {
             string message2 = $"Multiple supported Vernier devices wer found " +
                 $"({devices.Count}). Select one explicitily.";
             string details = string.Join(Environment.NewLine, devices.Select((device, index) =>
@@ -281,18 +255,15 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// from becoming <see cref="CurrentDevice"/> if its Connect operation returns
     /// normally.
     /// </summary>
-    public async Task Connect(int deviceIndex, CancellationToken ct = default)
-    {
+    public async Task Connect(int deviceIndex, CancellationToken ct = default) {
         ThrowIfDisposed();
         ct.ThrowIfCancellationRequested();
 
         await _gate.WaitAsync(ct).ConfigureAwait(false);
-        try
-        {
+        try {
             DiagnosticEntry.ClearDiagnostics(_diagnostics, DiagnosticCategory.Connection);
 
-            if (_devices.Count == 0)
-            {
+            if (_devices.Count == 0) {
                 const string message = "No discovered device is available. Run device discovery before connecting.";
 
                 DiagnosticEntry.AddDiagnostic(_diagnostics,
@@ -307,8 +278,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
                 throw new InvalidOperationException(message);
             }
 
-            if ((uint)deviceIndex >= (uint)_devices.Count)
-            {
+            if ((uint)deviceIndex >= (uint)_devices.Count) {
                 string message = _devices.Count == 0 ? "No discovered device is available."
                     : $"Device index {deviceIndex} is outside the valid range " + $"0..{_devices.Count - 1}.";
 
@@ -331,8 +301,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
             IDevice? candidate = null;
 
-            try
-            {
+            try {
                 candidate = CreateDevice(descriptor);
                 await candidate.Connect(ct).ConfigureAwait(false);
                 CurrentDevice = candidate;
@@ -341,13 +310,11 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
                 _log?.LogInformation("Connected to {Name} " + "(VID=0x{Vid:X4}, PID=0x{Pid:X4}).",
                     descriptor.Name, descriptor.Vid, descriptor.Pid);
             }
-            catch (OperationCanceledException)
-            {
+            catch (OperationCanceledException) {
                 await CleanupCandidate(candidate).ConfigureAwait(false);
                 throw;
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 await CleanupCandidate(candidate).ConfigureAwait(false);
 
                 DiagnosticEntry.AddDiagnostic(_diagnostics,
@@ -367,8 +334,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
                 throw;
             }
         }
-        finally
-        {
+        finally {
             _gate.Release();
         }
     }
@@ -377,20 +343,17 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// Disconnects and disposes the currently connected device (if any).
     /// Thread-safe (serialized through the gate).
     /// </summary>
-    public async Task Disconnect(CancellationToken ct = default)
-    {
+    public async Task Disconnect(CancellationToken ct = default) {
         ThrowIfDisposed();
         ct.ThrowIfCancellationRequested();
 
         await _gate.WaitAsync(ct).ConfigureAwait(false);
-        try
-        {
+        try {
             DiagnosticEntry.ClearDiagnostics(_diagnostics, DiagnosticCategory.Connection);
 
             await DisconnectCurrentDevice(createDiagnostics: true, ct).ConfigureAwait(false);
         }
-        finally
-        {
+        finally {
             _gate.Release();
         }
     }
@@ -398,15 +361,12 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// <summary>
     /// Disposes the manager by disconnecting any active device and releasing the semaphore gate.
     /// </summary>
-    public void Dispose()
-    {
-        if (_disposed)
-        {
+    public void Dispose() {
+        if (_disposed) {
             return;
         }
 
-        lock (_refreshDebounceLock)
-        {
+        lock (_refreshDebounceLock) {
             _refreshDebounceCts?.Cancel();
             _refreshDebounceCts?.Dispose();
             _refreshDebounceCts = null;
@@ -414,35 +374,28 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
         _gate.Wait();
 
-        try
-        {
+        try {
             DisconnectCurrentDevice(createDiagnostics: false, CancellationToken.None)
                 .GetAwaiter().GetResult();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _log?.LogWarning(ex, "Device Manager disposal failed.");
         }
-        finally
-        {
+        finally {
             _disposed = true;
             _gate.Release();
             _gate.Dispose();
         }
     }
 
-    private static bool SameDevices(IReadOnlyList<DeviceDescriptor> left, IReadOnlyList<DeviceDescriptor> right)
-    {
-        if (left.Count != right.Count)
-        {
+    private static bool SameDevices(IReadOnlyList<DeviceDescriptor> left, IReadOnlyList<DeviceDescriptor> right) {
+        if (left.Count != right.Count) {
             return false;
         }
 
-        for (int i = 0; i < left.Count; i++)
-        {
+        for (int i = 0; i < left.Count; i++) {
             if (left[i].Vid != right[i].Vid || left[i].Pid != right[i].Pid ||
-                left[i].DevicePath != right[i].DevicePath || left[i].TransportType != right[i].TransportType)
-            {
+                left[i].DevicePath != right[i].DevicePath || left[i].TransportType != right[i].TransportType) {
                 return false;
             }
         }
@@ -456,16 +409,13 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// New device types can be added here without changing the discovery,
     /// connection or cleanup logic.
     /// </summary>
-    private IDevice CreateDevice(DeviceDescriptor descriptor)
-    {
-        if (descriptor.Vid != DeviceCatalog.VernierVid)
-        {
+    private IDevice CreateDevice(DeviceDescriptor descriptor) {
+        if (descriptor.Vid != DeviceCatalog.VernierVid) {
             throw new NotSupportedException(
                 $"Unsupported vendor ID 0x{descriptor.Vid:X4}.");
         }
 
-        if (descriptor.TransportType == TransportType.Hid)
-        {
+        if (descriptor.TransportType == TransportType.Hid) {
             ILogger<HidTransport>? transportLogger =
                 _loggerFactory?.CreateLogger<HidTransport>();
 
@@ -477,8 +427,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
             if (DeviceCatalog.SpectrometerModels.TryGetValue(
                     descriptor.Pid,
-                    out SpectrometerModel? model))
-            {
+                    out SpectrometerModel? model)) {
                 return new Spectrometer(
                     transport,
                     model,
@@ -492,10 +441,8 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
                 $"VID=0x{descriptor.Vid:X4}, PID=0x{descriptor.Pid:X4}.");
         }
 
-        if (descriptor.TransportType == TransportType.UsbBulk)
-        {
-            if (descriptor.Pid != DeviceCatalog.LabQuestMiniPid)
-            {
+        if (descriptor.TransportType == TransportType.UsbBulk) {
+            if (descriptor.Pid != DeviceCatalog.LabQuestMiniPid) {
                 throw new NotSupportedException(
                     $"No USB bulk device implementation is registered for " +
                     $"VID=0x{descriptor.Vid:X4}, PID=0x{descriptor.Pid:X4}.");
@@ -503,8 +450,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
             if (descriptor.UsbBusNumber is null ||
                 descriptor.UsbDeviceAddress is null ||
-                descriptor.UsbPortNumbers is null)
-            {
+                descriptor.UsbPortNumbers is null) {
                 throw new InvalidOperationException(
                     "The USB bulk device descriptor contains no USB location information.");
             }
@@ -537,21 +483,29 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// PID 0x0008 identifies the LabQuest interface itself, not necessarily
     /// the sensor attached to that interface.
     /// </summary>
-    private void DiscoverLabQuestInterfaces(ICollection<DeviceDescriptor> discovered)
-    {
-        try
-        {
-            using UsbContext context = new();
+    private void DiscoverLabQuestInterfaces(ICollection<DeviceDescriptor> discovered) {
+        UsbContext? context = null;
+        List<UsbDevice> devices = [];
 
-            foreach (UsbDevice device in context.List().Cast<UsbDevice>())
-            {
-                if (device.VendorId != DeviceCatalog.VernierVid || device.ProductId != DeviceCatalog.LabQuestMiniPid)
-                {
+        try {
+            context = new UsbContext();
+
+            devices = context.List()
+                .OfType<UsbDevice>()
+                .ToList();
+
+            foreach (UsbDevice device in devices) {
+                if (device.VendorId != DeviceCatalog.VernierVid ||
+                    device.ProductId != DeviceCatalog.LabQuestMiniPid) {
                     continue;
                 }
 
                 byte[] portNumbers = [.. device.PortNumbers];
-                string locationKey = UsbBulkTransport.CreateLocationKey(device.BusNumber, device.Address, portNumbers);
+                string locationKey = UsbBulkTransport.CreateLocationKey(
+                    device.BusNumber,
+                    device.Address,
+                    portNumbers);
+
                 discovered.Add(new DeviceDescriptor(
                     Vid: device.VendorId,
                     Pid: device.ProductId,
@@ -563,56 +517,64 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
                     UsbPortNumbers: portNumbers
                 ));
 
-                _log?.LogInformation("Found LabQuest Mini. Bus={Bus}, Address={Address}, Ports={Ports}.",
-                    device.BusNumber, device.Address, string.Join(".", portNumbers));
+                _log?.LogInformation(
+                    "Found LabQuest Mini. Bus={Bus}, Address={Address}, Ports={Ports}.",
+                    device.BusNumber,
+                    device.Address,
+                    string.Join(".", portNumbers));
             }
         }
-        catch (Exception ex)
-        {
-            DiagnosticEntry.AddDiagnostic(_diagnostics,
+        catch (Exception ex) {
+            DiagnosticEntry.AddDiagnostic(
+                _diagnostics,
                 code: "DEVICE.DISCOVERY.LABQUEST_ENUMERATION_FAILED",
                 severity: DiagnosticSeverity.Warning,
                 category: DiagnosticCategory.Discovery,
                 message: "LabQuest interfaces could not be enumerated.",
                 technicalDetails: $"VID=0x{DeviceCatalog.VernierVid:X4}; " +
-                    $"PID=0x{LabQuestInterfacePid:X4}; " + $"Exception={ex}",
+                    $"PID=0x{LabQuestInterfacePid:X4}; Exception={ex}",
                 operation: nameof(ListDevices),
                 source: nameof(DeviceManager),
                 exception: ex,
-                logger: _log
-            );
+                logger: _log);
 
             _log?.LogWarning(ex, "LabQuest Mini enumeration failed.");
+        }
+        finally {
+            foreach (UsbDevice device in devices) {
+                try {
+                    device.Dispose();
+                }
+                catch (Exception ex) {
+                    _log?.LogWarning(ex, "Disposing a LabQuest discovery device handle failed.");
+                }
+            }
+
+            context?.Dispose();
         }
     }
 
     /// <summary>
     /// Disconnects and disposes the current device.
     /// </summary>
-    private async Task DisconnectCurrentDevice(bool createDiagnostics, CancellationToken ct)
-    {
+    private async Task DisconnectCurrentDevice(bool createDiagnostics, CancellationToken ct) {
         IDevice? device = CurrentDevice;
         CurrentDevice = null;
 
-        if (device is null)
-        {
+        if (device is null) {
             return;
         }
 
         OperationCanceledException? cancellation = null;
 
-        try
-        {
+        try {
             await device.Disconnect(ct).ConfigureAwait(false);
         }
-        catch (OperationCanceledException ex)
-        {
+        catch (OperationCanceledException ex) {
             cancellation = ex;
         }
-        catch (Exception ex)
-        {
-            if (createDiagnostics)
-            {
+        catch (Exception ex) {
+            if (createDiagnostics) {
                 DiagnosticEntry.AddDiagnostic(_diagnostics,
                     code: "DEVICE.CONNECTION.DISCONNECT_FAILED",
                     severity: DiagnosticSeverity.Warning,
@@ -627,14 +589,11 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
             _log?.LogWarning(ex, "Disconnect failed for {DeviceName}.", device.DeviceName);
         }
 
-        try
-        {
+        try {
             device.Dispose();
         }
-        catch (Exception ex)
-        {
-            if (createDiagnostics)
-            {
+        catch (Exception ex) {
+            if (createDiagnostics) {
                 DiagnosticEntry.AddDiagnostic(_diagnostics,
                     code: "DEVICE.CONNECTION.DISPOSE_FAILED",
                     severity: DiagnosticSeverity.Warning,
@@ -649,8 +608,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
             _log?.LogWarning(ex, "Dispose failed for {DeviceName}.", device.DeviceName);
         }
 
-        if (cancellation is not null)
-        {
+        if (cancellation is not null) {
             throw cancellation;
         }
 
@@ -659,34 +617,27 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// <summary>
     /// Cleans up a device whose connection attempt did not complete.
     /// </summary>
-    private async Task CleanupCandidate(IDevice? candidate)
-    {
-        if (candidate is null)
-        {
+    private async Task CleanupCandidate(IDevice? candidate) {
+        if (candidate is null) {
             return;
         }
 
-        try
-        {
+        try {
             await candidate.Disconnect(CancellationToken.None).ConfigureAwait(false);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _log?.LogWarning(ex, "Disconnect failed while cleaning up an unsuccesful device connection attempt.");
         }
 
-        try
-        {
+        try {
             candidate.Dispose();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _log?.LogWarning(ex, "Dispose failed while cleaning up an unsuccesful device connection attempt.");
         }
     }
 
-    private void ThrowIfDisposed()
-    {
+    private void ThrowIfDisposed() {
         ObjectDisposedException.ThrowIf(_disposed, this);
     }
 }

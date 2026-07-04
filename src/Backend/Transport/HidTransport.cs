@@ -15,8 +15,7 @@ using Microsoft.Extensions.Logging;
 /// 
 /// This decouples low-level blocking HID I/O from higher-level protocol logic.
 /// </summary>
-public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILogger<HidTransport>? log = null) : ITransport
-{
+public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILogger<HidTransport>? log = null) : ITransport {
     private readonly string _devicePath = devicePath ?? throw new ArgumentNullException(nameof(devicePath));
     private readonly ushort _vid = vid;
     private readonly ushort _pid = pid;
@@ -43,6 +42,8 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
     // Background reader task
     private Task? _rxTask;
 
+    private readonly SemaphoreSlim _writeGate = new(1, 1);
+
     /// <summary>
     /// True if the HID stream is currently open.
     /// </summary>
@@ -52,23 +53,15 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
     /// Opens the HID device, initializes report sizes,
     /// and starts the background ReaderLoop.
     /// </summary>
-    public Task Connect(CancellationToken ct = default)
-    {
+    public Task Connect(CancellationToken ct = default) {
         if (IsConnected) { return Task.CompletedTask; }
         ct.ThrowIfCancellationRequested();
 
         // Locate matching HID device by VID/PID and device path
         HidDevice? dev = DeviceList.Local
             .GetHidDevices(_vid, _pid)
-            .FirstOrDefault(d => string.Equals(d.DevicePath, _devicePath, StringComparison.OrdinalIgnoreCase));
-
-        if (dev is null)
-        {
-            throw new InvalidOperationException($"HID device not found (VID=0x{_vid:X4}, PID=0x{_pid:X4}, path='{_devicePath}')");
-        }
-
-        if (!dev.TryOpen(out HidStream stream))
-        {
+            .FirstOrDefault(d => string.Equals(d.DevicePath, _devicePath, StringComparison.OrdinalIgnoreCase)) ?? throw new InvalidOperationException($"HID device not found (VID=0x{_vid:X4}, PID=0x{_pid:X4}, path='{_devicePath}')");
+        if (!dev.TryOpen(out HidStream stream)) {
             throw new InvalidOperationException("Failed to open HID device stream.");
         }
 
@@ -78,14 +71,13 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
         _maxInputReportLen = Math.Max(stream.Device.GetMaxInputReportLength(), PayloadLen + 1);
         _maxOutputReportLen = Math.Max(stream.Device.GetMaxOutputReportLength(), PayloadLen + 1);
 
-        // Short read timeout to allow polling behavior in ReaderLoop
-        _stream.ReadTimeout = 50;
+        // Block until an input report arrives or the stream is closed during Disconnect()
+        _stream.ReadTimeout = Timeout.Infinite;
         // Write timeout for outbound commands
         _stream.WriteTimeout = 200;
 
         // Bounded FIFO channel between ReaderLoop (writer) and Read() (readers)
-        ChannelOptions options = new BoundedChannelOptions(PacketQueueCapacity)
-        {
+        ChannelOptions options = new BoundedChannelOptions(PacketQueueCapacity) {
             SingleReader = true,
             SingleWriter = true,
             FullMode = BoundedChannelFullMode.Wait
@@ -107,98 +99,103 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
     /// Stops ReaderLoop, completes RX channel,
     /// and disposes the HID stream.
     /// </summary>
-    public async Task Disconnect(CancellationToken ct = default)
-    {
+    public async Task Disconnect(CancellationToken ct = default) {
         ct.ThrowIfCancellationRequested();
 
         CancellationTokenSource? rxCts = _rxCts;
         _rxCts = null;
 
-        if (rxCts is not null)
-        {
+        if (rxCts is not null) {
             try { rxCts.Cancel(); }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 _log?.LogWarning(ex, "Cancel RX loop failed.");
             }
             finally { rxCts.Dispose(); }
         }
 
+        HidStream? stream = _stream;
+        _stream = null;
+
+        if (stream is not null) {
+            try {
+                stream.Dispose();
+            }
+            catch (Exception ex) {
+                _log?.LogWarning(ex, "Disposing HID stream failed.");
+            }
+        }
+
         Task? rxTask = _rxTask;
         _rxTask = null;
 
-        if (rxTask is not null)
-        {
+        if (rxTask is not null) {
             try { await rxTask.ConfigureAwait(false); }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 _log?.LogWarning(ex, "RX task ended with exception.");
+            }
+        }
+
+        if (rxCts is not null) {
+            try {
+                rxCts.Dispose();
+            }
+            catch (Exception ex) {
+                _log?.LogWarning(ex, "Disposing RX cancellation source failed.");
             }
         }
 
         Channel<byte[]>? ch = _rxChannel;
         _rxChannel = null;
 
-        if (ch is not null)
-        {
-            try
-            {
+        if (ch is not null) {
+            try {
                 ch.Writer.TryComplete();
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 _log?.LogWarning(ex, "Completing RX channel failed.");
             }
         }
 
-        HidStream? stream = _stream;
-        _stream = null;
-
-        try
-        {
-            stream?.Dispose();
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Disposing HID stream failed.");
-        }
         _log?.LogInformation("HID transport disconnected.");
-
     }
 
     /// <summary>
     /// Sends one 64-byte protocol payload as a HID output report.
     /// The payload is copied into a full report buffer including ReportID.
     /// </summary>
-    public Task Write(ReadOnlyMemory<byte> payload, CancellationToken ct = default)
-    {
+    public async Task Write(ReadOnlyMemory<byte> payload, CancellationToken ct = default) {
         ct.ThrowIfCancellationRequested();
         EnsureConnected();
 
-        if (payload.Length > PayloadLen)
-        {
+        if (payload.Length > PayloadLen) {
             throw new ArgumentOutOfRangeException(
                 nameof(payload),
                 $"Payload must be <= {PayloadLen} bytes, got {payload.Length}.");
         }
 
-        byte[] outBuf = new byte[_maxOutputReportLen];
-        outBuf[0] = ReportId;
+        await _writeGate.WaitAsync(ct).ConfigureAwait(false);
 
-        payload.Span.CopyTo(outBuf.AsSpan(1));
+        try {
+            EnsureConnected();
 
-        try
-        {
-            _stream!.Write(outBuf, 0, outBuf.Length);
-            _log?.LogTrace("HID OUT wrote {len} bytes (payload {PayloadLen}).", outBuf.Length, payload.Length);
+            byte[] outBuf = new byte[_maxOutputReportLen];
+            outBuf[0] = ReportId;
+
+            payload.Span.CopyTo(outBuf.AsSpan(1));
+
+            try {
+                _stream!.Write(outBuf, 0, outBuf.Length);
+                _log?.LogTrace("HID OUT wrote {len} bytes (payload {payloadLen}).",
+                        outBuf.Length, payload.Length);
+            }
+            catch (Exception ex) {
+                _log?.LogError(ex, "HID OUT write failed.");
+                throw;
+            }
         }
-        catch (Exception ex)
-        {
-            _log?.LogError(ex, "HID OUT write failed.");
-            throw;
+        finally {
+            _writeGate.Release();
         }
-
-        return Task.CompletedTask;
     }
 
     //// <summary>
@@ -208,8 +205,7 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
     /// Throws TimeoutException if no packet becomes available
     /// within OverallReadTimeoutMs.
     /// </summary>
-    public async Task<byte[]> Read(CancellationToken ct = default)
-    {
+    public async Task<byte[]> Read(CancellationToken ct = default) {
         EnsureConnected();
 
         Channel<byte[]> ch = _rxChannel ?? throw new InvalidOperationException("RX channel not initialized. Call Connect() first.");
@@ -217,18 +213,14 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
         linked.CancelAfter(OverallReadTimeoutMs);
 
-        try
-        {
-            while (await ch.Reader.WaitToReadAsync(linked.Token).ConfigureAwait(false))
-            {
-                if (ch.Reader.TryRead(out var packet))
-                {
+        try {
+            while (await ch.Reader.WaitToReadAsync(linked.Token).ConfigureAwait(false)) {
+                if (ch.Reader.TryRead(out var packet)) {
                     return packet;
                 }
             }
         }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        {
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
             _log?.LogWarning("Buffered read timeout after {Ms}ms.", OverallReadTimeoutMs);
             throw new TimeoutException($"Buffered read exceeded overall timeout of {OverallReadTimeoutMs} ms (no packet available).");
         }
@@ -241,22 +233,18 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
     /// Discards all currently buffered packets in the RX channel.
     /// Useful to resynchronize protocol state between commands.
     /// </summary>
-    public void FlushInputBuffer()
-    {
+    public void FlushInputBuffer() {
         Channel<byte[]>? ch = _rxChannel;
-        if (ch is null)
-        {
+        if (ch is null) {
             return;
         }
 
         int drained = 0;
-        while (ch.Reader.TryRead(out _))
-        {
+        while (ch.Reader.TryRead(out _)) {
             drained++;
         }
 
-        if (drained > 0)
-        {
+        if (drained > 0) {
             _log?.LogDebug("Flushed RX buffer: {Count} packets discarded.", drained);
         }
     }
@@ -267,27 +255,22 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
     /// Waits perPacketTimeoutMs for each missing packet.
     /// Intended for command-response cleanup scenarios.
     /// </summary>
-    public async Task<int> Drain(int expectedPackets, int perPacketTimeoutMs = 100, CancellationToken ct = default)
-    {
-        if (expectedPackets <= 0)
-        {
+    public async Task<int> Drain(int expectedPackets, int perPacketTimeoutMs = 100, CancellationToken ct = default) {
+        if (expectedPackets <= 0) {
             return 0;
         }
 
         Channel<byte[]>? ch = _rxChannel;
-        if (ch is null)
-        {
+        if (ch is null) {
             return 0;
         }
 
         int drained = 0;
 
-        for (int i = 0; i < expectedPackets; i++)
-        {
+        for (int i = 0; i < expectedPackets; i++) {
             ct.ThrowIfCancellationRequested();
 
-            if (ch.Reader.TryRead(out _))
-            {
+            if (ch.Reader.TryRead(out _)) {
                 drained++;
                 continue;
             }
@@ -295,30 +278,23 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
             using var one = CancellationTokenSource.CreateLinkedTokenSource(ct);
             one.CancelAfter(perPacketTimeoutMs);
 
-            try
-            {
-                if (!await ch.Reader.WaitToReadAsync(one.Token).ConfigureAwait(false))
-                {
+            try {
+                if (!await ch.Reader.WaitToReadAsync(one.Token).ConfigureAwait(false)) {
                     break;
                 }
 
-                if (ch.Reader.TryRead(out _))
-                {
+                if (ch.Reader.TryRead(out _)) {
                     drained++;
-                }
-                else
-                {
+                } else {
                     break;
                 }
             }
-            catch (OperationCanceledException)
-            {
+            catch (OperationCanceledException) {
                 break;
             }
         }
 
-        if (drained > 0)
-        {
+        if (drained > 0) {
             _log?.LogWarning("Drained {Drained}/{Expected} expected response packets (best-effort).", drained, expectedPackets);
         }
 
@@ -328,16 +304,15 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
     /// <summary>
     /// Stops transport and releases resources.
     /// </summary>
-    public void Dispose()
-    {
-        try
-        {
+    public void Dispose() {
+        try {
             Disconnect(CancellationToken.None).GetAwaiter().GetResult();
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             _log?.LogWarning(ex, "Dispose->Disconnect failed.");
         }
+
+        _writeGate.Release();
     }
 
     /// <summary>
@@ -351,13 +326,11 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
     /// 
     /// Terminates on cancellation or fatal stream error.
     /// </summary>
-    private async Task ReaderLoop(CancellationToken ct)
-    {
+    private async Task ReaderLoop(CancellationToken ct) {
         HidStream? stream = _stream;
         Channel<byte[]>? ch = _rxChannel;
 
-        if (stream is null || ch is null)
-        {
+        if (stream is null || ch is null) {
             _log?.LogWarning("ReaderLoop started without stream/channel.");
             return;
         }
@@ -366,23 +339,52 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
 
         _log?.LogDebug("ReaderLoop started.");
 
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                int n = stream.Read(inBuf, 0, inBuf.Length);
-                if (n <= 0)
-                {
-                    await Task.Yield();
+        try {
+            while (!ct.IsCancellationRequested) {
+                int n;
+
+                try {
+                    // Blocking read, no polling timeout
+                    n = stream.Read(inBuf, 0, inBuf.Length);
+                }
+                catch (OperationCanceledException) {
+                    break;
+                }
+                catch (ObjectDisposedException) when (ct.IsCancellationRequested) {
+                    break;
+                }
+                catch (IOException) when (ct.IsCancellationRequested) {
+                    break;
+                }
+                catch (TimeoutException) when (ct.IsCancellationRequested) {
+                    break;
+                }
+                catch (Exception ex) when (ct.IsCancellationRequested) {
+                    _log?.LogDebug(ex, "ReaderLoop read interrupted during shutdown.");
+                    break;
+                }
+                catch (Exception ex) {
+                    _log?.LogError(ex, "ReaderLoop fatal read error. Completing channel.");
+
+                    try {
+                        ch.Writer.TryComplete(ex);
+                    }
+                    catch {
+                        // Ignore completion races
+                    }
+
+                    return;
+                }
+
+                if (n <= 0) {
                     continue;
                 }
 
                 // Skip ReportID if present
                 int offset = (n >= PayloadLen + 1) ? 1 : 0;
                 int available = n - offset;
-                if (available <= 0)
-                {
-                    await Task.Yield();
+
+                if (available <= 0) {
                     continue;
                 }
 
@@ -390,34 +392,32 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
                 int copyLen = Math.Min(PayloadLen, available);
                 Array.Copy(inBuf, offset, payload, 0, copyLen);
 
-                await ch.Writer.WriteAsync(payload, ct).ConfigureAwait(false);
-            }
-            catch (TimeoutException)
-            {
-                // Expected due to short ReadTimeout; continue polling
-                continue;
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                _log?.LogError(ex, "ReaderLoop fatal error. Completing channel.");
-                try { ch.Writer.TryComplete(ex); }
-                catch { }
-                return;
+                try {
+                    await ch.Writer.WriteAsync(payload, ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) {
+                    break;
+                }
+                catch (InvalidOperationException) {
+                    // Channel was completed during disconnect
+                    break;
+                }
             }
         }
-        _log?.LogDebug("ReaderLoop stopped.");
-        try { ch.Writer.TryComplete(); }
-        catch { }
+        finally {
+            _log?.LogDebug("ReaderLoop stopped.");
+
+            try {
+                ch.Writer.TryComplete();
+            }
+            catch {
+                // Ignore completion races
+            }
+        }
     }
 
-    private void EnsureConnected()
-    {
-        if (_stream is null)
-        {
+    private void EnsureConnected() {
+        if (_stream is null) {
             throw new InvalidOperationException("Transport is not connected. Call Connect() first.");
         }
     }

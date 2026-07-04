@@ -21,32 +21,52 @@ namespace App
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             }).ConfigureLifecycleEvents(events =>
-            {
+{
 #if WINDOWS
-                events.AddWindows(windows =>{
-                    windows.OnPlatformMessage((window, args) =>{
-                        const uint WM_DEVICECHANGE = 0x0219;
+    events.AddWindows(windows =>
+    {
+        windows.OnClosed((window, args) =>
+        {
+            try
+            {
+                deviceManager?.Dispose();
+            }
+            catch
+            {
+                // App is closing. Do not throw from lifecycle cleanup.
+            }
+        });
 
-                        const long DBT_DEVNODES_CHANGED = 0x0007;
-                        const long DBT_DEVICEARRIVAL = 0x8000;
-                        const long DBT_DEVICEREMOVECOMPLETE = 0x8004;
+        windows.OnPlatformMessage((window, args) =>
+        {
+            const uint WM_DEVICECHANGE = 0x0219;
 
-                        if(args.MessageId != WM_DEVICECHANGE){
-                            return;
-                        }
+            const long DBT_DEVNODES_CHANGED = 0x0007;
+            const long DBT_DEVICEARRIVAL = 0x8000;
+            const long DBT_DEVICEREMOVECOMPLETE = 0x8004;
 
-                        long eventCode = (long)args.WParam;
+            if (args.MessageId != WM_DEVICECHANGE)
+            {
+                return;
+            }
 
-                        if(eventCode == DBT_DEVNODES_CHANGED || eventCode == DBT_DEVICEARRIVAL || eventCode == DBT_DEVICEREMOVECOMPLETE){
-                            deviceManager?.NotifyDeviceTopologyChanged();
-                        }
-                    });
-                });
+            long eventCode = (long)args.WParam;
+
+            if (eventCode == DBT_DEVNODES_CHANGED ||
+                eventCode == DBT_DEVICEARRIVAL ||
+                eventCode == DBT_DEVICEREMOVECOMPLETE)
+            {
+                deviceManager?.NotifyDeviceTopologyChanged();
+            }
+        });
+    });
 #endif
-            });
+});
 
 #if DEBUG
+            builder.Logging.SetMinimumLevel(LogLevel.Trace);
             builder.Logging.AddDebug();
+            builder.Logging.AddConsole();
 #endif
 
             builder.Services.AddSingleton<IDeviceManager>(sp => new DeviceManager(sp.GetService<ILoggerFactory>()));
