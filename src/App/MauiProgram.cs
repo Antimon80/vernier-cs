@@ -1,21 +1,65 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Maui.LifecycleEvents;
+using Backend.Discovery;
+using App.ViewModels;
+using App.Views;
+using App.Views.SpectroVis;
+using App.Views.LabQuest;
 
-namespace App {
-    public static class MauiProgram {
-        public static MauiApp CreateMauiApp() {
+namespace App
+{
+    public static class MauiProgram
+    {
+        public static MauiApp CreateMauiApp()
+        {
+            IDeviceManager? deviceManager = null;
+
             var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
-                .ConfigureFonts(fonts => {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+
+            builder.UseMauiApp<App>().ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            }).ConfigureLifecycleEvents(events =>
+            {
+#if WINDOWS
+                events.AddWindows(windows =>{
+                    windows.OnPlatformMessage((window, args) =>{
+                        const uint WM_DEVICECHANGE = 0x0219;
+
+                        const long DBT_DEVNODES_CHANGED = 0x0007;
+                        const long DBT_DEVICEARRIVAL = 0x8000;
+                        const long DBT_DEVICEREMOVECOMPLETE = 0x8004;
+
+                        if(args.MessageId != WM_DEVICECHANGE){
+                            return;
+                        }
+
+                        long eventCode = (long)args.WParam;
+
+                        if(eventCode == DBT_DEVNODES_CHANGED || eventCode == DBT_DEVICEARRIVAL || eventCode == DBT_DEVICEREMOVECOMPLETE){
+                            deviceManager?.NotifyDeviceTopologyChanged();
+                        }
+                    });
                 });
+#endif
+            });
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            builder.Services.AddSingleton<IDeviceManager>(sp => new DeviceManager(sp.GetService<ILoggerFactory>()));
+            builder.Services.AddTransient<DeviceSelectionViewModel>();
+            builder.Services.AddTransient<DeviceSelectionPage>();
+            builder.Services.AddTransient<SpectrometerPage>();
+            builder.Services.AddTransient<LabQuestPlaceholderPage>();
+
+            var app = builder.Build();
+
+            deviceManager = app.Services.GetRequiredService<IDeviceManager>();
+
+            return app;
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Backend.Measurements;
 using Backend.Protocol;
 using Backend.Transport;
+using Backend.Util;
 using Microsoft.Extensions.Logging;
 
 namespace Backend.Devices.GoDirect

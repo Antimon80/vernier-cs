@@ -1,4 +1,5 @@
 using Backend.Measurements;
+using Backend.Util;
 using Microsoft.Extensions.Logging;
 
 namespace Backend.Devices.GoDirect;

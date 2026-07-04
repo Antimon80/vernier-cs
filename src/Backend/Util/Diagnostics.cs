@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace Backend.Devices;
+namespace Backend.Util;
 
 /// <summary>
 /// Severity of a diagnostic entry produced by the backend.

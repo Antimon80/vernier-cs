@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="App.Views.LabQuest.LabQuestPlaceholderPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="LabQuest Mini">
+
+    <Grid Padding="40">
+        <Label
+            Text="LabQuest Mini verbunden. Betriebsfenster kommt später."
+            FontSize="22"
+            HorizontalOptions="Center"
+            VerticalOptions="Center" />
+    </Grid>
+</ContentPage>

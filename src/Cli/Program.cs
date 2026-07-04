@@ -1,7 +1,6 @@
 ﻿using Backend.Devices.GoDirect;
 using Backend.Discovery;
 using Backend.Measurements;
-using HidSharp;
 using Microsoft.Extensions.Logging;
 using ScottPlot.WinForms;
 using System.Globalization;

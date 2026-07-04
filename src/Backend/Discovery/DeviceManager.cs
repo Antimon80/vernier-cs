@@ -2,6 +2,7 @@ using Backend.Devices;
 using Backend.Devices.GoDirect;
 using Backend.Devices.LabQuest;
 using Backend.Transport;
+using Backend.Util;
 using HidSharp;
 using LibUsbDotNet.LibUsb;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,9 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     /// Protects the diagnostic collection.
     /// </summary>
     private readonly Lock _diagnosticLock = new();
+    private readonly Lock _deviceSnapshotLock = new();
+    private readonly Lock _refreshDebounceLock = new();
+    private CancellationTokenSource? _refreshDebounceCts;
 
     /// <summary>
     /// Cached last discovery result (device descriptors).
@@ -76,6 +80,19 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
         }
     }
 
+    public event Action<IReadOnlyList<DeviceDescriptor>>? DevicesChanged;
+
+    public IReadOnlyList<DeviceDescriptor> Devices
+    {
+        get
+        {
+            lock (_deviceSnapshotLock)
+            {
+                return [.. _devices];
+            }
+        }
+    }
+
     /// <summary>
     /// Enumerates all currently connected Vernier HID devices known to the catalog.
     ///
@@ -86,52 +103,121 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     public IReadOnlyList<DeviceDescriptor> ListDevices()
     {
         ThrowIfDisposed();
-        DiagnosticEntry.ClearDiagnostics(_diagnostics, DiagnosticCategory.Connection);
-        List<DeviceDescriptor> discovered = [];
 
-        foreach ((ushort pid, SpectrometerModel model) in DeviceCatalog.SpectrometerModels)
+        _gate.Wait();
+        try
+        {
+            DiagnosticEntry.ClearDiagnostics(_diagnostics, DiagnosticCategory.Discovery);
+            List<DeviceDescriptor> discovered = [];
+
+            foreach ((ushort pid, SpectrometerModel model) in DeviceCatalog.SpectrometerModels)
+            {
+                try
+                {
+                    IEnumerable<HidDevice> hidDevices = DeviceList.Local.GetHidDevices(DeviceCatalog.VernierVid, pid);
+
+                    foreach (HidDevice hidDevice in hidDevices)
+                    {
+                        discovered.Add(
+                            new DeviceDescriptor(
+                                Vid: DeviceCatalog.VernierVid,
+                                Pid: pid,
+                                Name: model.Name,
+                                DevicePath: hidDevice.DevicePath,
+                                TransportType: TransportType.Hid
+                            )
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DiagnosticEntry.AddDiagnostic(_diagnostics,
+                        code: "DEVICE.DISCOVERY.SPECTROMETER_ENUMERATION_FAILED",
+                        severity: DiagnosticSeverity.Warning,
+                        category: DiagnosticCategory.Discovery,
+                        message: $"Spectrometer of type '{model.Name}' could not be enumerated.",
+                        technicalDetails: $"VID=0x{DeviceCatalog.VernierVid:X4}; " +
+                            $"PID=0x{pid:X4}; " + $"Exception={ex}",
+                        operation: nameof(ListDevices),
+                        source: nameof(DeviceManager)
+                    );
+
+                    _log?.LogWarning(ex, "Enumeration failed for {Name} " +
+                        "(VID=0x{Vid:X4}, PID=0x{Pid:X4}).", model.Name, DeviceCatalog.VernierVid, pid);
+                }
+            }
+
+            DiscoverLabQuestInterfaces(discovered);
+
+            bool changed;
+            IReadOnlyList<DeviceDescriptor> snapshot;
+
+            lock (_deviceSnapshotLock)
+            {
+                changed = !SameDevices(_devices, discovered);
+                _devices = [.. discovered];
+                snapshot = [.. _devices];
+            }
+
+            _log?.LogInformation("Device discovery completed. Found {Count} supported devices(s).", _devices.Count);
+
+            if (changed)
+            {
+                DevicesChanged?.Invoke(snapshot);
+            }
+
+            return snapshot;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    public void NotifyDeviceTopologyChanged()
+    {
+        ThrowIfDisposed();
+
+        CancellationToken token;
+
+        lock (_refreshDebounceLock)
+        {
+            _refreshDebounceCts?.Cancel();
+            _refreshDebounceCts?.Dispose();
+
+            _refreshDebounceCts = new CancellationTokenSource();
+            token = _refreshDebounceCts.Token;
+        }
+
+        _ = Task.Run(async () =>
         {
             try
             {
-                IEnumerable<HidDevice> hidDevices = DeviceList.Local.GetHidDevices(DeviceCatalog.VernierVid, pid);
-
-                foreach (HidDevice hidDevice in hidDevices)
-                {
-                    discovered.Add(
-                        new DeviceDescriptor(
-                            Vid: DeviceCatalog.VernierVid,
-                            Pid: pid,
-                            Name: model.Name,
-                            DevicePath: hidDevice.DevicePath,
-                            TransportType: TransportType.Hid
-                        )
-                    );
-                }
+                await Task.Delay(1000, token).ConfigureAwait(false);
+                ListDevices();
+            }
+            catch (OperationCanceledException)
+            {
+                // Restart debounce.
             }
             catch (Exception ex)
             {
-                DiagnosticEntry.AddDiagnostic(_diagnostics,
-                    code: "DEVICE.DISCOVERY.SPECTROMETER_ENUMERATION_FAILED",
-                    severity: DiagnosticSeverity.Warning,
-                    category: DiagnosticCategory.Discovery,
-                    message: $"Spectrometer of type '{model.Name}' could not be enumerated.",
-                    technicalDetails: $"VID=0x{DeviceCatalog.VernierVid:X4}; " +
-                        $"PID=0x{pid:X4}; " + $"Exception={ex}",
-                    operation: nameof(ListDevices),
-                    source: nameof(DeviceManager)
-                );
-
-                _log?.LogWarning(ex, "Enumeration failed for {Name} " +
-                    "(VID=0x{Vid:X4}, PID=0x{Pid:X4}).", model.Name, DeviceCatalog.VernierVid, pid);
+                lock (_diagnosticLock)
+                {
+                    DiagnosticEntry.AddDiagnostic(
+                        _diagnostics,
+                        code: "DEVICE.DISCOVERY.HOTPLUG_REFRESH_FAILED",
+                        severity: DiagnosticSeverity.Error,
+                        category: DiagnosticCategory.Discovery,
+                        message: "Device list could not be refreshed after a USB device change.",
+                        technicalDetails: $"Exception={ex}",
+                        operation: nameof(NotifyDeviceTopologyChanged),
+                        source: nameof(DeviceManager),
+                        exception: ex,
+                        logger: _log);
+                }
             }
-        }
-
-        DiscoverLabQuestInterfaces(discovered);
-        _devices = discovered;
-
-        _log?.LogInformation("Device discovery completed. Found {Count} supported device(s).", _devices.Count);
-
-        return [.. _devices];
+        }, CancellationToken.None);
     }
 
     /// <summary>
@@ -207,7 +293,18 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
 
             if (_devices.Count == 0)
             {
-                ListDevices();
+                const string message = "No discovered device is available. Run device discovery before connecting.";
+
+                DiagnosticEntry.AddDiagnostic(_diagnostics,
+                    code: "DEVICE.CONNECTION.NO_DISCOVERY_SNAPSHOT",
+                    severity: DiagnosticSeverity.Error,
+                    category: DiagnosticCategory.Connection,
+                    message: message,
+                    operation: nameof(Connect),
+                    source: nameof(DeviceManager)
+                );
+
+                throw new InvalidOperationException(message);
             }
 
             if ((uint)deviceIndex >= (uint)_devices.Count)
@@ -296,6 +393,61 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
         {
             _gate.Release();
         }
+    }
+
+    /// <summary>
+    /// Disposes the manager by disconnecting any active device and releasing the semaphore gate.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        lock (_refreshDebounceLock)
+        {
+            _refreshDebounceCts?.Cancel();
+            _refreshDebounceCts?.Dispose();
+            _refreshDebounceCts = null;
+        }
+
+        _gate.Wait();
+
+        try
+        {
+            DisconnectCurrentDevice(createDiagnostics: false, CancellationToken.None)
+                .GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _log?.LogWarning(ex, "Device Manager disposal failed.");
+        }
+        finally
+        {
+            _disposed = true;
+            _gate.Release();
+            _gate.Dispose();
+        }
+    }
+
+    private static bool SameDevices(IReadOnlyList<DeviceDescriptor> left, IReadOnlyList<DeviceDescriptor> right)
+    {
+        if (left.Count != right.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < left.Count; i++)
+        {
+            if (left[i].Vid != right[i].Vid || left[i].Pid != right[i].Pid ||
+                left[i].DevicePath != right[i].DevicePath || left[i].TransportType != right[i].TransportType)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -536,34 +688,5 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
     private void ThrowIfDisposed()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-    }
-
-    /// <summary>
-    /// Disposes the manager by disconnecting any active device and releasing the semaphore gate.
-    /// </summary>
-    public void Dispose()
-    {
-        if (_disposed)
-        {
-            return;
-        }
-
-        _gate.Wait();
-
-        try
-        {
-            DisconnectCurrentDevice(createDiagnostics: false, CancellationToken.None)
-                .GetAwaiter().GetResult();
-        }
-        catch (Exception ex)
-        {
-            _log?.LogWarning(ex, "Device Manager disposal failed.");
-        }
-        finally
-        {
-            _disposed = true;
-            _gate.Release();
-            _gate.Dispose();
-        }
     }
 }
