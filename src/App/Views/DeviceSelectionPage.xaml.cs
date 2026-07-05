@@ -1,6 +1,7 @@
 using App.ViewModels;
 using App.Views.LabQuest;
 using App.Views.SpectroVis;
+using App.Resources.Strings;
 using Backend.Discovery;
 
 namespace App.Views;
@@ -57,7 +58,7 @@ public partial class DeviceSelectionPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("Verbindung fehlgeschlagen", ex.Message, "OK");
+            await DisplayAlertAsync(AppResources.DeviceSelection_ConnectionFailed, ex.Message, AppResources.Dialog_Ok);
         }
     }
 }

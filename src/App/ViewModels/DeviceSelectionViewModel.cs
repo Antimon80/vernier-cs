@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
-using App.Models;
-using Backend.Discovery;
 using CommunityToolkit.Mvvm.ComponentModel;
+using App.Models;
+using App.Resources.Strings;
+using Backend.Discovery;
+using App.Services;
 
 namespace App.ViewModels;
 
@@ -9,12 +11,13 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
 {
     private readonly IDeviceManager _deviceManager;
     private bool _disposed;
+    private readonly LocalizationService _localization;
 
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
-    public partial string StatusText { get; set; } = "Suche angeschlossene Geräte ...";
+    public partial string StatusText { get; set; } = AppResources.DeviceSelection_Searching;
 
     public ObservableCollection<DeviceSelectionItem> Devices { get; } = [];
 
@@ -22,10 +25,13 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
 
     public bool HasDiagnostics => Diagnostics.Count > 0;
 
-    public DeviceSelectionViewModel(IDeviceManager deviceManager)
+    public DeviceSelectionViewModel(IDeviceManager deviceManager, LocalizationService localization)
     {
         _deviceManager = deviceManager;
+        _localization = localization;
+
         _deviceManager.DevicesChanged += OnDevicesChanged;
+        _localization.LanguageChanged += OnLanguageChanged;
     }
 
     /// <summary>
@@ -43,7 +49,7 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         try
         {
             IsBusy = true;
-            StatusText = "Suche angeschlossene Geräte ...";
+            StatusText = AppResources.DeviceSelection_Searching;
 
             IReadOnlyList<DeviceDescriptor> found =
                 await Task.Run(() => _deviceManager.ListDevices());
@@ -58,7 +64,7 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
 
             StatusText = Diagnostics.Count > 0
                 ? Diagnostics[^1].Message
-                : $"Gerätesuche fehlgeschlagen: {ex.GetType().Name}: {ex.Message}";
+                : string.Format(AppResources.DeviceSelection_DiscoveryFailed, ex.GetType().Name, ex.Message);
         }
         finally
         {
@@ -79,15 +85,15 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         try
         {
             IsBusy = true;
-            StatusText = "Verbinde Gerät ...";
+            StatusText = AppResources.DeviceSelection_Connecting;
 
             await _deviceManager.Connect(deviceIndex);
 
             RefreshDiagnostics();
 
             StatusText = _deviceManager.CurrentDevice is null
-                ? "Gerät verbunden."
-                : $"Verbunden mit {_deviceManager.CurrentDevice.DeviceName}.";
+                ? AppResources.DeviceSelection_Conntected
+                : string.Format(AppResources.DeviceSelection_ConnectedToDevice, _deviceManager.CurrentDevice.DeviceName);
         }
         catch (Exception ex)
         {
@@ -95,7 +101,7 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
 
             StatusText = Diagnostics.Count > 0
                 ? Diagnostics[^1].Message
-                : $"Verbindung fehlgeschlagen: {ex.GetType().Name}: {ex.Message}";
+                : string.Format(AppResources.DeviceSelection_ConnectionFailed, ex.GetType().Name, ex.Message);
 
             throw;
         }
@@ -153,10 +159,18 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
     {
         StatusText = deviceCount switch
         {
-            0 => "Kein unterstütztes Gerät gefunden.",
-            1 => "1 unterstütztes Gerät gefunden.",
-            _ => $"{deviceCount} unterstützte Geräte gefunden."
+            0 => AppResources.DeviceSelection_NoDevicesFound,
+            1 => AppResources.DeviceSelection_DeviceFoundSingular,
+            _ => string.Format(AppResources.DeviceSelection_DeviceFoundPlural, deviceCount)
         };
+    }
+
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        if (!IsBusy)
+        {
+            StatusText = AppResources.DeviceSelection_Searching;
+        }
     }
 
     public void Dispose()
@@ -167,6 +181,7 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         }
 
         _deviceManager.DevicesChanged -= OnDevicesChanged;
+        _localization.LanguageChanged -= OnLanguageChanged;
         _disposed = true;
     }
 }

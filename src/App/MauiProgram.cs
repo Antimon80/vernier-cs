@@ -5,6 +5,7 @@ using App.ViewModels;
 using App.Views;
 using App.Views.SpectroVis;
 using App.Views.LabQuest;
+using App.Services;
 
 namespace App
 {
@@ -72,8 +73,11 @@ namespace App
             builder.Services.AddSingleton<IDeviceManager>(sp => new DeviceManager(sp.GetService<ILoggerFactory>()));
             builder.Services.AddTransient<DeviceSelectionViewModel>();
             builder.Services.AddTransient<DeviceSelectionPage>();
+
             builder.Services.AddTransient<SpectrometerPage>();
             builder.Services.AddTransient<LabQuestPlaceholderPage>();
+
+            builder.Services.AddSingleton<LocalizationService>();
 
             var app = builder.Build();
 
