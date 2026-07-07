@@ -3,8 +3,7 @@ using Microsoft.Maui.LifecycleEvents;
 using Backend.Discovery;
 using App.ViewModels;
 using App.Views;
-using App.Views.SpectroVis;
-using App.Views.LabQuest;
+using App.Views.GoDirect;
 using App.Services;
 
 namespace App
@@ -74,8 +73,8 @@ namespace App
             builder.Services.AddTransient<DeviceSelectionViewModel>();
             builder.Services.AddTransient<DeviceSelectionPage>();
 
-            builder.Services.AddTransient<SpectrometerPage>();
-            builder.Services.AddTransient<LabQuestPlaceholderPage>();
+            builder.Services.AddTransient<MeasurementPage>();
+            builder.Services.AddTransient<MeasurementViewModel>();
 
             builder.Services.AddSingleton<LocalizationService>();
 

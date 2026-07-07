@@ -22,8 +22,10 @@
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
         <value>[base64 mime encoded serialized .NET Framework object]</value>
     </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing"
+  mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework
+  object]</value>
         <comment>This is a comment</comment>
     </data>
 
@@ -59,46 +61,47 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
       <xsd:complexType>
         <xsd:choice maxOccurs="unbounded">
           <xsd:element name="metadata">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string"/>
-              <xsd:attribute name="type" type="xsd:string"/>
-              <xsd:attribute name="mimetype" type="xsd:string"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="assembly">
             <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string"/>
-              <xsd:attribute name="name" type="xsd:string"/>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="data">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="resheader">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -112,11 +115,15 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+
+  <!-- DeviceSelection -->
   <data name="DeviceSelection_Title" xml:space="preserve">
     <value>Select device</value>
     <comment/>
@@ -153,6 +160,10 @@
     <value>Device connected successfully.</value>
     <comment/>
   </data>
+  <data name="DeviceSelection_ConnectedToDevice" xml:space="preserve">
+    <value>Connected to {0}</value>
+    <comment/>
+  </data>
   <data name="DeviceSelection_ConnectionFailed" xml:space="preserve">
     <value>Connection failed: {0}: {1}</value>
     <comment/>
@@ -161,12 +172,10 @@
     <value>Device discovery failed: {0}: {1}</value>
     <comment/>
   </data>
+
+  <!-- Common Dialogs -->
   <data name="Dialog_ErrorTitle" xml:space="preserve">
     <value>Error</value>
-    <comment/>
-  </data>
-  <data name="Dialog_ConnectionFailedTitle" xml:space="preserve">
-    <value>Connection failed</value>
     <comment/>
   </data>
   <data name="Dialog_Ok" xml:space="preserve">
@@ -177,6 +186,8 @@
     <value>Cancel</value>
     <comment/>
   </data>
+
+  <!-- Status -->
   <data name="Spectrometer_NotCalibrated" xml:space="preserve">
     <value>The spectrometer is not calibrated yet.</value>
     <comment/>
@@ -189,12 +200,46 @@
     <value>Calibration:</value>
     <comment/>
   </data>
-  <data name="Spectrometer_StartMeasurement" xml:space="preserve">
+  <data name="Spectrometer_WhiteLamp" xml:space="preserve">
+    <value>White light lamp:</value>
+    <comment/>
+  </data>
+
+  <!-- Tooltips -->
+   <data name="App_OpenFile" xml:space="preserve">
+    <value>Open file</value>
+    <comment/>
+   </data>
+   <data name="App_SaveFile" xml:space="preserve">
+    <value>Save file</value>
+    <comment/>
+   </data>
+   <data name="App_SaveFileAs" xml:space="preserve">
+    <value>Save file as</value>
+    <comment/>
+   </data>
+   <data name="App_Print" xml:space="preserve">
+    <value>Print</value>
+    <comment/>
+   </data>
+   <data name="App_ExportData" xml:space="preserve">
+    <value>Export data</value>
+    <comment/>
+   </data>
+   <data name="App_ImportData" xml:space="preserve">
+    <value>Import data</value>
+    <comment/>
+   </data>
+  <data name="App_StartMeasurement" xml:space="preserve">
     <value>Start measurement</value>
     <comment/>
   </data>
-  <data name="Spectrometer_StopMeasurement" xml:space="preserve">
+  <data name="App_StopMeasurement" xml:space="preserve">
     <value>Stop measurement</value>
+    <comment/>
+  </data>
+  <data name="App_KeepDataPoint" xml:space="preserve">
+    <value>Keep datapoint</value>
     <comment/>
   </data>
   <data name="Spectrometer_Calibrate" xml:space="preserve">
@@ -205,12 +250,76 @@
     <value>Select operating mode</value>
     <comment/>
   </data>
-  <data name="Spectrometer_AcquisitionMode" xml:space="preserve">
+  <data name="App_AcquisitionMode" xml:space="preserve">
     <value>Select acquisition mode</value>
     <comment/>
   </data>
-  <data name="DeviceSelection_ConnectedToDevice" xml:space="preserve">
-    <value>Connected to {0}</value>
+  <data name="App_CrossHairs" xml:space="preserve">
+    <value>Crosshairs</value>
     <comment/>
   </data>
+  <data name="App_DataManagement" xml:space="preserve">
+    <value>Manage data</value>
+    <comment/>
+  </data>
+  <data name="App_DataAnalysis" xml:space="preserve">
+    <value>Analyze data</value>
+    <comment/>
+  </data>
+  <data name="App_Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment/>
+  </data>
+  <data name="App_Help" xml:space="preserve">
+    <value>Help</value>
+    <comment/>
+  </data>
+
+  <!-- Chart -->
+  <data name="Spectrometer_FullSpectrum" xml:space="preserve">
+    <value>Full spectrum</value>
+    <comment/>
+  </data>
+  <data name="App_TimeResolved" xml:space="preserve">
+    <value>Time-resolved measurement</value>
+    <comment/>
+  </data>
+  <data name="App_EventTriggered" xml:space="preserve">
+    <value>Event-triggered measurement</value>
+    <comment/>
+  </data>
+  <data name="Spectrometer_Wavelength" xml:space="preserve">
+    <value>Wavelength [nm]</value>
+    <comment/>
+  </data>
+  <data name="App_TimeAxis" xml:space="preserve">
+    <value>Time [s]</value>
+    <comment/>
+  </data>
+  <data name="Spectrometer_ConcentrationAxis" xml:space="preserve">
+    <value>Concentration</value>
+    <comment/>
+  </data>
+  <data name="Spectrometer_RawCounts" xml:space="preserve">
+    <value>ADC counts [counts]</value>
+    <comment/>
+  </data>
+  <data name="Spectrometer_Intensity" xml:space="preserve">
+    <value>Intensity [rel.]</value>
+    <comment/>
+  </data>
+  <data name="Spectrometer_Transmittance" xml:space="preserve">
+    <value>Transmittance [%]</value>
+    <comment/>
+  </data>
+  <data name="Spectrometer_Absorbance" xml:space="preserve">
+    <value>Absorbance</value>
+    <comment/>
+  </data>
+
+  <!-- Miscellaneous -->
+  <data name="App_AppName" xml:space="preserve">
+    <value>Antimon</value>
+    <comment/>
+   </data>
 </root>

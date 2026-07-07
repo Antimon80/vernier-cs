@@ -1,6 +1,4 @@
 using App.ViewModels;
-using App.Views.LabQuest;
-using App.Views.SpectroVis;
 using App.Resources.Strings;
 using Backend.Discovery;
 
@@ -49,9 +47,7 @@ public partial class DeviceSelectionPage : ContentPage
 
             IServiceProvider services = Handler!.MauiContext!.Services;
 
-            Page nextPage = _deviceManager.CurrentSpectrometer is not null
-                ? services.GetRequiredService<SpectrometerPage>()
-                : services.GetRequiredService<LabQuestPlaceholderPage>();
+            Page nextPage = services.GetRequiredService<MeasurementPage>();
 
             NavigationPage.SetHasBackButton(nextPage, false);
             await Navigation.PushAsync(nextPage);

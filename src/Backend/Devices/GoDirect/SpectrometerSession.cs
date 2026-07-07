@@ -63,6 +63,21 @@ public sealed class SpectrometerSession(ILogger<SpectrometerSession>? log = null
     /// </summary>
     public bool IsCalibrated { get; internal set; }
 
+    public bool WhiteLampIsOn { get; internal set; }
+    public bool? WhiteLampCheckPassed { get; internal set; }
+    public TimeSpan WhiteLampWarmupRequired { get; internal set; } = TimeSpan.FromMinutes(5);
+    public TimeSpan WhiteLampWarmupElapsed { get; internal set; }
+    public TimeSpan WhiteLampWarmupRemaining
+    {
+        get
+        {
+            TimeSpan remaining = WhiteLampWarmupRequired - WhiteLampWarmupElapsed;
+            return remaining <= TimeSpan.Zero ? TimeSpan.Zero : remaining;
+        }
+    }
+
+    public bool IsWhiteLampWarmedUp => WhiteLampWarmupRemaining == TimeSpan.Zero;
+
     public ushort? ModelCode { get; internal set; }
     public List<DiagnosticEntry> Diagnostics => _diagnostics;
 

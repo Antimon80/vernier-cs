@@ -18,7 +18,7 @@ public interface ISpectrometer : IDevice
     SpectrometerSession Session { get; }
 
     Task Initialize(CancellationToken ct = default);
-    Task Calibrate(CancellationToken ct = default);
+    Task Calibrate(bool skipWarmup, CancellationToken ct = default);
     Task SetIntegrationTime(int ms, CancellationToken ct = default);
     Task SetOperatingMode(OperatingMode mode, CancellationToken ct = default);
     void StartStreaming();

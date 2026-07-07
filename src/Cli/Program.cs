@@ -187,19 +187,11 @@ internal static class Program
                         Console.WriteLine($"OK: integration time set to " + $"{spectrometer.Session.IntegrationTime} ms.");
                         break;
 
-                    case "warmup":
-                        RequireArgs(parts, 2);
-                        spectrometer ??= EnsureSpectrometerConnected(deviceManager);
-
-                        spectrometer.SkipWarmup = ParseOnOff(parts[1]);
-                        Console.WriteLine($"OK: warm-up skip is " + $"{(spectrometer.SkipWarmup ? "enabled" : "disabled")}.");
-                        break;
-
                     case "cal":
                     case "calibrate":
                         spectrometer ??= EnsureSpectrometerConnected(deviceManager);
 
-                        await spectrometer.Calibrate();
+                        await spectrometer.Calibrate(true);
 
                         Console.WriteLine("OK: calibrated.");
                         PrintWarnings(spectrometer);
@@ -245,7 +237,6 @@ internal static class Program
         Console.WriteLine(" mode<abs|trans|f405|f500|int|raw>   - select operating mode");
         Console.WriteLine(" it <ms>                             - set integration time");
         Console.WriteLine(" cal                                 - calibrate (abs/trans only, needs white lamp and blank)");
-        Console.WriteLine(" warmup <on|off>                     - skip white lamp warmup wait (on=normal, off=skip)");
         Console.WriteLine(" meas                                - acquire single spectrum + show chart");
         Console.WriteLine(" disconnect                          - disconnect current device");
         Console.WriteLine(" help                                - show help");
@@ -308,16 +299,6 @@ internal static class Program
             "int" or "intensity" => OperatingMode.Intensity,
             "raw" or "rawcounts" => OperatingMode.RawCounts,
             _ => throw new ArgumentOutOfRangeException(nameof(s), $"Unknown mode '{s}.")
-        };
-    }
-
-    private static bool ParseOnOff(string value)
-    {
-        return value.ToLowerInvariant() switch
-        {
-            "on" or "true" => false,
-            "off" or "false" => true,
-            _ => throw new ArgumentOutOfRangeException(nameof(value), "Expected 'on' or 'off'.")
         };
     }
 

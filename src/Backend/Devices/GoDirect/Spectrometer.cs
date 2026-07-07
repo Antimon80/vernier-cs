@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Principal;
 using Backend.Measurements;
 using Backend.Protocol;
 using Backend.Transport;
@@ -41,6 +42,8 @@ namespace Backend.Devices.GoDirect
         // Required cumulative ON-time of the white lamp for calibration.
         private static readonly TimeSpan CalibrationWarmup = TimeSpan.FromMinutes(5);
         private bool _skipWarmup;
+        private CancellationTokenSource? _warmupStatusCts;
+        private Task? _warmupStatusTask;
 
         // CCD linearity check parameters
         private const int LinearityMinRun = 64;
@@ -176,11 +179,15 @@ namespace Backend.Devices.GoDirect
                     await _proto.SetLamp(LampMode.Fluo500, false, ct).ConfigureAwait(false);
                 }
 
+                StopWarmupStatusLoop();
+
                 _whiteIsOn = false;
                 if (_whiteOnStopwatch.IsRunning)
                 {
                     _whiteOnStopwatch.Stop();
                 }
+
+                UpdateWhiteLampSessionState();
 
                 Session.IsCalibrated = false;
                 Session.IsInitialized = false;
@@ -222,6 +229,11 @@ namespace Backend.Devices.GoDirect
         public async Task Initialize(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
+
+            Session.WhiteLampCheckPassed = null;
+            Session.WhiteLampIsOn = false;
+            Session.WhiteLampWarmupRequired = CalibrationWarmup;
+            Session.WhiteLampWarmupElapsed = TimeSpan.Zero;
 
             Session.IsInitialized = false;
             Session.IsCalibrated = false;
@@ -280,7 +292,7 @@ namespace Backend.Devices.GoDirect
         /// - Finds an integration time that yields a target mean ROI ratio (TargetLo..TargetHi).
         /// - Captures averaged blank (white ON) and dark (white OFF) spectra.
         /// </summary>
-        public async Task Calibrate(CancellationToken ct = default)
+        public async Task Calibrate(bool skipWarmup, CancellationToken ct = default)
         {
             await RunWithStreamingPaused(async () =>
             {
@@ -298,7 +310,7 @@ namespace Backend.Devices.GoDirect
                 await SetLampMode(LampMode.White, ct).ConfigureAwait(false);
 
                 // Warm-up: cumulative ON time
-                await EnsureWarmUp(ct).ConfigureAwait(false);
+                await EnsureWarmUp(skipWarmup, ct).ConfigureAwait(false);
 
                 // Find optimal integration time for blank/reference (5 - 6 iterations)
                 (int tFound, double ratio, bool inBand) = await FindIntegrationTimeForTargetBand(
@@ -310,7 +322,7 @@ namespace Backend.Devices.GoDirect
                 if (!inBand)
                 {
                     DiagnosticEntry.AddDiagnostic(Session.Diagnostics,
-                            code: "SPECTROVIS.CALIBRATION.TARGET_BAND_NOT_REACED",
+                            code: "SPECTROVIS.CALIBRATION.TARGET_BAND_NOT_REACHED",
                             severity: DiagnosticSeverity.Warning,
                             category: DiagnosticCategory.Calibration,
                             message: "The calibration target range could not be reached",
@@ -337,8 +349,8 @@ namespace Backend.Devices.GoDirect
                 Session.IsCalibrated = true;
                 _processor.Reset();
 
-                _log?.LogInformation("Calibration completed. t={T}ms, blank/dark average over {N} spectra, warmup={WarmupSeconds}s",
-                Session.IntegrationTime, CalibrationAverages, (int)_whiteOnStopwatch.Elapsed.TotalSeconds);
+                _log?.LogInformation("Calibration completed. t={T}ms, blank/dark average over {N} spectra, warmup={WarmupSeconds}s, skipWarmup={SkipWarmup}",
+                Session.IntegrationTime, CalibrationAverages, (int)_whiteOnStopwatch.Elapsed.TotalSeconds, skipWarmup);
             }, ct).ConfigureAwait(false);
         }
 
@@ -564,6 +576,17 @@ namespace Backend.Devices.GoDirect
                     _whiteOnStopwatch.Stop();
                 }
             }
+
+            UpdateWhiteLampSessionState();
+
+            if (_whiteIsOn && !Session.IsWhiteLampWarmedUp)
+            {
+                StartWarmupStatusLoop();
+            }
+            else
+            {
+                StopWarmupStatusLoop();
+            }
         }
 
         /// <summary>
@@ -589,11 +612,12 @@ namespace Backend.Devices.GoDirect
         /// Ensures the white lamp has been on for at least <see cref="RequiredWarmup"/>.
         /// Uses cumulative on-time (Stopwatch) rather than wall time.
         /// </summary>
-        private async Task EnsureWarmUp(CancellationToken ct)
+        private async Task EnsureWarmUp(bool skipWarmup, CancellationToken ct)
         {
-            if (SkipWarmup)
+            if (skipWarmup)
             {
                 _log?.LogInformation("White lamp warm-up skipped by configuration.");
+                UpdateWhiteLampSessionState();
                 return;
             }
 
@@ -607,17 +631,81 @@ namespace Backend.Devices.GoDirect
                 await SetWhiteLamp(on: true, countWarmupTime: true, ct).ConfigureAwait(false);
             }
 
-            TimeSpan onTime = _whiteOnStopwatch.Elapsed;
-            if (onTime >= CalibrationWarmup)
+            UpdateWhiteLampSessionState();
+
+            TimeSpan remaining = Session.WhiteLampWarmupRemaining;
+            if (remaining == TimeSpan.Zero)
             {
                 return;
             }
 
-            TimeSpan remaining = CalibrationWarmup - onTime;
             _log?.LogInformation("White lamp warm-up: elapsed={Elapsed}s, remaining={Remaining}s",
-                (int)onTime.TotalSeconds, (int)remaining.TotalSeconds);
+                (int)Session.WhiteLampWarmupElapsed.TotalSeconds, (int)remaining.TotalSeconds);
 
             await Task.Delay(remaining, ct).ConfigureAwait(false);
+
+            UpdateWhiteLampSessionState();
+        }
+
+        private void UpdateWhiteLampSessionState()
+        {
+            Session.WhiteLampIsOn = _whiteIsOn;
+            Session.WhiteLampWarmupRequired = CalibrationWarmup;
+            Session.WhiteLampWarmupElapsed = _whiteOnStopwatch.Elapsed;
+        }
+
+        private void StartWarmupStatusLoop()
+        {
+            if (_warmupStatusTask is not null && !_warmupStatusTask.IsCompleted)
+            {
+                return;
+            }
+
+            _warmupStatusCts = new CancellationTokenSource();
+            CancellationToken ct = _warmupStatusCts.Token;
+
+            _warmupStatusTask = Task.Run(async () =>
+            {
+                try
+                {
+                    while (!ct.IsCancellationRequested)
+                    {
+                        UpdateWhiteLampSessionState();
+
+                        if (!_whiteIsOn || Session.IsWhiteLampWarmedUp)
+                        {
+                            break;
+                        }
+
+                        await Task.Delay(250, ct).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // expected when lamp is switched off or device disconnects
+                }
+                finally
+                {
+                    UpdateWhiteLampSessionState();
+                }
+            }, CancellationToken.None);
+        }
+
+        private void StopWarmupStatusLoop()
+        {
+            try
+            {
+                _warmupStatusCts?.Cancel();
+            }
+            catch
+            {
+                // ignore cancellation races during shutdown
+            }
+            finally
+            {
+                _warmupStatusCts?.Dispose();
+                _warmupStatusCts = null;
+            }
         }
 
         // Private helpers: acquisition averaging
@@ -1116,6 +1204,8 @@ namespace Backend.Devices.GoDirect
                         operation: "White-lamp response check",
                         source: nameof(Spectrometer));
 
+                    Session.WhiteLampCheckPassed = false;
+
                     return false;
                 }
 
@@ -1149,9 +1239,13 @@ namespace Backend.Devices.GoDirect
                         operation: "White-lamp response check",
                         source: nameof(Spectrometer));
 
+                    Session.WhiteLampCheckPassed = false;
+
                     return false;
                 }
 
+                Session.WhiteLampCheckPassed = true;
+                UpdateWhiteLampSessionState();
                 return true;
             }
             catch (OperationCanceledException)
@@ -1169,6 +1263,8 @@ namespace Backend.Devices.GoDirect
                     operation: "White-lamp response check",
                     source: nameof(Spectrometer),
                     exception: ex);
+
+                Session.WhiteLampCheckPassed = false;
 
                 return false;
             }

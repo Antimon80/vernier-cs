@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView x:Class="App.Views.GoDirect.SpectroVisMeasurementView"
+ xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+ xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+ xmlns:strings="clr-namespace:App.Resources.Strings"
+ BackgroundColor="White">
+  <Grid RowDefinitions="Auto,*,Auto" Padding="8" RowSpacing="8">
+    <!-- Toolbar -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,30,Auto,Auto,30,Auto,Auto,30,Auto,Auto,Auto,30,*,Auto,Auto" ColumnSpacing="8" VerticalOptions="Center">
+      <ImageButton Grid.Column="0" Source="open.png" BackgroundColor="Transparent" Command="{Binding OpenFileCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_OpenFile}"/>
+      <ImageButton Grid.Column="1" Source="save.png" BackgroundColor="Transparent" Command="{Binding SaveCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_SaveFile}"/>
+      <ImageButton Grid.Column="2" Source="save_as.png" BackgroundColor="Transparent" Command="{Binding SaveAsCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_SaveFileAs}"/>
+      <ImageButton Grid.Column="3" Source="print.png" BackgroundColor="Transparent" Command="{Binding PrintCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_Print}"/>
+      <ImageButton Grid.Column="4" Source="export.png" BackgroundColor="Transparent" Command="{Binding ExportCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_ExportData}"/>
+      <ImageButton Grid.Column="5" Source="import.png" BackgroundColor="Transparent" Command="{Binding ImportCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_ImportData}"/>
+      <ImageButton Grid.Column="7" Source="operating_mode.png" BackgroundColor="Transparent" Command="{Binding OpenOperatingModeCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.Spectrometer_OperatingMode}"/>
+      <ImageButton Grid.Column="8" Source="acquisition_mode.png" BackgroundColor="Transparent" Command="{Binding OpenAcquisitionModeCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_AcquisitionMode}"/>
+      <ImageButton Grid.Column="10" Source="calibrate.png" BackgroundColor="Transparent" Command="{Binding CalibrateCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.Spectrometer_Calibrate}"/>
+      <ImageButton Grid.Column="11" Source="{Binding RecordingIcon}" BackgroundColor="Transparent" Command="{Binding ToggleRecordingCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_StartMeasurement}"/>
+      <ImageButton Grid.Column="13" Source="crosshairs.png" BackgroundColor="Transparent" Command="{Binding OpenCursorCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_CrossHairs}"/>
+      <ImageButton Grid.Column="14" Source="data.png" BackgroundColor="Transparent" Command="{Binding OpenDataManagerCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_DataManagement}"/>
+      <ImageButton Grid.Column="15" Source="analyze.png" BackgroundColor="Transparent" Command="{Binding OpenProcessingCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_DataAnalysis}"/>
+      <ImageButton Grid.Column="18" Source="settings.png" BackgroundColor="Transparent" Command="{Binding OpenSettingsCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_Settings}"/>
+      <ImageButton Grid.Column="19" Source="help.png" BackgroundColor="Transparent" Command="{Binding OpenHelpCommand}" ToolTipProperties.Text="{x:Static strings:AppResources.App_Help}"/>
+    </Grid>
+    <!-- Main measurement area -->
+    <Grid Grid.Row="1" ColumnDefinitions="*,8,260" ColumnSpacing="8">
+      <!-- Chart area placeholder -->
+      <Border Grid.Column="0" Stroke="Black" StrokeThickness="1" BackgroundColor="White" Padding="8">
+        <Grid RowDefinitions="Auto,*">
+          <Label Grid.Row="0" Text="{Binding ChartTitle}" FontAttributes="Bold" FontSize="20" HorizontalOptions="Center"/>
+          <Grid Grid.Row="1" ColumnDefinitions="Auto,*" RowDefinitions="*" Padding="4">
+            <Label Grid.Column="0" Text="{Binding YAxisTitle}" Rotation="-90" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" VerticalOptions="Center"/>
+            <Grid Grid.Column="1" RowDefinitions="*,Auto,Auto">
+              <Border Grid.Row="0" Stroke="Black" StrokeThickness="1" BackgroundColor="White">
+                <Label Text="Diagramm" TextColor="Gray" HorizontalOptions="Center" VerticalOptions="Center"/>
+              </Border>
+              <!-- Placeholder for the spectral strip. Real drawing comes later. -->
+              <BoxView Grid.Row="1" HeightRequest="18" Margin="0,4,0,0" IsVisible="{Binding ShowSpectrumStrip}" BackgroundColor="LightGray"/>
+              <Label Grid.Row="2" Text="{Binding XAxisTitle}" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" Margin="0,4,0,0"/>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Border>
+      <BoxView Grid.Column="1" WidthRequest="2" BackgroundColor="LightGray"/>
+      <!-- Table area placeholder -->
+      <Border Grid.Column="2" Stroke="Black" StrokeThickness="1" BackgroundColor="#eeeeee">
+        <Grid RowDefinitions="60,*">
+          <Grid Grid.Row="0" ColumnDefinitions="*,*" BackgroundColor="#dddddd">
+            <Label Grid.Column="0" Text="λ&#x0a;[nm]" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center"/>
+            <Label Grid.Column="1" Text="ADC&#x0a;[counts]" FontAttributes="Bold" HorizontalTextAlignment="Center" VerticalTextAlignment="Center"/>
+          </Grid>
+          <CollectionView Grid.Row="1">
+            <CollectionView.EmptyView>
+              <Label Text="Noch keine Daten" TextColor="Gray" HorizontalOptions="Center" VerticalOptions="Center"/>
+            </CollectionView.EmptyView>
+          </CollectionView>
+        </Grid>
+      </Border>
+    </Grid>
+    <!-- Status bar -->
+    <Grid Grid.Row="2" ColumnDefinitions="Auto,Auto,40,Auto,Auto,40,Auto,Auto,*" ColumnSpacing="10" Padding="8,4">
+      <Label Grid.Column="0" Text="{x:Static strings:AppResources.Spectrometer_IsInitialized}" FontSize="18" VerticalOptions="Center"/>
+      <Ellipse Grid.Column="1" WidthRequest="24" HeightRequest="24" Fill="{Binding InitializationStatusColor}" Stroke="Black" StrokeThickness="1" VerticalOptions="Center"/>
+      <Label Grid.Column="3" Text="{x:Static strings:AppResources.Spectrometer_WhiteLamp}" FontSize="18" VerticalOptions="Center"/>
+      <Ellipse Grid.Column="4" WidthRequest="24" HeightRequest="24" Fill="{Binding WhiteLampStatusColor}" Stroke="Black" StrokeThickness="1" VerticalOptions="Center"/>
+      <Label Grid.Column="6" Text="{x:Static strings:AppResources.Spectrometer_IsCalibrated}" FontSize="18" VerticalOptions="Center"/>
+      <Ellipse Grid.Column="7" WidthRequest="24" HeightRequest="24" Fill="{Binding CalibrationStatusColor}" Stroke="Black" StrokeThickness="1" VerticalOptions="Center"/>
+    </Grid>
+  </Grid>
+</ContentView>
