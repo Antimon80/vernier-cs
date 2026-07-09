@@ -172,6 +172,10 @@
     <value>Device discovery failed: {0}: {1}</value>
     <comment/>
   </data>
+  <data name="DeviceSelection_InitializationFailed" xml:space="preserve">
+    <value>Initialisierung fehlgeschlagen: {0}: {1}</value>
+    <comment/>
+  </data>
 
   <!-- Common Dialogs -->
   <data name="Dialog_ErrorTitle" xml:space="preserve">
@@ -186,13 +190,17 @@
     <value>Cancel</value>
     <comment/>
   </data>
+  <data name="Dialog_CannotCalibrate" xml:space="preserve">
+    <value>Calibration is not available for the current device state</value>
+    <comment/>
+  </data>
 
   <!-- Status -->
   <data name="Spectrometer_NotCalibrated" xml:space="preserve">
     <value>The spectrometer is not calibrated yet.</value>
     <comment/>
   </data>
-  <data name="Spectrometer_IsInitialized" xml:space="preserve">
+  <data name="Device_IsInitialized" xml:space="preserve">
     <value>Initialization:</value>
     <comment/>
   </data>
@@ -230,19 +238,15 @@
     <value>Import data</value>
     <comment/>
    </data>
-  <data name="App_StartMeasurement" xml:space="preserve">
-    <value>Start measurement</value>
+  <data name="Device_ToggleMeasurement" xml:space="preserve">
+    <value>Start/stop measurement</value>
     <comment/>
   </data>
-  <data name="App_StopMeasurement" xml:space="preserve">
-    <value>Stop measurement</value>
-    <comment/>
-  </data>
-  <data name="App_KeepDataPoint" xml:space="preserve">
+  <data name="Device_KeepDataPoint" xml:space="preserve">
     <value>Keep datapoint</value>
     <comment/>
   </data>
-  <data name="Spectrometer_Calibrate" xml:space="preserve">
+  <data name="Device_Calibrate" xml:space="preserve">
     <value>Calibrate</value>
     <comment/>
   </data>
@@ -250,7 +254,7 @@
     <value>Select operating mode</value>
     <comment/>
   </data>
-  <data name="App_AcquisitionMode" xml:space="preserve">
+  <data name="Device_AcquisitionMode" xml:space="preserve">
     <value>Select acquisition mode</value>
     <comment/>
   </data>
@@ -280,11 +284,11 @@
     <value>Full spectrum</value>
     <comment/>
   </data>
-  <data name="App_TimeResolved" xml:space="preserve">
+  <data name="Device_TimeResolved" xml:space="preserve">
     <value>Time-resolved measurement</value>
     <comment/>
   </data>
-  <data name="App_EventTriggered" xml:space="preserve">
+  <data name="Device_EventTriggered" xml:space="preserve">
     <value>Event-triggered measurement</value>
     <comment/>
   </data>

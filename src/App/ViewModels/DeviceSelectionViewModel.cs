@@ -4,6 +4,8 @@ using App.Models;
 using App.Resources.Strings;
 using Backend.Discovery;
 using App.Services;
+using Backend.Devices;
+using Backend.Util;
 
 namespace App.ViewModels;
 
@@ -88,11 +90,32 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
             StatusText = AppResources.DeviceSelection_Connecting;
 
             await _deviceManager.Connect(deviceIndex);
+            IDevice? device = _deviceManager.CurrentDevice;
+
+            if (device is null)
+            {
+                RefreshDiagnostics();
+                StatusText = AppResources.DeviceSelection_ConnectionFailed;
+                return;
+            }
+
+            await device.Initialize();
+
+            if (!device.IsInitialized)
+            {
+                RefreshDiagnostics();
+                StatusText = Diagnostics.Count > 0 
+                    ? Diagnostics[^1].Message 
+                    : string.Format(AppResources.DeviceSelection_InitializationFailed, _deviceManager.CurrentDevice?.DeviceName);
+                return;
+            }
+
+            device.StartMeasurement();
 
             RefreshDiagnostics();
 
             StatusText = _deviceManager.CurrentDevice is null
-                ? AppResources.DeviceSelection_Conntected
+                ? AppResources.DeviceSelection_Connected
                 : string.Format(AppResources.DeviceSelection_ConnectedToDevice, _deviceManager.CurrentDevice.DeviceName);
         }
         catch (Exception ex)
@@ -142,7 +165,7 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
     {
         Diagnostics.Clear();
 
-        foreach (var diagnostic in _deviceManager.Diagnostics)
+        foreach (DiagnosticEntry diagnostic in _deviceManager.Diagnostics)
         {
             Diagnostics.Add(new UiDiagnostics(
                 Severity: diagnostic.Severity.ToString(),

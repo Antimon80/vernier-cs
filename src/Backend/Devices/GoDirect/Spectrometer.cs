@@ -41,7 +41,6 @@ namespace Backend.Devices.GoDirect
 
         // Required cumulative ON-time of the white lamp for calibration.
         private static readonly TimeSpan CalibrationWarmup = TimeSpan.FromMinutes(5);
-        private bool _skipWarmup;
         private CancellationTokenSource? _warmupStatusCts;
         private Task? _warmupStatusTask;
 
@@ -94,22 +93,8 @@ namespace Backend.Devices.GoDirect
         // Public properties
         public SpectrometerModel Model => _model;
 
-        /// <summary>
-        /// Mutable runtime session state (integration time, mode, blank/dark, snapshots, flags).
-        /// </summary>
-        public SpectrometerSession Session { get; }
-
-        public OperatingMode Mode => Session.Mode;
-        public LampMode LampMode => _lampMode;
-
-        /// <summary>
-        /// If true, the white lamp warm-up wait is skipped (dev/test).
-        /// </summary>
-        public bool SkipWarmup
-        {
-            get => _skipWarmup;
-            set => _skipWarmup = value;
-        }
+        /// <summary>True if the underlying transport is connected.</summary>
+        public bool IsConnected => _transport.IsConnected;
 
         /// <summary>
         /// Non-fatal issues found during initialization/calibration (echo mismatch, weak lamp check, etc.).
@@ -118,8 +103,18 @@ namespace Backend.Devices.GoDirect
         public ushort Pid => _model.Pid;
         public string DeviceName => _model.Name;
 
-        /// <summary>True if the underlying transport is connected.</summary>
-        public bool IsConnected => _transport.IsConnected;
+        /// <summary>
+        /// Mutable runtime session state (integration time, mode, blank/dark, snapshots, flags).
+        /// </summary>
+        public SpectrometerSession Session { get; }
+
+        public OperatingMode Mode => Session.Mode;
+        public LampMode LampMode => _lampMode;
+
+        public bool IsInitialized => Session.IsInitialized;
+        public bool IsCalibrated => Session.IsCalibrated;
+        public bool RequiresWarmupForCalibration => _model.HasWhiteLamp;
+        public bool CanCalibrate => _model.HasWhiteLamp && Session.Mode is OperatingMode.Absorbance or OperatingMode.Transmission;
 
         // Events
 
@@ -131,7 +126,7 @@ namespace Backend.Devices.GoDirect
         // Public API: lifecycle
 
         /// <summary>
-        /// Connects the transport and initializes the device if needed.
+        /// Connects the transport. The device will only be initialized if it is successfully connected.
         /// </summary>
         public async Task Connect(CancellationToken ct = default)
         {
@@ -140,11 +135,6 @@ namespace Backend.Devices.GoDirect
             if (!IsConnected)
             {
                 await _transport.Connect(ct).ConfigureAwait(false);
-            }
-
-            if (!Session.IsInitialized)
-            {
-                await Initialize(ct).ConfigureAwait(false);
             }
         }
 
@@ -161,7 +151,7 @@ namespace Backend.Devices.GoDirect
                 return;
             }
 
-            await StopStreaming(ct).ConfigureAwait(false);
+            await StopMeasurement(ct).ConfigureAwait(false);
             await _exclusive.WaitAsync(ct).ConfigureAwait(false);
             try
             {
@@ -242,7 +232,7 @@ namespace Backend.Devices.GoDirect
             _streamFaulted = false;
 
             // Ensure measurement data stream loop is not running during initialization
-            await StopStreaming(ct).ConfigureAwait(false);
+            await StopMeasurement(ct).ConfigureAwait(false);
 
             // 1) Wake up device and switch off all lamps
             if (!await PrepareInitialization(ct).ConfigureAwait(false))
@@ -292,7 +282,7 @@ namespace Backend.Devices.GoDirect
         /// - Finds an integration time that yields a target mean ROI ratio (TargetLo..TargetHi).
         /// - Captures averaged blank (white ON) and dark (white OFF) spectra.
         /// </summary>
-        public async Task Calibrate(bool skipWarmup, CancellationToken ct = default)
+        public async Task Calibrate(bool? skipWarmup, CancellationToken ct = default)
         {
             await RunWithStreamingPaused(async () =>
             {
@@ -310,7 +300,8 @@ namespace Backend.Devices.GoDirect
                 await SetLampMode(LampMode.White, ct).ConfigureAwait(false);
 
                 // Warm-up: cumulative ON time
-                await EnsureWarmUp(skipWarmup, ct).ConfigureAwait(false);
+                bool effectiveSkipWarmup = skipWarmup ?? !RequiresWarmupForCalibration;
+                await EnsureWarmUp(effectiveSkipWarmup, ct).ConfigureAwait(false);
 
                 // Find optimal integration time for blank/reference (5 - 6 iterations)
                 (int tFound, double ratio, bool inBand) = await FindIntegrationTimeForTargetBand(
@@ -434,7 +425,7 @@ namespace Backend.Devices.GoDirect
         /// Starts live streaming (repeated acquisitions in a background loop).
         /// Requires successful <see cref="Initialize"/>.
         /// </summary>
-        public void StartStreaming()
+        public void StartMeasurement()
         {
             if (!Session.IsInitialized)
             {
@@ -455,7 +446,7 @@ namespace Backend.Devices.GoDirect
         /// <summary>
         /// Stops live streaming and waits for the loop to terminate.
         /// </summary>
-        public async Task StopStreaming(CancellationToken ct = default)
+        public async Task StopMeasurement(CancellationToken ct = default)
         {
             CancellationTokenSource? cts = _streamCts;
             _streamCts = null;
@@ -836,7 +827,7 @@ namespace Backend.Devices.GoDirect
             bool wasStreaming = IsStreamingActive;
             if (wasStreaming)
             {
-                await StopStreaming(ct).ConfigureAwait(false);
+                await StopMeasurement(ct).ConfigureAwait(false);
             }
 
             try
@@ -847,7 +838,7 @@ namespace Backend.Devices.GoDirect
             {
                 if (wasStreaming && !_streamFaulted)
                 {
-                    StartStreaming();
+                    StartMeasurement();
                 }
             }
         }

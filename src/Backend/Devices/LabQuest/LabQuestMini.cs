@@ -31,6 +31,19 @@ public sealed class LabQuestMini(ITransport transport, ILoggerFactory? loggerFac
     /// </summary>
     public bool IsConnected => _transport.IsConnected;
 
+    public bool IsInitialized => throw new NotImplementedException();
+
+    public bool CanCalibrate => throw new NotImplementedException();
+
+    public bool IsCalibrated => throw new NotImplementedException();
+
+    public bool RequiresWarmupForCalibration => throw new NotImplementedException();
+
+    public Task Calibrate(bool? skipWarmup = null, CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Opens the USB transport connection.
     /// </summary>
@@ -80,5 +93,20 @@ public sealed class LabQuestMini(ITransport transport, ILoggerFactory? loggerFac
         {
             _transport.Dispose();
         }
+    }
+
+    public Task Initialize(CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void StartMeasurement()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task StopMeasurement(CancellationToken ct = default)
+    {
+        throw new NotImplementedException();
     }
 }

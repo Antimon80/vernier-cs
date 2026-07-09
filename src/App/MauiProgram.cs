@@ -78,7 +78,7 @@ namespace App
 
             builder.Services.AddSingleton<LocalizationService>();
 
-            var app = builder.Build();
+            MauiApp app = builder.Build();
 
             deviceManager = app.Services.GetRequiredService<IDeviceManager>();
 

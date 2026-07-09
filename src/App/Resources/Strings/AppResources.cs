@@ -25,19 +25,21 @@ public static class AppResources
     public static string DeviceSelection_Refreshing => GetString(nameof(DeviceSelection_Refreshing));
     public static string DeviceSelection_Connecting => GetString(nameof(DeviceSelection_Connecting));
     public static string DeviceSelection_Initializing => GetString(nameof(DeviceSelection_Initializing));
-    public static string DeviceSelection_Conntected => GetString(nameof(DeviceSelection_Conntected));
+    public static string DeviceSelection_Connected => GetString(nameof(DeviceSelection_Connected));
     public static string DeviceSelection_ConnectedToDevice => GetString(nameof(DeviceSelection_ConnectedToDevice));
     public static string DeviceSelection_ConnectionFailed => GetString(nameof(DeviceSelection_ConnectionFailed));
     public static string DeviceSelection_DiscoveryFailed => GetString(nameof(DeviceSelection_DiscoveryFailed));
+    public static string DeviceSelection_InitializationFailed => GetString(nameof(DeviceSelection_InitializationFailed));
 
     // common dialogs
     public static string Dialog_ErrorTitle => GetString(nameof(Dialog_ErrorTitle));
     public static string Dialog_Ok => GetString(nameof(Dialog_Ok));
     public static string Dialog_Cancel => GetString(nameof(Dialog_Cancel));
+    public static string Dialog_CannotCalibrate => GetString(nameof(Dialog_CannotCalibrate));
 
     // status
     public static string Spectrometer_NotCalibrated => GetString(nameof(Spectrometer_NotCalibrated));
-    public static string Spectrometer_IsInitialized => GetString(nameof(Spectrometer_IsInitialized));
+    public static string Device_IsInitialized => GetString(nameof(Device_IsInitialized));
     public static string Spectrometer_IsCalibrated => GetString(nameof(Spectrometer_IsCalibrated));
     public static string Spectrometer_WhiteLamp => GetString(nameof(Spectrometer_WhiteLamp));
 
@@ -48,12 +50,11 @@ public static class AppResources
     public static string App_Print => GetString(nameof(App_Print));
     public static string App_ExportData => GetString(nameof(App_ExportData));
     public static string App_ImportData => GetString(nameof(App_ImportData));
-    public static string App_StartMeasurement => GetString(nameof(App_StartMeasurement));
-    public static string App_StopMeasurement => GetString(nameof(App_StopMeasurement));
-    public static string App_KeepDataPoint => GetString(nameof(App_KeepDataPoint));
-    public static string Spectrometer_Calibrate => GetString(nameof(Spectrometer_Calibrate));
+    public static string Device_ToggleMeasurement => GetString(nameof(Device_ToggleMeasurement));
+    public static string Device_KeepDataPoint => GetString(nameof(Device_KeepDataPoint));
+    public static string Device_Calibrate => GetString(nameof(Device_Calibrate));
     public static string Spectrometer_OperatingMode => GetString(nameof(Spectrometer_OperatingMode));
-    public static string App_AcquisitionMode => GetString(nameof(App_AcquisitionMode));
+    public static string Device_AcquisitionMode => GetString(nameof(Device_AcquisitionMode));
     public static string App_CrossHairs => GetString(nameof(App_CrossHairs));
     public static string App_DataManagement => GetString(nameof(App_DataManagement));
     public static string App_DataAnalysis => GetString(nameof(App_DataAnalysis));
@@ -62,8 +63,8 @@ public static class AppResources
 
     // chart
     public static string Spectrometer_FullSpectrum => GetString(nameof(Spectrometer_FullSpectrum));
-    public static string App_TimeResolved => GetString(nameof(App_TimeResolved));
-    public static string App_EventTriggered => GetString(nameof(App_EventTriggered));
+    public static string Device_TimeResolved => GetString(nameof(Device_TimeResolved));
+    public static string Device_EventTriggered => GetString(nameof(Device_EventTriggered));
     public static string Spectrometer_Wavelength => GetString(nameof(Spectrometer_Wavelength));
     public static string App_TimeAxis => GetString(nameof(App_TimeAxis));
     public static string Spectrometer_ConcentrationAxis => GetString(nameof(Spectrometer_ConcentrationAxis));

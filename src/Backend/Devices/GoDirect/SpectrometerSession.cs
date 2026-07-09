@@ -121,6 +121,13 @@ public sealed class SpectrometerSession(ILogger<SpectrometerSession>? log = null
     public event Action<Spectrum>? CurrentSpectrumChanged;
 
     /// <summary>
+    /// Raised whenever session state other than the current spectrum changes.
+    /// Examples: initialization, calibration, lamp state, warmup, mode,
+    /// integration time.
+    /// </summary>
+    public event Action? StateChanged;
+
+    /// <summary>
     /// Captures the current processed live spectrum for later overlay,
     /// comparison or export.
     /// </summary>
@@ -226,6 +233,11 @@ public sealed class SpectrometerSession(ILogger<SpectrometerSession>? log = null
         }
 
         CurrentSpectrumChanged?.Invoke(eventSpectrum);
+    }
+
+    internal void RaiseStateChanged()
+    {
+        StateChanged?.Invoke();
     }
 
     /// <summary>
