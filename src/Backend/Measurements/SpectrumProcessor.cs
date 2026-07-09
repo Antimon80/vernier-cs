@@ -62,7 +62,7 @@ public sealed class SpectrumProcessor
     /// <param name="windowSpectra">
     /// Number of consecutive raw spectra to average.
     /// </param>
-    public SpectrumProcessor(SpectrometerModel model, SpectrometerSession session, int windowSpectra = 5)
+    public SpectrumProcessor(SpectrometerModel model, SpectrometerSession session, int windowSpectra)
     {
         _model = model ?? throw new ArgumentNullException(nameof(model));
         _session = session ?? throw new ArgumentNullException(nameof(session));
@@ -130,17 +130,14 @@ public sealed class SpectrumProcessor
         {
             _window.Enqueue((ushort[])raw.Clone());
 
-            while (_window.Count > _windowSpectra)
-            {
-                _window.Dequeue();
-            }
-
-            if (_window.Count < _windowSpectra)
+            if(_window.Count < _windowSpectra)
             {
                 return;
             }
 
             double[] averagedRawCounts = AverageRawCounts();
+
+            _window.Clear();
 
             processedSpectrum = ProcessRawCounts(averagedRawCounts, timestamp);
         }

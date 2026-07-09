@@ -13,3 +13,13 @@ public enum AcquisitionMode
     TimeResolved,
     EventTriggered
 }
+
+public enum ConcentrationUnits
+{
+    MolPerLiter,
+    MilliMolPerLiter,
+    MicroMolPerLiter,
+    GramsPerLiter,
+    MilliGramsPerLiter,
+    MilliGramsPerMilliLiter
+}

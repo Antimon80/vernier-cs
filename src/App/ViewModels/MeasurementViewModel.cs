@@ -9,6 +9,8 @@ namespace App.ViewModels;
 
 public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 {
+    private const string StartIcon = "start.png";
+    private const string StopIcon = "stop.png";
     private readonly IDeviceManager _deviceManager;
     private bool _disposed;
 
@@ -35,7 +37,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     public partial bool IsMeasurementRunning { get; set; }
 
     [ObservableProperty]
-    public partial ImageSource RecordingIcon { get; set; } = ImageSource.FromFile("start.png");
+    public partial string RecordingIcon { get; set; } = StartIcon;
+
 
     [ObservableProperty]
     public partial bool HasOperatingModeSelection { get; set; }
@@ -192,11 +195,11 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private async Task ToggleMeasurement()
+    private void ToggleMeasurement()
     {
         IsMeasurementRunning = !IsMeasurementRunning;
 
-        RecordingIcon = ImageSource.FromFile(IsMeasurementRunning ? "stop.png" : "start.png");
+        RecordingIcon = IsMeasurementRunning ? StopIcon : StartIcon;
 
         RefreshDeviceState();
     }

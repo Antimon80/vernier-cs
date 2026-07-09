@@ -279,7 +279,7 @@
     <comment/>
   </data>
 
-  <!-- Chart -->
+  <!-- Chart and Table -->
   <data name="Spectrometer_FullSpectrum" xml:space="preserve">
     <value>Full spectrum</value>
     <comment/>
@@ -320,6 +320,36 @@
     <value>Absorbance</value>
     <comment/>
   </data>
+  <data name="Device_NoDataYet" xml:space="preserve">
+    <value>No data yet</value>
+    <comment/>
+  </data>
+
+  <!-- Spectrometer Operating Mode-->
+   <data name="OperatingMode_Absorbance" xml:space="preserve">
+    <value>Absorbance</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_Transmittance" xml:space="preserve">
+    <value>Transmittance</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_Emission" xml:space="preserve">
+    <value>Emission</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_Fluorescence405" xml:space="preserve">
+    <value>Fluorescence 405 nm</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_Fluorescence500" xml:space="preserve">
+    <value>Fluorescence 500 nm</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_RawCounts" xml:space="preserve">
+    <value>Raw Counts</value>
+    <comment/>
+   </data>
 
   <!-- Miscellaneous -->
   <data name="App_AppName" xml:space="preserve">

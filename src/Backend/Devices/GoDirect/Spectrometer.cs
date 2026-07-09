@@ -85,7 +85,7 @@ namespace Backend.Devices.GoDirect
             Session = new SpectrometerSession(loggerFactory?.CreateLogger<SpectrometerSession>());
 
             // Processor uses the current Session (mode, dark/blank, etc.) and emits display spectra.
-            _processor = new SpectrumProcessor(_model, Session, windowSpectra: 4);
+            _processor = new SpectrumProcessor(_model, Session, 6);
 
             _log = loggerFactory?.CreateLogger<Spectrometer>();
         }

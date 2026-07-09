@@ -61,7 +61,7 @@ public static class AppResources
     public static string App_Settings => GetString(nameof(App_Settings));
     public static string App_Help => GetString(nameof(App_Help));
 
-    // chart
+    // chart and table
     public static string Spectrometer_FullSpectrum => GetString(nameof(Spectrometer_FullSpectrum));
     public static string Device_TimeResolved => GetString(nameof(Device_TimeResolved));
     public static string Device_EventTriggered => GetString(nameof(Device_EventTriggered));
@@ -72,6 +72,15 @@ public static class AppResources
     public static string Spectrometer_Intensity => GetString(nameof(Spectrometer_Intensity));
     public static string Spectrometer_Transmittance => GetString(nameof(Spectrometer_Transmittance));
     public static string Spectrometer_Absorbance => GetString(nameof(Spectrometer_Absorbance));
+    public static string Device_NoDataYet => GetString(nameof(Device_NoDataYet));
+
+    // spectrometer operating mode
+    public static string OperatingMode_Absorbance => GetString(nameof(OperatingMode_Absorbance));
+    public static string OperatingMode_Transmittance => GetString(nameof(OperatingMode_Transmittance));
+    public static string OperatingMode_Fluorescence405 => GetString(nameof(OperatingMode_Fluorescence405));
+    public static string OperatingMode_Fluorescence500 => GetString(nameof(OperatingMode_Fluorescence500));
+    public static string OperatingMode_Emission => GetString(nameof(OperatingMode_Emission));
+    public static string OperatingMode_RawCounts => GetString(nameof(OperatingMode_RawCounts));
 
     // miscellaneous
     public static string App_AppName => GetString(nameof(App_AppName));

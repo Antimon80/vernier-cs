@@ -34,7 +34,7 @@
           </Grid>
           <CollectionView Grid.Row="1" ItemsSource="{Binding TableRows}">
             <CollectionView.EmptyView>
-              <Label Text="Noch keine Daten" TextColor="Gray" HorizontalOptions="Center" VerticalOptions="Center"/>
+              <Label Text="{x:Static strings:AppResources.Device_NoDataYet}" TextColor="Gray" HorizontalOptions="Center" VerticalOptions="Center"/>
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
               <DataTemplate>

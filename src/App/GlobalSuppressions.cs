@@ -58,3 +58,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>", Scope = "member", Target = "~M:App.ViewModels.MeasurementViewModel.Print~System.Threading.Tasks.Task")]
 [assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>", Scope = "member", Target = "~M:App.ViewModels.MeasurementViewModel.SaveFile~System.Threading.Tasks.Task")]
 [assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>", Scope = "member", Target = "~M:App.ViewModels.MeasurementViewModel.SaveFileAs~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Interoperability", "CA1416:Validate platform compatibility", Justification = "<Pending>", Scope = "member", Target = "~M:App.ViewModels.MeasurementViewModel.ToggleMeasurement")]
