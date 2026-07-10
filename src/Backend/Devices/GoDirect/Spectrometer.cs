@@ -43,6 +43,7 @@ namespace Backend.Devices.GoDirect
         private static readonly TimeSpan CalibrationWarmup = TimeSpan.FromMinutes(5);
         private CancellationTokenSource? _warmupStatusCts;
         private Task? _warmupStatusTask;
+        private int _lastPublishedWarmupRemainingSeconds = -1;
 
         // CCD linearity check parameters
         private const int LinearityMinRun = 64;
@@ -182,6 +183,7 @@ namespace Backend.Devices.GoDirect
                 Session.IsCalibrated = false;
                 Session.IsInitialized = false;
                 _streamFaulted = false;
+                Session.RaiseStateChanged();
             }
             finally
             {
@@ -228,6 +230,10 @@ namespace Backend.Devices.GoDirect
             Session.IsInitialized = false;
             Session.IsCalibrated = false;
             Session.ModelCode = null;
+
+            _lastPublishedWarmupRemainingSeconds = -1;
+            Session.RaiseStateChanged();
+
             DiagnosticEntry.ClearDiagnostics(Session.Diagnostics, DiagnosticCategory.Initialization);
             _streamFaulted = false;
 
@@ -271,6 +277,7 @@ namespace Backend.Devices.GoDirect
             Session.IsCalibrated = false;
             Session.IsInitialized = true;
             _streamFaulted = false;
+            Session.RaiseStateChanged();
 
             _log?.LogInformation("Spectrometer initialized. ModelCode={ModelCode:X4}, Calibrated={Calibrated}, WhiteOn={WhiteOn}, Warmup={WarmupSeconds}s",
                 Session.ModelCode, Session.IsCalibrated, _whiteIsOn, (int)_whiteOnStopwatch.Elapsed.TotalSeconds);
@@ -339,6 +346,7 @@ namespace Backend.Devices.GoDirect
 
                 Session.IsCalibrated = true;
                 _processor.Reset();
+                Session.RaiseStateChanged();
 
                 _log?.LogInformation("Calibration completed. t={T}ms, blank/dark average over {N} spectra, warmup={WarmupSeconds}s, skipWarmup={SkipWarmup}",
                 Session.IntegrationTime, CalibrationAverages, (int)_whiteOnStopwatch.Elapsed.TotalSeconds, skipWarmup);
@@ -358,6 +366,7 @@ namespace Backend.Devices.GoDirect
                 {
                     case OperatingMode.Absorbance:
                     case OperatingMode.Transmission:
+                    case OperatingMode.RawCounts:
                         await SetLampMode(_model.HasWhiteLamp ? LampMode.White : LampMode.Off, ct).ConfigureAwait(false);
                         break;
                     case OperatingMode.Intensity:
@@ -375,6 +384,7 @@ namespace Backend.Devices.GoDirect
                 Session.IsCalibrated = false;
                 _processor.Reset();
                 _streamFaulted = false;
+                Session.RaiseStateChanged();
             }, ct).ConfigureAwait(false);
         }
 
@@ -393,6 +403,7 @@ namespace Backend.Devices.GoDirect
                 Session.IsCalibrated = false;
                 _processor.Reset();
                 _streamFaulted = false;
+                Session.RaiseStateChanged();
             }, ct).ConfigureAwait(false);
         }
 
@@ -566,6 +577,11 @@ namespace Backend.Devices.GoDirect
                 {
                     _whiteOnStopwatch.Stop();
                 }
+
+                if (countWarmupTime)
+                {
+                    _whiteOnStopwatch.Reset();
+                }
             }
 
             UpdateWhiteLampSessionState();
@@ -640,9 +656,26 @@ namespace Backend.Devices.GoDirect
 
         private void UpdateWhiteLampSessionState()
         {
+            bool oldWhiteLampIsOn = Session.WhiteLampIsOn;
+            bool oldIsWhiteLampWarmedUp = Session.IsWhiteLampWarmedUp;
+
             Session.WhiteLampIsOn = _whiteIsOn;
             Session.WhiteLampWarmupRequired = CalibrationWarmup;
             Session.WhiteLampWarmupElapsed = _whiteOnStopwatch.Elapsed;
+
+            int remainingSeconds = (int)Math.Ceiling(Session.WhiteLampWarmupRemaining.TotalSeconds);
+
+            bool stateChanged =
+                oldWhiteLampIsOn != Session.WhiteLampIsOn ||
+                oldIsWhiteLampWarmedUp != Session.IsWhiteLampWarmedUp ||
+                remainingSeconds != _lastPublishedWarmupRemainingSeconds;
+
+            _lastPublishedWarmupRemainingSeconds = remainingSeconds;
+
+            if (stateChanged)
+            {
+                Session.RaiseStateChanged();
+            }
         }
 
         private void StartWarmupStatusLoop()

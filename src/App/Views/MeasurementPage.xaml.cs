@@ -7,6 +7,7 @@ namespace App.Views;
 public partial class MeasurementPage : ContentPage
 {
     private readonly MeasurementViewModel _viewModel;
+    private SpectroVisMeasurementViewModel? _spectroVisViewModel;
 
     public MeasurementPage(MeasurementViewModel viewModel)
     {
@@ -15,7 +16,19 @@ public partial class MeasurementPage : ContentPage
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = _viewModel;
 
+        RegisterDeviceDialogs();
         LoadDeviceContent();
+    }
+
+    private void RegisterDeviceDialogs()
+    {
+        if (_viewModel.DeviceViewModel is not SpectroVisMeasurementViewModel spectroVisViewModel)
+        {
+            return;
+        }
+
+        _spectroVisViewModel = spectroVisViewModel;
+        _spectroVisViewModel.OperatingModeDialogRequested += ShowOperatingModeDialog;
     }
 
     private void LoadDeviceContent()
@@ -35,9 +48,15 @@ public partial class MeasurementPage : ContentPage
         }
     }
 
-    protected override void OnDisappearing()
+    private async Task ShowOperatingModeDialog(
+        SpectroVisMeasurementViewModel measurementViewModel,
+        CancellationToken ct)
     {
-        _viewModel.Dispose();
-        base.OnDisappearing();
+        ct.ThrowIfCancellationRequested();
+
+        SpectroVisOperatingModeViewModel dialogViewModel = new(measurementViewModel);
+        SpectroVisOperatingModeDialog dialog = new(dialogViewModel);
+
+        await Navigation.PushModalAsync(dialog);
     }
 }

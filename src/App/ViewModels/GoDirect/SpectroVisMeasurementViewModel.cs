@@ -7,10 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace App.ViewModels.GoDirect;
 
-public sealed partial class SpectroVisMeasurementViewModel :
-    ObservableObject,
-    IDisposable,
-    IMeasurementWorkflow
+public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, IDisposable, IMeasurementWorkflow
 {
     private readonly ISpectrometer _spectrometer;
     private readonly Func<bool> _isMeasurementRunningProvider;
@@ -20,6 +17,7 @@ public sealed partial class SpectroVisMeasurementViewModel :
     private Spectrum? _latestSpectrumForUi;
     private bool _uiUpdateScheduled;
     private DateTimeOffset _latestUiUpdateAt = DateTimeOffset.MinValue;
+    private DateTimeOffset? _acquisitionStartedAt;
     private bool _disposed;
 
     public SpectroVisMeasurementViewModel(ISpectrometer spectrometer, Func<bool> isMeasurementRunningProvider)
@@ -37,6 +35,7 @@ public sealed partial class SpectroVisMeasurementViewModel :
     }
 
     public SpectrometerSession Session => _spectrometer.Session;
+    public SpectrometerModel Model => _spectrometer.Model;
 
     public ObservableCollection<TableRow> TableRows { get; } = [];
 
@@ -80,6 +79,9 @@ public sealed partial class SpectroVisMeasurementViewModel :
     public partial double YMaximum { get; set; }
 
     [ObservableProperty]
+    public partial double SelectedWavelengthNm { get; set; } = 500.0;
+
+    [ObservableProperty]
     public partial bool ShowSpectrumStrip { get; set; }
 
     [ObservableProperty]
@@ -90,6 +92,9 @@ public sealed partial class SpectroVisMeasurementViewModel :
 
     [ObservableProperty]
     public partial Color CalibrationStatusColor { get; set; } = Colors.Gray;
+
+    [ObservableProperty]
+    public partial string CurrentOperatingMode { get; set; } = "";
 
     [ObservableProperty]
     public partial int IntegrationTimeMs { get; set; }
@@ -109,12 +114,14 @@ public sealed partial class SpectroVisMeasurementViewModel :
 
     partial void OnAcquisitionModeChanged(AcquisitionMode value)
     {
+        TableRows.Clear();
+
         RefreshChartConfiguration();
         RefreshTableHeaders();
 
-        if (DisplayedSpectrum is not null)
+        if (DisplayedSpectrum is not null && value == AcquisitionMode.FullSpectrum)
         {
-            UpdateFullSpectrumTable(DisplayedSpectrum);
+            UpdateTable(DisplayedSpectrum);
         }
     }
 
@@ -198,6 +205,18 @@ public sealed partial class SpectroVisMeasurementViewModel :
         });
     }
 
+    public void CaptureEventPoint(double concentration)
+    {
+        if (DisplayedSpectrum is null)
+        {
+            return;
+        }
+
+        double y = GetYValueAtSelectedWavelength(DisplayedSpectrum);
+
+        TableRows.Add(new TableRow(FormatConcentration(concentration), FormatYValue(y, DisplayedSpectrum.Mode)));
+    }
+
     public void RefreshAll()
     {
         IntegrationTimeMs = _spectrometer.Session.IntegrationTime;
@@ -205,9 +224,10 @@ public sealed partial class SpectroVisMeasurementViewModel :
 
         RefreshChartConfiguration();
         RefreshTableHeaders();
+        RefreshCurrentOperatingMode();
         RefreshStatusIndicators();
 
-        if (DisplayedSpectrum is not null)
+        if (DisplayedSpectrum is not null && AcquisitionMode == AcquisitionMode.FullSpectrum)
         {
             UpdateFullSpectrumTable(DisplayedSpectrum);
         }
@@ -263,7 +283,7 @@ public sealed partial class SpectroVisMeasurementViewModel :
             _latestUiUpdateAt = DateTimeOffset.UtcNow;
 
             DisplayedSpectrum = spectrum;
-            UpdateFullSpectrumTable(spectrum);
+            UpdateTable(spectrum);
         }
         catch (Exception ex)
         {
@@ -378,6 +398,82 @@ public sealed partial class SpectroVisMeasurementViewModel :
         };
     }
 
+    private void UpdateTable(Spectrum spectrum)
+    {
+        switch (AcquisitionMode)
+        {
+            case AcquisitionMode.FullSpectrum:
+                UpdateFullSpectrumTable(spectrum);
+                break;
+            case AcquisitionMode.TimeResolved:
+                AppendTimeResolvedTableRow(spectrum);
+                break;
+            case AcquisitionMode.EventTriggered:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(AcquisitionMode), AcquisitionMode, "Unknown acquisition mode.");
+        }
+    }
+
+    private void UpdateFullSpectrumTable(Spectrum spectrum)
+    {
+        int count = Math.Min(spectrum.WavelengthNm.Length, spectrum.YAxis.Length);
+
+        if (TableRows.Count != count)
+        {
+            TableRows.Clear();
+
+            for (int i = 0; i < count; i++)
+            {
+                TableRows.Add(new TableRow(FormatXValue(spectrum.WavelengthNm[i]), FormatYValue(spectrum.YAxis[i], spectrum.Mode)));
+            }
+
+            return;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            TableRows[i].XValue = FormatXValue(spectrum.WavelengthNm[i]);
+            TableRows[i].YValue = FormatYValue(spectrum.YAxis[i], spectrum.Mode);
+        }
+    }
+
+    private void AppendTimeResolvedTableRow(Spectrum spectrum)
+    {
+        _acquisitionStartedAt ??= DateTimeOffset.UtcNow;
+
+        double elapsedSeconds = (DateTimeOffset.UtcNow - _acquisitionStartedAt.Value).TotalSeconds;
+        double y = GetYValueAtSelectedWavelength(spectrum);
+
+        TableRows.Add(new TableRow(elapsedSeconds.ToString("F2"), FormatYValue(y, spectrum.Mode)));
+    }
+
+    private double GetYValueAtSelectedWavelength(Spectrum spectrum)
+    {
+        int count = Math.Min(spectrum.WavelengthNm.Length, spectrum.YAxis.Length);
+
+        if (count == 0)
+        {
+            return double.NaN;
+        }
+
+        int bestIndex = 0;
+        double bestDistance = Math.Abs(spectrum.WavelengthNm[0] - SelectedWavelengthNm);
+
+        for (int i = 0; i < count; i++)
+        {
+            double distance = Math.Abs(spectrum.WavelengthNm[i] - SelectedWavelengthNm);
+
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestIndex = i;
+            }
+        }
+
+        return spectrum.YAxis[bestIndex];
+    }
+
     private void RefreshStatusIndicators()
     {
         InitializationStatusColor = _spectrometer.IsInitialized ? Colors.LimeGreen : Colors.Red;
@@ -395,19 +491,26 @@ public sealed partial class SpectroVisMeasurementViewModel :
             return;
         }
 
-        if (Session.WhiteLampCheckPassed == true && Session.IsWhiteLampWarmedUp)
+        if (Session.WhiteLampCheckPassed != true)
         {
-            WhiteLampStatusColor = Colors.LimeGreen;
+            WhiteLampStatusColor = Colors.Red;
             return;
         }
 
-        if (Session.WhiteLampCheckPassed == true && Session.WhiteLampIsOn)
+        if (!Session.WhiteLampIsOn)
         {
             WhiteLampStatusColor = Colors.Orange;
             return;
         }
 
-        WhiteLampStatusColor = Colors.Red;
+        WhiteLampStatusColor = Session.IsWhiteLampWarmedUp ? Colors.LimeGreen : Colors.Orange;
+    }
+
+    private void RefreshCurrentOperatingMode()
+    {
+        SpectroVisOperatingModeOption? option = OperatingModeOptions.FirstOrDefault(item => item.Mode == Session.Mode);
+
+        CurrentOperatingMode = option?.DisplayName ?? Session.Mode.ToString();
     }
 
     private void RebuildOperatingModeOptions()
@@ -433,30 +536,7 @@ public sealed partial class SpectroVisMeasurementViewModel :
             mode,
             displayName,
             isSupported,
-            IsSelected: Session.Mode == mode));
-    }
-
-    private void UpdateFullSpectrumTable(Spectrum spectrum)
-    {
-        int count = Math.Min(spectrum.WavelengthNm.Length, spectrum.YAxis.Length);
-
-        if (TableRows.Count != count)
-        {
-            TableRows.Clear();
-
-            for (int i = 0; i < count; i++)
-            {
-                TableRows.Add(new TableRow(FormatXValue(spectrum.WavelengthNm[i]), FormatYValue(spectrum.YAxis[i], spectrum.Mode)));
-            }
-
-            return;
-        }
-
-        for (int i = 0; i < count; i++)
-        {
-            TableRows[i].XValue = FormatXValue(spectrum.WavelengthNm[i]);
-            TableRows[i].YValue = FormatYValue(spectrum.YAxis[i], spectrum.Mode);
-        }
+            isSelected: Session.Mode == mode));
     }
 
     private bool CanEditIntegrationTimeForCurrentMode()
@@ -512,6 +592,20 @@ public sealed partial class SpectroVisMeasurementViewModel :
         };
     }
 
+    private string FormatConcentration(double value)
+    {
+        return ConcentrationUnits switch
+        {
+            ConcentrationUnits.MolPerLiter => value.ToString("G4"),
+            ConcentrationUnits.MilliMolPerLiter => value.ToString("G4"),
+            ConcentrationUnits.MicroMolPerLiter => value.ToString("G4"),
+            ConcentrationUnits.GramsPerLiter => value.ToString("G4"),
+            ConcentrationUnits.MilliGramsPerLiter => value.ToString("G4"),
+            ConcentrationUnits.MilliGramsPerMilliLiter => value.ToString("G4"),
+            _ => value.ToString("G4")
+        };
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -525,9 +619,3 @@ public sealed partial class SpectroVisMeasurementViewModel :
         _spectrometer.Session.StateChanged -= OnSessionStateChanged;
     }
 }
-
-public sealed record SpectroVisOperatingModeOption(
-    OperatingMode Mode,
-    string DisplayName,
-    bool IsSupported,
-    bool IsSelected);

@@ -109,10 +109,11 @@ public sealed class SpectrumProcessor
     }
 
     /// <summary>
-    /// Adds a raw CCD spectrum to the moving-average window.
+    /// Adds a raw CCD spectrum to the current averaging block.
     ///
-    /// Once the window is full, the averaged raw counts are processed
-    /// and stored as the current live spectrum in the associated session.
+    /// Once the block is full, the averaged raw counts are processed,
+    /// the block is cleared, and the resulting spectrum is stored as
+    /// the current live spectrum in the associated session.
     /// </summary>
     /// <param name="raw">
     /// Full-sensor raw CCD counts.
@@ -130,7 +131,7 @@ public sealed class SpectrumProcessor
         {
             _window.Enqueue((ushort[])raw.Clone());
 
-            if(_window.Count < _windowSpectra)
+            if (_window.Count < _windowSpectra)
             {
                 return;
             }
@@ -361,7 +362,7 @@ public sealed class SpectrumProcessor
             }
 
             double transmission = numerator / denominator;
-            if(transmission <= 0.0)
+            if (transmission <= 0.0)
             {
                 absorbance[i] = 3.0;
                 continue;

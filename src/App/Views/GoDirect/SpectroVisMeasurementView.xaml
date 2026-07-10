@@ -49,13 +49,15 @@
       </Border>
     </Grid>
     <!-- Status bar -->
-    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,40,Auto,Auto,40,Auto,Auto,*" ColumnSpacing="10" Padding="8,4">
+    <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,40,Auto,Auto,40,Auto,Auto,40,Auto,Auto,*" ColumnSpacing="10" Padding="8,4">
       <Label Grid.Column="0" Text="{x:Static strings:AppResources.Device_IsInitialized}" FontSize="18" VerticalOptions="Center"/>
       <shapes:Ellipse Grid.Column="1" WidthRequest="24" HeightRequest="24" Fill="{Binding InitializationStatusColor}" Stroke="Black" StrokeThickness="1" VerticalOptions="Center"/>
       <Label Grid.Column="3" Text="{x:Static strings:AppResources.Spectrometer_WhiteLamp}" FontSize="18" VerticalOptions="Center"/>
       <shapes:Ellipse Grid.Column="4" WidthRequest="24" HeightRequest="24" Fill="{Binding WhiteLampStatusColor}" Stroke="Black" StrokeThickness="1" VerticalOptions="Center"/>
       <Label Grid.Column="6" Text="{x:Static strings:AppResources.Spectrometer_IsCalibrated}" FontSize="18" VerticalOptions="Center"/>
       <shapes:Ellipse Grid.Column="7" WidthRequest="24" HeightRequest="24" Fill="{Binding CalibrationStatusColor}" Stroke="Black" StrokeThickness="1" VerticalOptions="Center"/>
+      <Label Grid.Column="9" Text="{x:Static strings:AppResources.Spectrometer_CurrentOperatingMode}" FontSize="18" VerticalOptions="Center"/>
+      <Label Grid.Column="10" Text="{Binding CurrentOperatingMode}" FontSize="18" FontAttributes="Bold" VerticalOptions="Center"/>
     </Grid>
   </Grid>
 </ContentView>

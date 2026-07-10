@@ -212,6 +212,10 @@
     <value>White light lamp:</value>
     <comment/>
   </data>
+  <data name="Spectrometer_CurrentOperatingMode" xml:space="preserve">
+    <value>Operating mode:</value>
+    <comment/>
+  </data>
 
   <!-- Tooltips -->
    <data name="App_OpenFile" xml:space="preserve">
@@ -348,6 +352,18 @@
    </data>
    <data name="OperatingMode_RawCounts" xml:space="preserve">
     <value>Raw Counts</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_DeviceType" xml:space="preserve">
+    <value>Type:</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_MeasurementRange" xml:space="preserve">
+    <value>Measurement range:</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_IntegrationTime" xml:space="preserve">
+    <value>Integration time [15 bis 1000]:</value>
     <comment/>
    </data>
 

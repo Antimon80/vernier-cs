@@ -212,6 +212,10 @@
     <value>Weisslichtquelle:</value>
     <comment/>
   </data>
+  <data name="Spectrometer_CurrentOperatingMode" xml:space="preserve">
+    <value>Betriebsmodus:</value>
+    <comment/>
+  </data>
 
   <!-- Tooltips -->
    <data name="App_OpenFile" xml:space="preserve">
@@ -348,6 +352,18 @@
    </data>
    <data name="OperatingMode_RawCounts" xml:space="preserve">
     <value>unkalibrierte Messwerte</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_DeviceType" xml:space="preserve">
+    <value>Typ:</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_MeasurementRange" xml:space="preserve">
+    <value>Messbereich:</value>
+    <comment/>
+   </data>
+   <data name="OperatingMode_IntegrationTime" xml:space="preserve">
+    <value>Integrationszeit [15 bis 1000]:</value>
     <comment/>
    </data>
 

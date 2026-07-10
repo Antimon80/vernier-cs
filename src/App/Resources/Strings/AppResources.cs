@@ -42,6 +42,7 @@ public static class AppResources
     public static string Device_IsInitialized => GetString(nameof(Device_IsInitialized));
     public static string Spectrometer_IsCalibrated => GetString(nameof(Spectrometer_IsCalibrated));
     public static string Spectrometer_WhiteLamp => GetString(nameof(Spectrometer_WhiteLamp));
+    public static string Spectrometer_CurrentOperatingMode => GetString(nameof(Spectrometer_CurrentOperatingMode));
 
     // tooltips
     public static string App_OpenFile => GetString(nameof(App_OpenFile));
@@ -81,6 +82,9 @@ public static class AppResources
     public static string OperatingMode_Fluorescence500 => GetString(nameof(OperatingMode_Fluorescence500));
     public static string OperatingMode_Emission => GetString(nameof(OperatingMode_Emission));
     public static string OperatingMode_RawCounts => GetString(nameof(OperatingMode_RawCounts));
+    public static string OperatingMode_DeviceType => GetString(nameof(OperatingMode_DeviceType));
+    public static string OperatingMode_MeasurementRange => GetString(nameof(OperatingMode_MeasurementRange));
+    public static string OperatingMode_IntegrationTime => GetString(nameof(OperatingMode_IntegrationTime));
 
     // miscellaneous
     public static string App_AppName => GetString(nameof(App_AppName));
