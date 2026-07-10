@@ -28,13 +28,16 @@ public static class AppResources
     public static string DeviceSelection_Connected => GetString(nameof(DeviceSelection_Connected));
     public static string DeviceSelection_ConnectedToDevice => GetString(nameof(DeviceSelection_ConnectedToDevice));
     public static string DeviceSelection_ConnectionFailed => GetString(nameof(DeviceSelection_ConnectionFailed));
+    public static string DeviceSelection_ConnectionFailedWithDetails => GetString(nameof(DeviceSelection_ConnectionFailedWithDetails));
     public static string DeviceSelection_DiscoveryFailed => GetString(nameof(DeviceSelection_DiscoveryFailed));
+    public static string DeviceSelection_DiscoveryFailedWithDetails => GetString(nameof(DeviceSelection_DiscoveryFailedWithDetails));
     public static string DeviceSelection_InitializationFailed => GetString(nameof(DeviceSelection_InitializationFailed));
 
     // common dialogs
     public static string Dialog_ErrorTitle => GetString(nameof(Dialog_ErrorTitle));
     public static string Dialog_Ok => GetString(nameof(Dialog_Ok));
     public static string Dialog_Cancel => GetString(nameof(Dialog_Cancel));
+    public static string Dialog_Close => GetString(nameof(Dialog_Close));
     public static string Dialog_CannotCalibrate => GetString(nameof(Dialog_CannotCalibrate));
 
     // status
@@ -59,6 +62,7 @@ public static class AppResources
     public static string App_CrossHairs => GetString(nameof(App_CrossHairs));
     public static string App_DataManagement => GetString(nameof(App_DataManagement));
     public static string App_DataAnalysis => GetString(nameof(App_DataAnalysis));
+    public static string Device_Diagnostics => GetString(nameof(Device_Diagnostics));
     public static string App_Settings => GetString(nameof(App_Settings));
     public static string App_Help => GetString(nameof(App_Help));
 
@@ -85,6 +89,11 @@ public static class AppResources
     public static string OperatingMode_DeviceType => GetString(nameof(OperatingMode_DeviceType));
     public static string OperatingMode_MeasurementRange => GetString(nameof(OperatingMode_MeasurementRange));
     public static string OperatingMode_IntegrationTime => GetString(nameof(OperatingMode_IntegrationTime));
+    public static string OperatingMode_DialogTitle => GetString(nameof(OperatingMode_DialogTitle));
+
+    // diagnostics dialog
+    public static string Diagnostics_DialogTitle => GetString(nameof(Diagnostics_DialogTitle));
+    public static string Diagnostics_NoEntries => GetString(nameof(Diagnostics_NoEntries));
 
     // miscellaneous
     public static string App_AppName => GetString(nameof(App_AppName));

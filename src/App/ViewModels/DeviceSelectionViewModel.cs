@@ -6,6 +6,7 @@ using Backend.Discovery;
 using App.Services;
 using Backend.Devices;
 using Backend.Util;
+using Backend.Devices.GoDirect;
 
 namespace App.ViewModels;
 
@@ -66,7 +67,7 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
 
             StatusText = Diagnostics.Count > 0
                 ? Diagnostics[^1].Message
-                : string.Format(AppResources.DeviceSelection_DiscoveryFailed, ex.GetType().Name, ex.Message);
+                : string.Format(AppResources.DeviceSelection_DiscoveryFailedWithDetails, ex.GetType().Name, ex.Message);
         }
         finally
         {
@@ -101,11 +102,24 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
 
             await device.Initialize();
 
+            System.Diagnostics.Debug.WriteLine(
+    $"[Connect] Device={device.GetHashCode()}, " +
+    $"Initialized={device.IsInitialized}");
+
+            if (device is ISpectrometer spectrometer)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[Connect] Spectrometer={spectrometer.GetHashCode()}, " +
+                    $"SessionInitialized={spectrometer.Session.IsInitialized}, " +
+                    $"LampCheck={spectrometer.Session.WhiteLampCheckPassed}, " +
+                    $"LampOn={spectrometer.Session.WhiteLampIsOn}");
+            }
+
             if (!device.IsInitialized)
             {
                 RefreshDiagnostics();
-                StatusText = Diagnostics.Count > 0 
-                    ? Diagnostics[^1].Message 
+                StatusText = Diagnostics.Count > 0
+                    ? Diagnostics[^1].Message
                     : string.Format(AppResources.DeviceSelection_InitializationFailed, _deviceManager.CurrentDevice?.DeviceName);
                 return;
             }
@@ -124,7 +138,7 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
 
             StatusText = Diagnostics.Count > 0
                 ? Diagnostics[^1].Message
-                : string.Format(AppResources.DeviceSelection_ConnectionFailed, ex.GetType().Name, ex.Message);
+                : string.Format(AppResources.DeviceSelection_ConnectionFailedWithDetails, ex.GetType().Name, ex.Message);
 
             throw;
         }

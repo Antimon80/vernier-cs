@@ -1,4 +1,3 @@
-using App.ViewModels.GoDirect;
 
 namespace App.ViewModels;
 

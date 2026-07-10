@@ -1,3 +1,4 @@
+using App.Resources.Strings;
 using App.ViewModels;
 using App.ViewModels.GoDirect;
 using App.Views.GoDirect;
@@ -16,6 +17,8 @@ public partial class MeasurementPage : ContentPage
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         BindingContext = _viewModel;
 
+        _viewModel.DiagnosticsRequested += ShowDiagnosticsDialog;
+
         RegisterDeviceDialogs();
         LoadDeviceContent();
     }
@@ -29,6 +32,8 @@ public partial class MeasurementPage : ContentPage
 
         _spectroVisViewModel = spectroVisViewModel;
         _spectroVisViewModel.OperatingModeDialogRequested += ShowOperatingModeDialog;
+        _spectroVisViewModel.AcquisitionModeDialogRequested += ShowAcquisitionModeDialog;
+        _spectroVisViewModel.CalibrationDialogRequested += ShowCalibrationDialog;
     }
 
     private void LoadDeviceContent()
@@ -48,9 +53,7 @@ public partial class MeasurementPage : ContentPage
         }
     }
 
-    private async Task ShowOperatingModeDialog(
-        SpectroVisMeasurementViewModel measurementViewModel,
-        CancellationToken ct)
+    private async Task ShowOperatingModeDialog(SpectroVisMeasurementViewModel measurementViewModel, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -58,5 +61,44 @@ public partial class MeasurementPage : ContentPage
         SpectroVisOperatingModeDialog dialog = new(dialogViewModel);
 
         await Navigation.PushModalAsync(dialog);
+    }
+
+    private Task ShowAcquisitionModeDialog(SpectroVisMeasurementViewModel measurmentViewModel, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        return DisplayAlertAsync(AppResources.Device_AcquisitionMode, "not implemented yet", AppResources.Dialog_Ok);
+    }
+
+    private async Task<CalibrationDialogResult?> ShowCalibrationDialog(SpectroVisMeasurementViewModel measurmentViewModel, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        await DisplayAlertAsync(AppResources.Device_Calibrate, "not implemented yet", AppResources.Dialog_Ok);
+
+        return null;
+    }
+
+    private async Task ShowDiagnosticsDialog(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        _viewModel.RefreshDiagnostics();
+        DiagnosticsDialog dialog = new(_viewModel.Diagnostics);
+
+        await Navigation.PushModalAsync(dialog);
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+
+        _viewModel.RefreshDeviceState();
+        _viewModel.RefreshDiagnostics();
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
     }
 }

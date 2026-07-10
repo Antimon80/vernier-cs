@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using App.Models;
+using App.Resources.Strings;
 using Backend.Devices.GoDirect;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -29,6 +30,7 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject
     }
 
     public ObservableCollection<SpectroVisOperatingModeOption> OperatingModeOptions { get; } = [];
+
     [ObservableProperty]
     public partial OperatingMode SelectedMode { get; set; }
 
@@ -59,5 +61,23 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject
         {
             await _measurementViewModel.ApplyIntegrationTimeAsync(IntegrationTimeMs);
         }
+    }
+
+    [RelayCommand]
+    private Task OpenHelp()
+    {
+        return ShowNotImplementedAsync(AppResources.App_Help);
+    }
+
+    private static Task ShowNotImplementedAsync(string feature)
+    {
+        Page? page = Application.Current?.Windows.FirstOrDefault()?.Page;
+
+        if (page is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return page.DisplayAlertAsync(feature, "not implemented yet", AppResources.Dialog_Ok);
     }
 }

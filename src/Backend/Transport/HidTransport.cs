@@ -185,8 +185,6 @@ public sealed class HidTransport(string devicePath, ushort vid, ushort pid, ILog
 
             try {
                 _stream!.Write(outBuf, 0, outBuf.Length);
-                _log?.LogTrace("HID OUT wrote {len} bytes (payload {payloadLen}).",
-                        outBuf.Length, payload.Length);
             }
             catch (Exception ex) {
                 _log?.LogError(ex, "HID OUT write failed.");

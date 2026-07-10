@@ -165,15 +165,23 @@
     <comment/>
   </data>
   <data name="DeviceSelection_ConnectionFailed" xml:space="preserve">
+    <value>Verbindung fehlgeschlagen</value>
+    <comment/>
+  </data>
+  <data name="DeviceSelection_ConnectionFailedWithDetails" xml:space="preserve">
     <value>Verbindung fehlgeschlagen: {0}: {1}</value>
     <comment/>
   </data>
   <data name="DeviceSelection_DiscoveryFailed" xml:space="preserve">
+    <value>Gerätesuche fehlgeschlagen</value>
+    <comment/>
+  </data>
+  <data name="DeviceSelection_DiscoveryFailedWithDetails" xml:space="preserve">
     <value>Gerätesuche fehlgeschlagen: {0}: {1}</value>
     <comment/>
   </data>
   <data name="DeviceSelection_InitializationFailed" xml:space="preserve">
-    <value>Initialisierung fehlgeschlagen: {0}: {1}</value>
+    <value>Initialisierung fehlgeschlagen: {0}</value>
     <comment/>
   </data>
 
@@ -184,6 +192,10 @@
   </data>
   <data name="Dialog_Cancel" xml:space="preserve">
     <value>Abbrechen</value>
+    <comment/>
+  </data>
+  <data name="Dialog_Close" xml:space="preserve">
+    <value>Schliessen</value>
     <comment/>
   </data>
   <data name="Dialog_ErrorTitle" xml:space="preserve">
@@ -272,6 +284,10 @@
   </data>
   <data name="App_DataAnalysis" xml:space="preserve">
     <value>Daten analysieren</value>
+    <comment/>
+  </data>
+  <data name="Device_Diagnostics" xml:space="preserve">
+    <value>Diagnoseeinträge</value>
     <comment/>
   </data>
   <data name="App_Settings" xml:space="preserve">
@@ -364,6 +380,20 @@
    </data>
   <data name="OperatingMode_IntegrationTime" xml:space="preserve">
     <value>Integrationszeit [15 bis 1000]:</value>
+    <comment/>
+   </data>
+  <data name="OperatingMode_DialogTitle" xml:space="preserve">
+    <value>Betriebsmodus</value>
+    <comment/>
+   </data>
+
+  <!-- Diagnostics -->
+  <data name="Diagnostics_NoEntries" xml:space="preserve">
+    <value>Keine Diagnosemeldungen vorhanden</value>
+    <comment/>
+   </data>
+  <data name="Diagnostics_DialogTitle" xml:space="preserve">
+    <value>Diagnosemeldungen</value>
     <comment/>
    </data>
 

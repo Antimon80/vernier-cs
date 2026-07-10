@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using App.Models;
 using App.Resources.Strings;
 using App.ViewModels.GoDirect;
 using Backend.Devices;
@@ -27,6 +29,11 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     /// </summary>
     public IMeasurementWorkflow Workflow { get; }
 
+    public ObservableCollection<UiDiagnostics> Diagnostics { get; } = [];
+    public bool HasDiagnostics => Diagnostics.Count > 0;
+
+    public event Func<CancellationToken, Task>? DiagnosticsRequested;
+
     [ObservableProperty]
     public partial string PageTitle { get; set; } = AppResources.App_AppName;
 
@@ -54,7 +61,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         if (_deviceManager.CurrentSpectrometer is not null)
         {
-            SpectroVisMeasurementViewModel spectroVisViewModel = new SpectroVisMeasurementViewModel(_deviceManager.CurrentSpectrometer, isMeasurementRunningProvider: () => IsMeasurementRunning);
+            SpectroVisMeasurementViewModel spectroVisViewModel = new(_deviceManager.CurrentSpectrometer, isMeasurementRunningProvider: () => IsMeasurementRunning);
             DeviceViewModel = spectroVisViewModel;
             Workflow = spectroVisViewModel as IMeasurementWorkflow ?? new NoOpMeasurementWorkflow();
 
@@ -71,6 +78,23 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     {
         HasOperatingModeSelection = Workflow.HasOperatingModeSelection;
         IsCalibrationCommandEnabled = CurrentDevice.CanCalibrate;
+
+        if (DeviceViewModel is SpectroVisMeasurementViewModel spectroVisViewModel)
+        {
+            spectroVisViewModel.RefreshAll();
+        }
+
+        RefreshDiagnostics();
+    }
+
+    public void RefreshDiagnostics()
+    {
+        Diagnostics.Clear();
+
+        UiDiagnostics.AddDiagnostics(Diagnostics, _deviceManager.Diagnostics);
+        UiDiagnostics.AddDiagnostics(Diagnostics, CurrentDevice.Diagnostics);
+
+        OnPropertyChanged(nameof(HasDiagnostics));
     }
 
     public void Dispose()
@@ -143,6 +167,19 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private async Task OpenDiagnostics(CancellationToken ct)
+    {
+        RefreshDiagnostics();
+
+        if (DiagnosticsRequested is null)
+        {
+            throw new InvalidOperationException("No diagnostics dialog is registered.");
+        }
+
+        await DiagnosticsRequested(ct);
+    }
+
+    [RelayCommand]
     private Task OpenSettings()
     {
         return ShowNotImplementedAsync(AppResources.App_Settings);
@@ -164,6 +201,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         await Workflow.OpenOperatingMode();
         RefreshDeviceState();
+        RefreshDiagnostics();
     }
 
     [RelayCommand(CanExecute = nameof(CanChangeMeasurementConfiguration))]
@@ -192,6 +230,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         await CurrentDevice.Calibrate(result.SkipWarmup);
         RefreshDeviceState();
+        RefreshDiagnostics();
     }
 
     [RelayCommand]
@@ -216,7 +255,14 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
     private static Task ShowNotImplementedAsync(string feature)
     {
-        return Shell.Current.DisplayAlertAsync(feature, "not implemented yet", AppResources.Dialog_Ok);
+        Page? page = Application.Current?.Windows.FirstOrDefault()?.Page;
+
+        if (page is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return page.DisplayAlertAsync(feature, "not implemented yet", AppResources.Dialog_Ok);
     }
 
     private sealed class NoOpMeasurementWorkflow : IMeasurementWorkflow

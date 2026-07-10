@@ -165,15 +165,23 @@
     <comment/>
   </data>
   <data name="DeviceSelection_ConnectionFailed" xml:space="preserve">
+    <value>Verbindung fehlgeschlagen</value>
+    <comment/>
+  </data>
+  <data name="DeviceSelection_ConnectionFailedWithDetails" xml:space="preserve">
     <value>Verbindung fehlgeschlagen: {0}: {1}</value>
     <comment/>
   </data>
   <data name="DeviceSelection_DiscoveryFailed" xml:space="preserve">
+    <value>Gerätesuche fehlgeschlagen</value>
+    <comment/>
+  </data>
+  <data name="DeviceSelection_DiscoveryFailedWithDetails" xml:space="preserve">
     <value>Gerätesuche fehlgeschlagen: {0}: {1}</value>
     <comment/>
   </data>
   <data name="DeviceSelection_InitializationFailed" xml:space="preserve">
-    <value>Initialisierung fehlgeschlagen: {0}: {1}</value>
+    <value>Initialisierung fehlgeschlagen: {0}</value>
     <comment/>
   </data>
 
@@ -184,6 +192,10 @@
   </data>
   <data name="Dialog_Cancel" xml:space="preserve">
     <value>Abbrechen</value>
+    <comment/>
+  </data>
+  <data name="Dialog_Close" xml:space="preserve">
+    <value>Schliessen</value>
     <comment/>
   </data>
   <data name="Dialog_ErrorTitle" xml:space="preserve">
@@ -218,27 +230,27 @@
   </data>
 
   <!-- Tooltips -->
-   <data name="App_OpenFile" xml:space="preserve">
+  <data name="App_OpenFile" xml:space="preserve">
     <value>Datei öffnen</value>
     <comment/>
    </data>
-   <data name="App_SaveFile" xml:space="preserve">
+  <data name="App_SaveFile" xml:space="preserve">
     <value>Datei speichern</value>
     <comment/>
    </data>
-   <data name="App_SaveFileAs" xml:space="preserve">
+  <data name="App_SaveFileAs" xml:space="preserve">
     <value>Datei speichern unter</value>
     <comment/>
    </data>
-   <data name="App_Print" xml:space="preserve">
+  <data name="App_Print" xml:space="preserve">
     <value>Drucken</value>
     <comment/>
    </data>
-   <data name="App_ExportData" xml:space="preserve">
+  <data name="App_ExportData" xml:space="preserve">
     <value>Daten exportieren</value>
     <comment/>
    </data>
-   <data name="App_ImportData" xml:space="preserve">
+  <data name="App_ImportData" xml:space="preserve">
     <value>Daten importieren</value>
     <comment/>
    </data>
@@ -272,6 +284,10 @@
   </data>
   <data name="App_DataAnalysis" xml:space="preserve">
     <value>Daten analysieren</value>
+    <comment/>
+  </data>
+  <data name="Device_Diagnostics" xml:space="preserve">
+    <value>Diagnoseeinträge</value>
     <comment/>
   </data>
   <data name="App_Settings" xml:space="preserve">
@@ -330,40 +346,54 @@
   </data>
 
   <!-- Spectrometer Operating Mode-->
-   <data name="OperatingMode_Absorbance" xml:space="preserve">
+  <data name="OperatingMode_Absorbance" xml:space="preserve">
     <value>Absorption</value>
     <comment/>
    </data>
-   <data name="OperatingMode_Transmittance" xml:space="preserve">
+  <data name="OperatingMode_Transmittance" xml:space="preserve">
     <value>Transmission</value>
     <comment/>
    </data>
-   <data name="OperatingMode_Emission" xml:space="preserve">
+  <data name="OperatingMode_Emission" xml:space="preserve">
     <value>Emission</value>
     <comment/>
    </data>
-   <data name="OperatingMode_Fluorescence405" xml:space="preserve">
+  <data name="OperatingMode_Fluorescence405" xml:space="preserve">
     <value>Fluoreszenz 405 nm</value>
     <comment/>
    </data>
-   <data name="OperatingMode_Fluorescence500" xml:space="preserve">
+  <data name="OperatingMode_Fluorescence500" xml:space="preserve">
     <value>Fluoreszenz 500 nm</value>
     <comment/>
    </data>
-   <data name="OperatingMode_RawCounts" xml:space="preserve">
+  <data name="OperatingMode_RawCounts" xml:space="preserve">
     <value>unkalibrierte Messwerte</value>
     <comment/>
    </data>
-   <data name="OperatingMode_DeviceType" xml:space="preserve">
+  <data name="OperatingMode_DeviceType" xml:space="preserve">
     <value>Typ:</value>
     <comment/>
    </data>
-   <data name="OperatingMode_MeasurementRange" xml:space="preserve">
+  <data name="OperatingMode_MeasurementRange" xml:space="preserve">
     <value>Messbereich:</value>
     <comment/>
    </data>
-   <data name="OperatingMode_IntegrationTime" xml:space="preserve">
+  <data name="OperatingMode_IntegrationTime" xml:space="preserve">
     <value>Integrationszeit [15 bis 1000]:</value>
+    <comment/>
+   </data>
+  <data name="OperatingMode_DialogTitle" xml:space="preserve">
+    <value>Betriebsmodus</value>
+    <comment/>
+   </data>
+
+  <!-- Diagnostics -->
+  <data name="Diagnostics_NoEntries" xml:space="preserve">
+    <value>Keine Diagnosemeldungen vorhanden</value>
+    <comment/>
+   </data>
+  <data name="Diagnostics_DialogTitle" xml:space="preserve">
+    <value>Diagnosemeldungen</value>
     <comment/>
    </data>
 

@@ -1,4 +1,5 @@
 using Backend.Transport;
+using Backend.Util;
 using Microsoft.Extensions.Logging;
 
 namespace Backend.Devices.LabQuest;
@@ -38,6 +39,8 @@ public sealed class LabQuestMini(ITransport transport, ILoggerFactory? loggerFac
     public bool IsCalibrated => throw new NotImplementedException();
 
     public bool RequiresWarmupForCalibration => throw new NotImplementedException();
+
+    public IReadOnlyList<DiagnosticEntry> Diagnostics => throw new NotImplementedException();
 
     public Task Calibrate(bool? skipWarmup = null, CancellationToken ct = default)
     {

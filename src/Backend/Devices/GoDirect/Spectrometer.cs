@@ -49,6 +49,9 @@ namespace Backend.Devices.GoDirect
         private const int LinearityMinRun = 64;
         private const int LinearityTolerance = 3;
 
+        // number of discarded spectra for dark-noise check
+        private const int SettlingSpectra = 5;
+
         // Dependencies
         private readonly ITransport _transport;
         private readonly SpectrometerProtocol _proto;
@@ -71,6 +74,7 @@ namespace Backend.Devices.GoDirect
 
         // Processing
         private readonly SpectrumProcessor _processor;
+        private const int WindowSpectra = 6;
 
         /// <summary>
         /// Creates a new spectrometer façade for a given transport + model.
@@ -86,7 +90,7 @@ namespace Backend.Devices.GoDirect
             Session = new SpectrometerSession(loggerFactory?.CreateLogger<SpectrometerSession>());
 
             // Processor uses the current Session (mode, dark/blank, etc.) and emits display spectra.
-            _processor = new SpectrumProcessor(_model, Session, 6);
+            _processor = new SpectrumProcessor(_model, Session, WindowSpectra);
 
             _log = loggerFactory?.CreateLogger<Spectrometer>();
         }
@@ -116,6 +120,8 @@ namespace Backend.Devices.GoDirect
         public bool IsCalibrated => Session.IsCalibrated;
         public bool RequiresWarmupForCalibration => _model.HasWhiteLamp;
         public bool CanCalibrate => _model.HasWhiteLamp && Session.Mode is OperatingMode.Absorbance or OperatingMode.Transmission;
+
+        public IReadOnlyList<DiagnosticEntry> Diagnostics => Session.Diagnostics;
 
         // Events
 
@@ -1021,6 +1027,7 @@ namespace Backend.Devices.GoDirect
             try
             {
                 await SetLampMode(LampMode.Off, ct).ConfigureAwait(false);
+                await DiscardSpectra(SettlingSpectra, ct).ConfigureAwait(false);
 
                 int integrationTime1 = ClampIntegrationTime(40, 1, 1000);
 
@@ -1031,6 +1038,8 @@ namespace Backend.Devices.GoDirect
                 {
                     return (false, null);
                 }
+
+                await DiscardSpectra(SettlingSpectra, ct).ConfigureAwait(false);
 
                 ushort[] darkSpectrum1 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
 
@@ -1099,6 +1108,8 @@ namespace Backend.Devices.GoDirect
                 {
                     return (false, null);
                 }
+
+                await DiscardSpectra(SettlingSpectra, ct).ConfigureAwait(false);
 
                 ushort[] darkSpectrum3 = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
 
@@ -1418,6 +1429,15 @@ namespace Backend.Devices.GoDirect
             }
 
             return (bestT, bestRatio, false);
+        }
+
+        private async Task DiscardSpectra(int count, CancellationToken ct)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+                await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
+            }
         }
 
         // Private helpers: ROI (region of interest) and statistics

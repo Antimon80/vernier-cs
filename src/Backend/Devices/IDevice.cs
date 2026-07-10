@@ -1,3 +1,5 @@
+using Backend.Util;
+
 namespace Backend.Devices;
 
 public interface IDevice : IDisposable
@@ -11,6 +13,8 @@ public interface IDevice : IDisposable
     bool CanCalibrate { get; }
     bool IsCalibrated { get; }
     bool RequiresWarmupForCalibration { get; }
+
+    IReadOnlyList<DiagnosticEntry> Diagnostics { get; }
 
     Task Connect(CancellationToken ct = default);
     Task Disconnect(CancellationToken ct = default);
