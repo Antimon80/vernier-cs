@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using App.Models;
 using App.Resources.Strings;
-using Backend.Devices.GoDirect;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -20,19 +20,14 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject
 
         foreach (SpectroVisOperatingModeOption option in _measurementViewModel.OperatingModeOptions)
         {
-            OperatingModeOptions.Add(new SpectroVisOperatingModeOption(option.Mode, option.DisplayName, option.IsSupported,
-                option.Mode == _measurementViewModel.Session.Mode));
+            option.PropertyChanged += OnOperatingModeChanged;
         }
 
-        SelectedMode = _measurementViewModel.Session.Mode;
         IntegrationTimeMs = _measurementViewModel.IntegrationTimeMs;
         CanEditIntegrationTime = _measurementViewModel.CanEditIntegrationTime;
     }
 
-    public ObservableCollection<SpectroVisOperatingModeOption> OperatingModeOptions { get; } = [];
-
-    [ObservableProperty]
-    public partial OperatingMode SelectedMode { get; set; }
+    public ObservableCollection<SpectroVisOperatingModeOption> OperatingModeOptions => _measurementViewModel.OperatingModeOptions;
 
     [ObservableProperty]
     public partial int IntegrationTimeMs { get; set; }
@@ -50,17 +45,32 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject
     public partial string DeviceTypeText { get; set; } = "";
 
     [RelayCommand]
-    private async Task ApplyAsync()
+    private async Task OnIntegrationTimeChanged()
     {
-        if (_measurementViewModel.Session.Mode != SelectedMode)
-        {
-            await _measurementViewModel.SelectOperatingModeAsync(SelectedMode);
-        }
-
         if (_measurementViewModel.IntegrationTimeMs != IntegrationTimeMs)
         {
             await _measurementViewModel.ApplyIntegrationTimeAsync(IntegrationTimeMs);
         }
+    }
+
+    private async void OnOperatingModeChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(SpectroVisOperatingModeOption.IsSelected))
+        {
+            return;
+        }
+
+        if (sender is not SpectroVisOperatingModeOption option || !option.IsSelected)
+        {
+            return;
+        }
+
+        if (option.Mode == _measurementViewModel.Session.Mode)
+        {
+            return;
+        }
+
+        await _measurementViewModel.SelectOperatingModeAsync(option.Mode);
     }
 
     [RelayCommand]

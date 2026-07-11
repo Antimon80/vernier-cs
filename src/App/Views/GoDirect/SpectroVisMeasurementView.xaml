@@ -4,162 +4,161 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:App.Resources.Strings"
              xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
+             xmlns:converters="clr-namespace:App.Util"
              BackgroundColor="White">
-  <Grid RowDefinitions="*,Auto"
-      Padding="8"
-      RowSpacing="8">
-    <!-- Main measurement area -->
-    <Grid Grid.Row="0"
-        ColumnDefinitions="*,8,260"
-        ColumnSpacing="8">
-      <!-- Chart area placeholder -->
-      <Border Grid.Column="0"
-          Stroke="Black"
-          StrokeThickness="1"
-          BackgroundColor="White"
-          Padding="8">
-        <Grid RowDefinitions="Auto,*">
-          <Label Grid.Row="0"
-              Text="{Binding ChartTitle}"
-              FontAttributes="Bold"
-              FontSize="20"
-              HorizontalOptions="Center"/>
-          <Grid Grid.Row="1"
-              ColumnDefinitions="Auto,*"
-              Padding="4">
-            <Label Grid.Column="0"
-                Text="{Binding YAxisTitle}"
-                Rotation="-90"
-                FontAttributes="Bold"
-                FontSize="18"
-                HorizontalOptions="Center"
-                VerticalOptions="Center"/>
-            <Grid Grid.Column="1"
-                RowDefinitions="*,Auto,Auto">
-              <Border Grid.Row="0"
-                  Stroke="Black"
-                  StrokeThickness="1"
-                  BackgroundColor="White">
-                <Label Text="Diagramm"
-                    TextColor="Gray"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"/>
-              </Border>
-              <BoxView Grid.Row="1"
-                  HeightRequest="18"
-                  Margin="0,4,0,0"
-                  IsVisible="{Binding ShowSpectrumStrip}"
-                  BackgroundColor="LightGray"/>
-              <Label Grid.Row="2"
-                  Text="{Binding XAxisTitle}"
-                  FontAttributes="Bold"
-                  FontSize="18"
-                  HorizontalOptions="Center"
-                  Margin="0,4,0,0"/>
-            </Grid>
-          </Grid>
-        </Grid>
-      </Border>
-      <BoxView Grid.Column="1"
-          WidthRequest="2"
-          BackgroundColor="LightGray"/>
-      <!-- Table area -->
-      <Border Grid.Column="2"
-          Stroke="Black"
-          StrokeThickness="1"
-          BackgroundColor="#eeeeee">
-        <Grid RowDefinitions="60,*">
-          <Grid Grid.Row="0"
-              ColumnDefinitions="*,*"
-              BackgroundColor="#dddddd">
-            <Label Grid.Column="0"
-                Text="{Binding XColumnHeader}"
-                FontAttributes="Bold"
-                HorizontalTextAlignment="Center"
-                VerticalTextAlignment="Center"/>
-            <Label Grid.Column="1"
-                Text="{Binding YColumnHeader}"
-                FontAttributes="Bold"
-                HorizontalTextAlignment="Center"
-                VerticalTextAlignment="Center"/>
-          </Grid>
-          <CollectionView Grid.Row="1"
-              ItemsSource="{Binding TableRows}">
-            <CollectionView.EmptyView>
-              <Label Text="{x:Static strings:AppResources.Device_NoDataYet}"
-                  TextColor="Gray"
-                  HorizontalOptions="Center"
-                  VerticalOptions="Center"/>
-            </CollectionView.EmptyView>
-            <CollectionView.ItemTemplate>
-              <DataTemplate>
-                <Grid ColumnDefinitions="*,*"
-                    Padding="4,2"
-                    BackgroundColor="White">
-                  <Label Grid.Column="0"
-                      Text="{Binding XValue}"
-                      HorizontalTextAlignment="End"
-                      VerticalTextAlignment="Center"
-                      Padding="0,0,8,0"/>
-                  <Label Grid.Column="1"
-                      Text="{Binding YValue}"
-                      HorizontalTextAlignment="End"
-                      VerticalTextAlignment="Center"
-                      Padding="0,0,8,0"/>
+    <ContentView.Resources>
+        <converters:CountToWidthConverter x:Key="CountToWidthConverter"/>
+    </ContentView.Resources>
+    <Grid RowDefinitions="*,Auto"
+          Padding="8"
+          RowSpacing="8">
+        <!-- Main measurement area -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,8,260"
+              ColumnSpacing="8">
+            <!-- Chart area placeholder -->
+            <Border Grid.Column="0"
+                    Stroke="Black"
+                    StrokeThickness="1"
+                    BackgroundColor="White"
+                    Padding="8">
+                <Grid RowDefinitions="Auto,*">
+                    <Label Grid.Row="0"
+                           Text="{Binding ChartTitle}"
+                           FontAttributes="Bold"
+                           FontSize="20"
+                           HorizontalOptions="Center"/>
+                    <Grid Grid.Row="1"
+                          ColumnDefinitions="Auto,*"
+                          Padding="4">
+                        <Label Grid.Column="0"
+                               Text="{Binding YAxisTitle}"
+                               Rotation="-90"
+                               FontAttributes="Bold"
+                               FontSize="18"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                        <Grid Grid.Column="1"
+                              RowDefinitions="*,Auto,Auto">
+                            <Border Grid.Row="0"
+                                    Stroke="Black"
+                                    StrokeThickness="1"
+                                    BackgroundColor="White">
+                                <Label Text="Diagramm"
+                                       TextColor="Gray"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                            <BoxView Grid.Row="1"
+                                     HeightRequest="18"
+                                     Margin="0,4,0,0"
+                                     IsVisible="{Binding ShowSpectrumStrip}"
+                                     BackgroundColor="LightGray"/>
+                            <Label Grid.Row="2"
+                                   Text="{Binding XAxisTitle}"
+                                   FontAttributes="Bold"
+                                   FontSize="18"
+                                   HorizontalOptions="Center"
+                                   Margin="0,4,0,0"/>
+                        </Grid>
+                    </Grid>
                 </Grid>
-              </DataTemplate>
-            </CollectionView.ItemTemplate>
-          </CollectionView>
+            </Border>
+            <BoxView Grid.Column="1"
+                     WidthRequest="2"
+                     BackgroundColor="LightGray"/>
+            <!-- Table area -->
+            <Border Grid.Column="2"
+                    Stroke="Black"
+                    StrokeThickness="1"
+                    BackgroundColor="#eeeeee">
+                <ScrollView Orientation="Horizontal">
+                    <Grid RowDefinitions="Auto,*"
+                          WidthRequest="{Binding Columns.Count, Converter={StaticResource CountToWidthConverter}}">
+                        <HorizontalStackLayout Grid.Row="0"
+                                               BackgroundColor="#dddddd"
+                                               Padding="4,2"
+                                               BindableLayout.ItemsSource="{Binding Columns}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Text="{Binding Header}"
+                                           TextColor="{Binding Color}"
+                                           FontAttributes="Bold"
+                                           WidthRequest="90"
+                                           HorizontalTextAlignment="Center"/>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+
+                        <CollectionView Grid.Row="1"
+                                        ItemsSource="{Binding WideRows}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <HorizontalStackLayout Padding="4,2"
+                                                           BindableLayout.ItemsSource="{Binding Cells}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Label Text="{Binding Value}"
+                                                       TextColor="{Binding Color}"
+                                                       WidthRequest="90"
+                                                       HorizontalTextAlignment="End"/>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </HorizontalStackLayout>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </Grid>
+                </ScrollView>
+            </Border>
         </Grid>
-      </Border>
+        <!-- Status bar -->
+        <Grid Grid.Row="1"
+              ColumnDefinitions="Auto,Auto,40,Auto,Auto,40,Auto,Auto,40,Auto,Auto,*"
+              ColumnSpacing="10"
+              Padding="8,4">
+            <Label Grid.Column="0"
+                   Text="{x:Static strings:AppResources.Device_IsInitialized}"
+                   FontSize="18"
+                   VerticalOptions="Center"/>
+            <shapes:Ellipse Grid.Column="1"
+                            WidthRequest="24"
+                            HeightRequest="24"
+                            Fill="{Binding InitializationStatusColor}"
+                            Stroke="Black"
+                            StrokeThickness="1"
+                            VerticalOptions="Center"/>
+            <Label Grid.Column="3"
+                   Text="{x:Static strings:AppResources.Spectrometer_WhiteLamp}"
+                   FontSize="18"
+                   VerticalOptions="Center"/>
+            <shapes:Ellipse Grid.Column="4"
+                            WidthRequest="24"
+                            HeightRequest="24"
+                            Fill="{Binding WhiteLampStatusColor}"
+                            Stroke="Black"
+                            StrokeThickness="1"
+                            VerticalOptions="Center"/>
+            <Label Grid.Column="6"
+                   Text="{x:Static strings:AppResources.Spectrometer_IsCalibrated}"
+                   FontSize="18"
+                   VerticalOptions="Center"/>
+            <shapes:Ellipse Grid.Column="7"
+                            WidthRequest="24"
+                            HeightRequest="24"
+                            Fill="{Binding CalibrationStatusColor}"
+                            Stroke="Black"
+                            StrokeThickness="1"
+                            VerticalOptions="Center"/>
+            <Label Grid.Column="9"
+                   Text="{x:Static strings:AppResources.Spectrometer_CurrentOperatingMode}"
+                   FontSize="18"
+                   VerticalOptions="Center"/>
+            <Label Grid.Column="10"
+                   Text="{Binding CurrentOperatingMode}"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"/>
+        </Grid>
     </Grid>
-    <!-- Status bar -->
-    <Grid Grid.Row="1"
-        ColumnDefinitions="Auto,Auto,40,Auto,Auto,40,Auto,Auto,40,Auto,Auto,*"
-        ColumnSpacing="10"
-        Padding="8,4">
-      <Label Grid.Column="0"
-          Text="{x:Static strings:AppResources.Device_IsInitialized}"
-          FontSize="18"
-          VerticalOptions="Center"/>
-      <shapes:Ellipse Grid.Column="1"
-          WidthRequest="24"
-          HeightRequest="24"
-          Fill="{Binding InitializationStatusColor}"
-          Stroke="Black"
-          StrokeThickness="1"
-          VerticalOptions="Center"/>
-      <Label Grid.Column="3"
-          Text="{x:Static strings:AppResources.Spectrometer_WhiteLamp}"
-          FontSize="18"
-          VerticalOptions="Center"/>
-      <shapes:Ellipse Grid.Column="4"
-          WidthRequest="24"
-          HeightRequest="24"
-          Fill="{Binding WhiteLampStatusColor}"
-          Stroke="Black"
-          StrokeThickness="1"
-          VerticalOptions="Center"/>
-      <Label Grid.Column="6"
-          Text="{x:Static strings:AppResources.Spectrometer_IsCalibrated}"
-          FontSize="18"
-          VerticalOptions="Center"/>
-      <shapes:Ellipse Grid.Column="7"
-          WidthRequest="24"
-          HeightRequest="24"
-          Fill="{Binding CalibrationStatusColor}"
-          Stroke="Black"
-          StrokeThickness="1"
-          VerticalOptions="Center"/>
-      <Label Grid.Column="9"
-          Text="{x:Static strings:AppResources.Spectrometer_CurrentOperatingMode}"
-          FontSize="18"
-          VerticalOptions="Center"/>
-      <Label Grid.Column="10"
-          Text="{Binding CurrentOperatingMode}"
-          FontSize="18"
-          FontAttributes="Bold"
-          VerticalOptions="Center"/>
-    </Grid>
-  </Grid>
 </ContentView>

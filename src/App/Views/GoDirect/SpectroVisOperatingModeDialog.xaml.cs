@@ -22,7 +22,7 @@ public partial class SpectroVisOperatingModeDialog : ContentPage
     {
         try
         {
-            await ViewModel.ApplyCommand.ExecuteAsync(null);
+            await ViewModel.IntegrationTimeChangedCommand.ExecuteAsync(null);
             await Navigation.PopModalAsync();
         }
         catch (Exception ex)

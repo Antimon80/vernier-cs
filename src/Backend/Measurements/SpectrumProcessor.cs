@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Drawing;
 using Backend.Devices.GoDirect;
 
 namespace Backend.Measurements;
@@ -70,11 +68,6 @@ public sealed class SpectrumProcessor
         ArgumentOutOfRangeException.ThrowIfLessThan(windowSpectra, 1);
         _windowSpectra = windowSpectra;
     }
-
-    /// <summary>
-    /// Number of raw spectra used for temporal averaging.
-    /// </summary>
-    public int WindowSpectra => _windowSpectra;
 
     /// <summary>
     /// Processes one raw CCD spectrum immediately without temporal
