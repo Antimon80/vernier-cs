@@ -64,6 +64,7 @@ public static class AppResources
     public static string App_DataAnalysis => GetString(nameof(App_DataAnalysis));
     public static string Device_Diagnostics => GetString(nameof(Device_Diagnostics));
     public static string App_Settings => GetString(nameof(App_Settings));
+    public static string App_About => GetString(nameof(App_About));
     public static string App_Help => GetString(nameof(App_Help));
 
     // chart and table

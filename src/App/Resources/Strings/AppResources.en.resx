@@ -293,6 +293,10 @@
   <data name="App_Settings" xml:space="preserve">
     <value>Settings</value>
     <comment/>
+    <data name="App_About" xml:space="preserve">
+    <value>Impressum</value>
+    <comment/>
+    </data>
   </data>
   <data name="App_Help" xml:space="preserve">
     <value>Help</value>

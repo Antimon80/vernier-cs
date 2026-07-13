@@ -6,23 +6,24 @@ public sealed class InvertedBoolConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        return value is bool b ? !b : true;
+        return value is not bool b || !b;
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        return value is bool b ? !b : false;
+        return value is bool b && !b;
     }
 }
 
 public sealed class CountToWidthConverter : IValueConverter
 {
-    private const double ColumnWidth = 90;
+    private const double ColumnWidth = 120.0;
+    private const double ScrollbarAllowance = 24;
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         int count = value is int i ? i : 0;
-        return count * ColumnWidth;
+        return count * ColumnWidth + ScrollbarAllowance;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

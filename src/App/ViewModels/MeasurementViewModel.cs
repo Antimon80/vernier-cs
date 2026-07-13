@@ -186,6 +186,12 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
+    private Task OpenAbout()
+    {
+        return ShowNotImplementedAsync(AppResources.App_About);
+    }
+
+    [RelayCommand]
     private Task OpenHelp()
     {
         return ShowNotImplementedAsync(AppResources.App_Help);

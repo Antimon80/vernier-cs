@@ -4,18 +4,18 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:App.Resources.Strings"
              xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
-             xmlns:converters="clr-namespace:App.Util"
-             BackgroundColor="White">
+             xmlns:util="clr-namespace:App.Util"
+             BackgroundColor="Transparent">
     <ContentView.Resources>
-        <converters:CountToWidthConverter x:Key="CountToWidthConverter"/>
+        <util:CountToWidthConverter x:Key="CountToWidthConverter"/>
     </ContentView.Resources>
     <Grid RowDefinitions="*,Auto"
           Padding="8"
           RowSpacing="8">
         <!-- Main measurement area -->
         <Grid Grid.Row="0"
-              ColumnDefinitions="*,8,260"
-              ColumnSpacing="8">
+              ColumnDefinitions="*,20,260"
+              ColumnSpacing="0">
             <!-- Chart area placeholder -->
             <Border Grid.Column="0"
                     Stroke="Black"
@@ -64,9 +64,11 @@
                     </Grid>
                 </Grid>
             </Border>
-            <BoxView Grid.Column="1"
-                     WidthRequest="2"
-                     BackgroundColor="LightGray"/>
+            <util:GridSplitter Grid.Column="1"
+                               WidthRequest="20"
+                               MinimumLeftWidth="300"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Fill"/>
             <!-- Table area -->
             <Border Grid.Column="2"
                     Stroke="Black"
@@ -74,17 +76,18 @@
                     BackgroundColor="#eeeeee">
                 <ScrollView Orientation="Horizontal">
                     <Grid RowDefinitions="Auto,*"
+                          HorizontalOptions="Start"
                           WidthRequest="{Binding Columns.Count, Converter={StaticResource CountToWidthConverter}}">
                         <HorizontalStackLayout Grid.Row="0"
                                                BackgroundColor="#dddddd"
-                                               Padding="4,2"
+                                               Padding="4,2,24,2"
                                                BindableLayout.ItemsSource="{Binding Columns}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate>
                                     <Label Text="{Binding Header}"
                                            TextColor="{Binding Color}"
                                            FontAttributes="Bold"
-                                           WidthRequest="90"
+                                           WidthRequest="120"
                                            HorizontalTextAlignment="Center"/>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
@@ -94,13 +97,13 @@
                                         ItemsSource="{Binding WideRows}">
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
-                                    <HorizontalStackLayout Padding="4,2"
+                                    <HorizontalStackLayout Padding="4,2,24,2"
                                                            BindableLayout.ItemsSource="{Binding Cells}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate>
                                                 <Label Text="{Binding Value}"
                                                        TextColor="{Binding Color}"
-                                                       WidthRequest="90"
+                                                       WidthRequest="120"
                                                        HorizontalTextAlignment="End"/>
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
