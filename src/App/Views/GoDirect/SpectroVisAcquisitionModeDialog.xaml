@@ -92,26 +92,41 @@
                                                    BackgroundColor="{AppThemeBinding Light=#B0B0B0, Dark=#606060}"/>
 
                                           <Grid ColumnDefinitions="130,*"
-                                                RowDefinitions="Auto,Auto"
+                                                RowDefinitions="Auto,Auto,Auto,Auto"
                                                 ColumnSpacing="16"
                                                 RowSpacing="8">
                                                  <Label Grid.Row="0"
                                                         Grid.Column="0"
-                                                        Text="{x:Static res:AppResources.AcquisitionMode_ColumnName}"
+                                                        Text="{x:Static res:AppResources.AcquisitionMode_ColumnNameLong}"
                                                         VerticalOptions="Center"/>
                                                  <Entry Grid.Row="0"
                                                         Grid.Column="1"
-                                                        Text="{Binding ColumnName,Mode=TwoWay}"
-                                                        MaxLength="20"
+                                                        Text="{Binding ColumnNameLong,Mode=TwoWay}"
+                                                        MaxLength="40"
                                                         IsEnabled="{Binding CanEditEventTriggeredSettings}"/>
                                                  <Label Grid.Row="1"
                                                         Grid.Column="0"
-                                                        Text="{x:Static res:AppResources.AcquisitionMode_Unit}"
+                                                        Text="{x:Static res:AppResources.AcquisitionMode_ColumnNameShort}"
                                                         VerticalOptions="Center"/>
                                                  <Entry Grid.Row="1"
                                                         Grid.Column="1"
-                                                        Text="{Binding Unit,Mode=TwoWay}"
+                                                        Text="{Binding ColumnNameShort,Mode=TwoWay}"
+                                                        MaxLength="8"
+                                                        IsEnabled="{Binding CanEditEventTriggeredSettings}"/>
+                                                 <Label Grid.Row="2"
+                                                        Grid.Column="0"
+                                                        Text="{x:Static res:AppResources.AcquisitionMode_Unit}"
+                                                        VerticalOptions="Center"/>
+                                                 <Picker Grid.Row="2"
+                                                         Grid.Column="1"
+                                                         ItemsSource="{Binding UnitOptions}"
+                                                         SelectedItem="{Binding SelectedUnit,Mode=TwoWay}"
+                                                         IsEnabled="{Binding CanEditEventTriggeredSettings}"/>
+                                                 <Entry Grid.Row="3"
+                                                        Grid.Column="1"
+                                                        Text="{Binding CustomUnit,Mode=TwoWay}"
                                                         MaxLength="10"
+                                                        IsVisible="{Binding IsCustomUnitSelected}"
                                                         IsEnabled="{Binding CanEditEventTriggeredSettings}"/>
                                           </Grid>
                                    </VerticalStackLayout>

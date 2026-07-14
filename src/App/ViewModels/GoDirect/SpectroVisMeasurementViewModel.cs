@@ -15,7 +15,7 @@ namespace App.ViewModels.GoDirect;
 /// It also coordinates operating-mode changes, integration-time updates, calibration dialogs and 
 /// acquisition-mode-specific table handling.
 /// </summary>
-public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, IDisposable, IMeasurementWorkflow
+public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, IDisposable, IMeasurementSettings
 {
     /// <summary>
     /// Spectrometer controlled by this view model.
@@ -132,6 +132,8 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     public bool HasOperatingModeSelection => true;
 
+    public bool CanKeepDataPoint => AcquisitionMode == AcquisitionMode.EventTriggered;
+
     /// <summary>
     /// Indicates that the spectrometer does not expose a generic zero command.
     /// </summary>
@@ -148,10 +150,16 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public event Func<SpectroVisMeasurementViewModel, CancellationToken, Task>? AcquisitionModeDialogRequested;
 
     /// <summary>
-    /// Raised when the platform view should display the SpectroVis calibration
-    /// dialog and return the selected calibration action.
+    /// Raised when the platform view should display the SpectroVis calibration dialog and return the selected calibration action.
     /// </summary>
     public event Func<SpectroVisMeasurementViewModel, CancellationToken, Task<CalibrationDialogResult?>>? CalibrationDialogRequested;
+
+    public event Func<SpectroVisMeasurementViewModel, CancellationToken, Task>? KeepDataPointDialogRequested;
+
+    /// <summary>
+    /// The event is triggered to stop data recording when a fixed time interval has elapsed in time-resolved mode.
+    /// </summary>
+    public event Action? AutoStopRequested;
 
     /// <summary>
     /// Gets or sets how incoming full spectra are interpreted and accumulated by the user interface.
@@ -187,7 +195,10 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public partial int SelectedWavelengthNm { get; set; } = 500;
 
     [ObservableProperty]
-    public partial int TimeResolvedDuration {get; set;} = 10;
+    public partial int TimeResolvedDuration { get; set; } = 10;
+
+    [ObservableProperty]
+    public partial double DataPointValue { get; set; } = 0.0;
 
     /// <summary>
     /// Gets or sets whether the wavelength color strip should be displayed below the chart.
@@ -233,13 +244,20 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public partial bool ContinuousDataCollection { get; set; }
 
     /// <summary>
-    /// Gets or sets the column name used for the x-axis of event-triggered measurement series.
+    /// Gets or sets the full descriptive name for the x-axis of event-triggered measurement series
+    /// (e.g. for legends/exports). The table header itself uses <see cref="ColumnNameShort"/>.
     /// </summary>
     [ObservableProperty]
-    public partial string ColumnName { get; set; } = "Konzentration";
+    public partial string ColumnNameLong { get; set; } = AppResources.AcquisitionMode_Concentration;
 
     /// <summary>
-    /// Gets or sets the unit shown alongside <see cref="ColumnName"/> in the event-triggered table header.
+    /// Gets or sets the abbreviated column name used in the (narrow) event-triggered table header.
+    /// </summary>
+    [ObservableProperty]
+    public partial string ColumnNameShort { get; set; } = "c";
+
+    /// <summary>
+    /// Gets or sets the unit shown alongside <see cref="ColumnNameShort"/> in the event-triggered table header.
     /// </summary>
     [ObservableProperty]
     public partial string Unit { get; set; } = "mol/l";
@@ -256,35 +274,13 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     private bool IsMeasurementRunning => _isMeasurementRunningProvider();
 
     /// <summary>
-    /// Archives the current live series and rebuilds chart and table metadata
-    /// whenever the acquisition mode changes.
-    /// </summary>
-    /// <param name="value">New acquisition mode.</param>
-    partial void OnAcquisitionModeChanged(AcquisitionMode value)
-    {
-        ArchiveLiveSeries();
-
-        RefreshChartConfiguration();
-        RefreshTableHeaders();
-        RefreshAcquisitionModeEditFlags();
-
-        // The live preview (DisplayedSpectrum) updates continuously regardless of recording state.
-        // Only write into the table if recording is actually running - otherwise a mode change while
-        // stopped would re-populate the just-cleared live columns with a stale one-off snapshot.
-        if (IsMeasurementRunning && DisplayedSpectrum is not null && value == AcquisitionMode.FullSpectrum)
-        {
-            UpdateTable(DisplayedSpectrum);
-        }
-    }
-
-    /// <summary>
     /// Requests display of the device-specific operating-mode dialog.
     /// </summary>
     /// <param name="ct">Cancellation token for the dialog operation.</param>
     /// <exception cref="InvalidOperationException">
     /// Thrown when no dialog handler has been registered by the view.
     /// </exception>
-    public async Task OpenOperatingMode(CancellationToken ct = default)
+    public async Task RequestOperatingModeDialog(CancellationToken ct = default)
     {
         if (OperatingModeDialogRequested is null)
         {
@@ -301,7 +297,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <exception cref="InvalidOperationException">
     /// Thrown when no dialog handler has been registered by the view.
     /// </exception>
-    public async Task OpenAcquisitionMode(CancellationToken ct = default)
+    public async Task RequestAcquisitionModeDialog(CancellationToken ct = default)
     {
         if (AcquisitionModeDialogRequested is null)
         {
@@ -321,7 +317,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <exception cref="InvalidOperationException">
     /// Thrown when no dialog handler has been registered by the view.
     /// </exception>
-    public async Task<CalibrationDialogResult?> ShowCalibrationDialog(CancellationToken ct = default)
+    public async Task<CalibrationDialogResult?> RequestCalibrationDialog(CancellationToken ct = default)
     {
         if (CalibrationDialogRequested is null)
         {
@@ -329,6 +325,23 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         }
 
         return await CalibrationDialogRequested(this, ct);
+    }
+
+    /// <summary>
+    /// Requests display of the device-specific "keep data point" dialog.
+    /// </summary>
+    /// <param name="ct">Cancellation token for the dialog operation.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when no dialog handler has been registered by the view.
+    /// </exception>
+    public async Task RequestKeepDataPointDialog(CancellationToken ct = default)
+    {
+        if (KeepDataPointDialogRequested is null)
+        {
+            throw new InvalidOperationException("No keep data point dialog is registered.");
+        }
+
+        await KeepDataPointDialogRequested(this, ct);
     }
 
     public Task SetToZero(CancellationToken ct = default)
@@ -367,9 +380,25 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         });
     }
 
+    /// <summary>
+    /// Archives the current live series and rebuilds chart and table metadata
+    /// whenever the acquisition mode changes.
+    /// </summary>
+    /// <param name="value">New acquisition mode.</param>
     public void SelectAcquisitionMode(AcquisitionMode mode)
     {
         AcquisitionMode = mode;
+
+        ArchiveLiveSeries();
+
+        RefreshChartConfiguration();
+        RefreshTableHeaders();
+        RefreshAcquisitionModeEditFlags();
+
+        if (IsMeasurementRunning && DisplayedSpectrum is not null && mode == AcquisitionMode.FullSpectrum)
+        {
+            UpdateTable(DisplayedSpectrum);
+        }
     }
 
     /// <summary>
@@ -399,10 +428,10 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// Captures one event-triggered measurement point at the selected wavelength and appends 
     /// it to the live table series.
     /// </summary>
-    /// <param name="concentration">
+    /// <param name="value">
     /// Concentration value associated with the current spectrum.
     /// </param>
-    public void CaptureEventPoint(double concentration)
+    public async Task CaptureEventPoint(double value, CancellationToken ct = default)
     {
         if (DisplayedSpectrum is null)
         {
@@ -410,8 +439,9 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         }
 
         double y = GetYValueAtSelectedWavelength(DisplayedSpectrum);
+        _table.AppendLiveRow(FormatXValue(value), FormatYValue(y, DisplayedSpectrum.Mode));
 
-        _table.AppendLiveRow(FormatXValue(concentration), FormatYValue(y, DisplayedSpectrum.Mode));
+
     }
 
     /// <summary>
@@ -615,7 +645,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         {
             AcquisitionMode.FullSpectrum => "λ [nm]",
             AcquisitionMode.TimeResolved => "t [s]",
-            AcquisitionMode.EventTriggered => $"{ColumnName} [{Unit}]",
+            AcquisitionMode.EventTriggered => $"{ColumnNameShort} [{Unit}]",
             _ => "x"
         };
 
@@ -683,6 +713,11 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         double y = GetYValueAtSelectedWavelength(spectrum);
 
         _table.AppendLiveRow(elapsedSeconds.ToString("F2"), FormatYValue(y, spectrum.Mode));
+
+        if(!ContinuousDataCollection && elapsedSeconds >= TimeResolvedDuration)
+        {
+            AutoStopRequested?.Invoke();
+        }
     }
 
     /// <summary>
@@ -782,6 +817,9 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         AddOperatingModeOption(OperatingMode.Fluorescence500, AppResources.OperatingMode_Fluorescence500, isSupported: _spectrometer.Model.HasLed500);
     }
 
+    /// <summary>
+    /// Builds the acquisition-mode selection specific to spectrometers.
+    /// </summary>
     private void BuildAcquisitionModeOptions()
     {
         AddAcquisitionModeOption(AcquisitionMode.FullSpectrum, AppResources.Spectrometer_FullSpectrum);

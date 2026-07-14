@@ -7,29 +7,66 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace App.ViewModels.GoDirect;
 
+/// <summary>
+/// Provides the state and commands used by the SpectroVis acquisition-mode dialog.
+///
+/// The dialog edits acquisition settings that are stored in the long-lived
+/// <see cref="SpectroVisMeasurementViewModel"/>. Acquisition-mode options are shared
+/// with the measurement view model so that both view models always use the same selection state.
+/// </summary>
 public sealed partial class SpectroVisAcquisitionModeViewModel : ObservableObject, IDisposable
 {
     private readonly SpectroVisMeasurementViewModel _measurementViewModel;
     private bool _disposed;
 
+    /// <summary>
+    /// Initializes the acquisition-mode dialog from the current measurement settings.
+    /// </summary>
+    /// <param name="measurementViewModel">
+    /// The measurement view model whose acquisition settings are displayed and modified.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="measurementViewModel"/> is <see langword="null"/>.
+    /// </exception>
     public SpectroVisAcquisitionModeViewModel(SpectroVisMeasurementViewModel measurementViewModel)
     {
         _measurementViewModel = measurementViewModel ?? throw new ArgumentNullException(nameof(measurementViewModel));
 
+        // Display static device information in the dialog header.
         SpectrometerType = _measurementViewModel.Model.Name;
         MeasurementRangeText = $"{_measurementViewModel.Model.WavelengthMinNm:F1} - {_measurementViewModel.Model.WavelengthMaxNm:F1} nm";
 
-        foreach(AcquisitionModeOption option in _measurementViewModel.AcquisitionModeOptions)
+        // Observe the shared radio-button options so a newly selected mode can be
+        // applied immediately to the measurement view model.
+        foreach (AcquisitionModeOption option in _measurementViewModel.AcquisitionModeOptions)
         {
             option.PropertyChanged += OnAcquisitionModeChanged;
         }
 
+        // Copy the current time-resolved settings into the dialog.
         TimeResolvedDuration = _measurementViewModel.TimeResolvedDuration;
         SelectedWavelength = _measurementViewModel.SelectedWavelengthNm;
         ContinuousDataCollection = _measurementViewModel.ContinuousDataCollection;
-        ColumnName = _measurementViewModel.ColumnName;
-        Unit = _measurementViewModel.Unit;
 
+        // Copy the current event-triggered column settings into the dialog.
+        ColumnNameLong = _measurementViewModel.ColumnNameLong;
+        ColumnNameShort = _measurementViewModel.ColumnNameShort;
+
+        // Select a predefined unit when possible. Otherwise select the custom-unit
+        // option and preserve the existing unit as free text.
+        string currentUnit = _measurementViewModel.Unit;
+
+        if (UnitOptions.Contains(currentUnit))
+        {
+            SelectedUnit = currentUnit;
+        }
+        else
+        {
+            SelectedUnit = AppResources.AcquisitionMode_OtherUnit;
+            CustomUnit = currentUnit;
+        }
+
+        // Initialize the editability state for the currently selected acquisition mode.
         CanEditTimeResolvedSettings = _measurementViewModel.CanEditTimeResolvedSettings;
         CanEditEventTriggeredSettings = _measurementViewModel.CanEditEventTriggeredSettings;
         CanEditWavelength = _measurementViewModel.CanEditWavelength;
@@ -42,116 +79,190 @@ public sealed partial class SpectroVisAcquisitionModeViewModel : ObservableObjec
     public ObservableCollection<AcquisitionModeOption> AcquisitionModeOptions => _measurementViewModel.AcquisitionModeOptions;
 
     [ObservableProperty]
-    public partial int TimeResolvedDuration {get; set;}
+    public partial int TimeResolvedDuration { get; set; }
 
     [ObservableProperty]
-    public partial int SelectedWavelength {get; set;}
+    public partial int SelectedWavelength { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether time-resolved data collection continues until stopped manually.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool ContinuousDataCollection { get; set; }
+
+    /// <summary>
+    /// Common concentration units offered for event-triggered (Lambert-Beer) measurements,
+    /// plus a trailing "Sonstiges"/"Other" option that reveals a free-text entry.
+    /// Other device types will need a different list entirely, so this stays local to this dialog.
+    /// </summary>
+    public IReadOnlyList<string> UnitOptions { get; } =
+    [
+        "mol/l", "mmol/l", "µmol/l", "g/l", "mg/l", "µg/l", "mg/ml", "µg/ml",
+        AppResources.AcquisitionMode_OtherUnit
+    ];
 
     [ObservableProperty]
-    public partial bool ContinuousDataCollection {get; set;}
+    public partial string ColumnNameLong { get; set; } = "";
 
     [ObservableProperty]
-    public partial string ColumnName {get; set;} = "";
+    public partial string ColumnNameShort { get; set; } = "";
 
     [ObservableProperty]
-    public partial string Unit {get; set;} = "";
+    public partial string SelectedUnit { get; set; } = "";
 
     [ObservableProperty]
-    public partial bool CanEditTimeResolvedSettings {get; set;}
+    public partial string CustomUnit { get; set; } = "";
+
+    /// <summary>
+    /// Gets whether the free-text custom-unit entry should be shown, i.e. whether
+    /// "Sonstiges"/"Other" is currently selected in the unit dropdown.
+    /// </summary>
+    public bool IsCustomUnitSelected => SelectedUnit == AppResources.AcquisitionMode_OtherUnit;
+
 
     [ObservableProperty]
-    public partial bool CanEditEventTriggeredSettings {get; set;}
+    public partial bool CanEditTimeResolvedSettings { get; set; }
 
     [ObservableProperty]
-    public partial bool CanEditWavelength {get; set;}
+    public partial bool CanEditEventTriggeredSettings { get; set; }
+
+    [ObservableProperty]
+    public partial bool CanEditWavelength { get; set; }
 
     /// <summary>
     /// Gets or sets whether the duration entry may be edited: only in time-resolved mode, and only
     /// while continuous data collection is not selected.
     /// </summary>
     [ObservableProperty]
-    public partial bool CanEditDuration {get; set;}
+    public partial bool CanEditDuration { get; set; }
 
+    [ObservableProperty]
+    public partial string SpectrometerType { get; set; } = "";
+
+    [ObservableProperty]
+    public partial string MeasurementRangeText { get; set; } = "";
+
+    [ObservableProperty]
+    public partial string DeviceTypeText { get; set; } = "";
+
+    /// <summary>
+    /// Recalculates duration-field editability when continuous collection changes.
+    /// </summary>
+    /// <param name="value">
+    /// The new continuous-data-collection value generated by the observable property.
+    /// </param>
     partial void OnContinuousDataCollectionChanged(bool value)
-    {
-        RefreshCanEditDuration();
-    }
-
-    partial void OnCanEditTimeResolvedSettingsChanged(bool value)
-    {
-        RefreshCanEditDuration();
-    }
-
-    private void RefreshCanEditDuration()
     {
         CanEditDuration = CanEditTimeResolvedSettings && !ContinuousDataCollection;
     }
 
-    [ObservableProperty]
-    public partial string SpectrometerType {get; set;} = "";
+    /// <summary>
+    /// Recalculates duration-field editability when the active acquisition mode changes.
+    /// </summary>
+    /// <param name="value">
+    /// The new time-resolved editability value generated by the observable property.
+    /// </param>
+    partial void OnCanEditTimeResolvedSettingsChanged(bool value)
+    {
+        CanEditDuration = CanEditTimeResolvedSettings && !ContinuousDataCollection;
+    }
 
-    [ObservableProperty]
-    public partial string MeasurementRangeText {get; set;} = "";
+    /// <summary>
+    /// Notifies the UI that custom-unit visibility may have changed.
+    /// </summary>
+    /// <param name="value">
+    /// The newly selected unit generated by the observable property.
+    /// </param>
+    partial void OnSelectedUnitChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsCustomUnitSelected));
+    }
 
-    [ObservableProperty]
-    public partial string DeviceTypeText {get; set;} = "";
-
+    /// <summary>
+    /// Applies the current time-resolved settings to the measurement view model.
+    ///
+    /// Only changed values are written back.
+    /// </summary>
     [RelayCommand]
     private void OnTimeResolvedSettingsChanged()
     {
-        if(_measurementViewModel.TimeResolvedDuration != TimeResolvedDuration)
+        if (_measurementViewModel.TimeResolvedDuration != TimeResolvedDuration)
         {
             _measurementViewModel.TimeResolvedDuration = TimeResolvedDuration;
         }
 
-        if(_measurementViewModel.SelectedWavelengthNm != SelectedWavelength)
+        if (_measurementViewModel.SelectedWavelengthNm != SelectedWavelength)
         {
             _measurementViewModel.SelectedWavelengthNm = SelectedWavelength;
         }
 
-        if(_measurementViewModel.ContinuousDataCollection != ContinuousDataCollection)
+        if (_measurementViewModel.ContinuousDataCollection != ContinuousDataCollection)
         {
             _measurementViewModel.ContinuousDataCollection = ContinuousDataCollection;
         }
     }
 
+    /// <summary>
+    /// Applies the current event-triggered settings to the measurement view model.
+    ///
+    /// When the custom-unit option is selected, the free-text unit is used instead
+    /// of the selected predefined entry.
+    /// </summary>
+    /// <returns>A task representing completion of the command.</returns>
     [RelayCommand]
     private async Task OnEventTriggeredSettingsChanged()
     {
-        if(_measurementViewModel.ColumnName != ColumnName)
+        if (_measurementViewModel.ColumnNameLong != ColumnNameLong)
         {
-            _measurementViewModel.ColumnName = ColumnName;
+            _measurementViewModel.ColumnNameLong = ColumnNameLong;
         }
 
-        if(_measurementViewModel.Unit != Unit)
+        if (_measurementViewModel.ColumnNameShort != ColumnNameShort)
         {
-            _measurementViewModel.Unit = Unit;
+            _measurementViewModel.ColumnNameShort = ColumnNameShort;
+        }
+
+        string effectiveUnit = IsCustomUnitSelected ? CustomUnit : SelectedUnit;
+
+        if (_measurementViewModel.Unit != effectiveUnit)
+        {
+            _measurementViewModel.Unit = effectiveUnit;
         }
 
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Handles selection changes raised by the shared acquisition-mode options.
+    ///
+    /// Only transitions to a newly selected option are processed. Deselection events
+    /// and notifications for unrelated properties are ignored.
+    /// </summary>
+    /// <param name="sender">
+    /// The acquisition-mode option that raised the property-change notification.
+    /// </param>
+    /// <param name="e">
+    /// Information about the changed property.
+    /// </param>
     private void OnAcquisitionModeChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if(e.PropertyName != nameof(AcquisitionModeOption.IsSelected))
+        if (e.PropertyName != nameof(AcquisitionModeOption.IsSelected))
         {
             return;
         }
 
-        if(sender is not AcquisitionModeOption option || !option.IsSelected)
+        if (sender is not AcquisitionModeOption option || !option.IsSelected)
         {
             return;
         }
 
-        if(option.Mode == _measurementViewModel.AcquisitionMode)
+        if (option.Mode == _measurementViewModel.AcquisitionMode)
         {
             return;
         }
 
         _measurementViewModel.SelectAcquisitionMode(option.Mode);
 
-        // The measurement view model is the source of truth for these flags; re-read them
-        // now that the acquisition mode (and therefore their computed value) has changed.
         CanEditTimeResolvedSettings = _measurementViewModel.CanEditTimeResolvedSettings;
         CanEditEventTriggeredSettings = _measurementViewModel.CanEditEventTriggeredSettings;
         CanEditWavelength = _measurementViewModel.CanEditWavelength;

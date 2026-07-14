@@ -118,6 +118,12 @@ public sealed class SpectrumProcessor
     public void PushRaw(ushort[] raw, DateTimeOffset timestamp)
     {
         ArgumentNullException.ThrowIfNull(raw);
+
+        if (!IsCalibrationSatisfiedForCurrentMode())
+        {
+            return;
+        }
+
         Spectrum? processedSpectrum = null;
 
         lock (_lock)
@@ -137,6 +143,25 @@ public sealed class SpectrumProcessor
         }
 
         _session.UpdateCurrentSpectrum(processedSpectrum);
+    }
+
+    /// <summary>
+    /// Checks whether the current operating mode's calibration requirements
+    /// are met. Transmission and Absorbance require a dark and blank
+    /// reference; every other mode has none.
+    /// </summary>
+    private bool IsCalibrationSatisfiedForCurrentMode()
+    {
+        OperatingMode mode = _session.Mode;
+
+        if (mode is not (OperatingMode.Transmission or OperatingMode.Absorbance))
+        {
+            return true;
+        }
+
+        return _session.IsCalibrated
+            && _session.DarkCounts is not null
+            && _session.BlankCounts is not null;
     }
 
     /// <summary>

@@ -31,9 +31,10 @@ public partial class MeasurementPage : ContentPage
         }
 
         _spectroVisViewModel = spectroVisViewModel;
-        _spectroVisViewModel.OperatingModeDialogRequested += ShowOperatingModeDialog;
-        _spectroVisViewModel.AcquisitionModeDialogRequested += ShowAcquisitionModeDialog;
-        _spectroVisViewModel.CalibrationDialogRequested += ShowCalibrationDialog;
+        _spectroVisViewModel.OperatingModeDialogRequested += PresentOperatingModeDialog;
+        _spectroVisViewModel.AcquisitionModeDialogRequested += PresentAcquisitionModeDialog;
+        _spectroVisViewModel.CalibrationDialogRequested += PresentCalibrationDialog;
+        _spectroVisViewModel.KeepDataPointDialogRequested += PresentKeepDataPointDialog;
     }
 
     private void LoadDeviceContent()
@@ -53,7 +54,12 @@ public partial class MeasurementPage : ContentPage
         }
     }
 
-    private async Task ShowOperatingModeDialog(SpectroVisMeasurementViewModel measurementViewModel, CancellationToken ct)
+    /// <summary>
+    /// Handles <see cref="SpectroVisMeasurementViewModel.OperatingModeDialogRequested"/> by building
+    /// and pushing the operating-mode dialog. This is the one place that actually puts the dialog on
+    /// screen; the view model only requests it.
+    /// </summary>
+    private async Task PresentOperatingModeDialog(SpectroVisMeasurementViewModel measurementViewModel, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -63,7 +69,10 @@ public partial class MeasurementPage : ContentPage
         await Navigation.PushModalAsync(dialog);
     }
 
-    private async Task ShowAcquisitionModeDialog(SpectroVisMeasurementViewModel measurementViewModel, CancellationToken ct)
+    /// <summary>
+    /// Handles <see cref="SpectroVisMeasurementViewModel.AcquisitionModeDialogRequested"/>.
+    /// </summary>
+    private async Task PresentAcquisitionModeDialog(SpectroVisMeasurementViewModel measurementViewModel, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -73,13 +82,29 @@ public partial class MeasurementPage : ContentPage
         await Navigation.PushModalAsync(dialog);
     }
 
-    private async Task<CalibrationDialogResult?> ShowCalibrationDialog(SpectroVisMeasurementViewModel measurmentViewModel, CancellationToken ct)
+    /// <summary>
+    /// Handles <see cref="SpectroVisMeasurementViewModel.CalibrationDialogRequested"/>.
+    /// </summary>
+    private async Task<CalibrationDialogResult?> PresentCalibrationDialog(SpectroVisMeasurementViewModel measurmentViewModel, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
         await DisplayAlertAsync(AppResources.Device_Calibrate, "not implemented yet", AppResources.Dialog_Ok);
 
         return null;
+    }
+
+    /// <summary>
+    /// Handles <see cref="SpectroVisMeasurementViewModel.KeepDataPointDialogRequested"/>.
+    /// </summary>
+    private async Task PresentKeepDataPointDialog(SpectroVisMeasurementViewModel measurementViewModel, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        SpectroVisKeepDataPointViewModel dialogViewModel = new(measurementViewModel);
+        SpectroVisKeepDataPointDialog dialog = new(dialogViewModel);
+
+        await Navigation.PushModalAsync(dialog);
     }
 
     private async Task ShowDiagnosticsDialog(CancellationToken ct)

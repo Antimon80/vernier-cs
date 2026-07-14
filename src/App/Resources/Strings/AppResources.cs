@@ -39,6 +39,7 @@ public static class AppResources
     public static string Dialog_Cancel => GetString(nameof(Dialog_Cancel));
     public static string Dialog_Close => GetString(nameof(Dialog_Close));
     public static string Dialog_CannotCalibrate => GetString(nameof(Dialog_CannotCalibrate));
+    public static string Dialog_CannotKeepDataPoint => GetString(nameof(Dialog_CannotKeepDataPoint));
 
     // status
     public static string Spectrometer_NotCalibrated => GetString(nameof(Spectrometer_NotCalibrated));
@@ -97,7 +98,11 @@ public static class AppResources
     public static string AcquisitionMode_Duration => GetString(nameof(AcquisitionMode_Duration));
     public static string AcquisitionMode_ContinuousCollection => GetString(nameof(AcquisitionMode_ContinuousCollection));
     public static string AcquisitionMode_ColumnName => GetString(nameof(AcquisitionMode_ColumnName));
+    public static string AcquisitionMode_ColumnNameLong => GetString(nameof(AcquisitionMode_ColumnNameLong));
+    public static string AcquisitionMode_ColumnNameShort => GetString(nameof(AcquisitionMode_ColumnNameShort));
     public static string AcquisitionMode_Unit => GetString(nameof(AcquisitionMode_Unit));
+    public static string AcquisitionMode_Concentration => GetString(nameof(AcquisitionMode_Concentration));
+    public static string AcquisitionMode_OtherUnit => GetString(nameof(AcquisitionMode_OtherUnit));
     public static string AcquisitionMode_Wavelength => GetString(nameof(AcquisitionMode_Wavelength));
 
     // diagnostics dialog

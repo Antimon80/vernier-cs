@@ -17,6 +17,28 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     private readonly IDeviceManager _deviceManager;
     private bool _disposed;
 
+    public MeasurementViewModel(IDeviceManager deviceManager)
+    {
+        _deviceManager = deviceManager ?? throw new ArgumentNullException(nameof(deviceManager));
+
+        CurrentDevice = _deviceManager.CurrentDevice ?? throw new InvalidOperationException("No current device is selected.");
+
+        if (_deviceManager.CurrentSpectrometer is not null)
+        {
+            SpectroVisMeasurementViewModel spectroVisViewModel = new(_deviceManager.CurrentSpectrometer, isMeasurementRunningProvider: () => IsMeasurementRunning);
+            DeviceViewModel = spectroVisViewModel;
+            MeasurementSettings = spectroVisViewModel as IMeasurementSettings ?? new NoOpMeasurementWorkflow();
+            MeasurementSettings.AutoStopRequested += OnAutoStopRequested;
+
+            RefreshDeviceState();
+
+            return;
+        }
+
+        throw new InvalidOperationException($"The selected device type '{CurrentDevice.DeviceName}' is not supported by the measurement UI yet.");
+
+    }
+
     public IDevice CurrentDevice { get; }
 
     /// <summary>
@@ -28,7 +50,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     /// <summary>
     /// Device-specific dialog/workflow adapter used by generic toolbar commands.
     /// </summary>
-    public IMeasurementWorkflow Workflow { get; }
+    public IMeasurementSettings MeasurementSettings { get; }
 
     public ObservableCollection<UiDiagnostics> Diagnostics { get; } = [];
     public bool HasDiagnostics => Diagnostics.Count > 0;
@@ -42,7 +64,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(OpenOperatingModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenAcquisitionModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(CalibrateCommand))]
-    
+
     public partial bool IsMeasurementRunning { get; set; }
 
     [ObservableProperty]
@@ -53,33 +75,16 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     public partial bool HasOperatingModeSelection { get; set; }
 
     [ObservableProperty]
-    public partial bool IsCalibrationCommandEnabled { get; set; }
+    public partial bool IsCalibrationEnabled { get; set; }
 
-    public MeasurementViewModel(IDeviceManager deviceManager)
-    {
-        _deviceManager = deviceManager ?? throw new ArgumentNullException(nameof(deviceManager));
-
-        CurrentDevice = _deviceManager.CurrentDevice ?? throw new InvalidOperationException("No current device is selected.");
-
-        if (_deviceManager.CurrentSpectrometer is not null)
-        {
-            SpectroVisMeasurementViewModel spectroVisViewModel = new(_deviceManager.CurrentSpectrometer, isMeasurementRunningProvider: () => IsMeasurementRunning);
-            DeviceViewModel = spectroVisViewModel;
-            Workflow = spectroVisViewModel as IMeasurementWorkflow ?? new NoOpMeasurementWorkflow();
-
-            RefreshDeviceState();
-
-            return;
-        }
-
-        throw new InvalidOperationException($"The selected device type '{CurrentDevice.DeviceName}' is not supported by the measurement UI yet.");
-
-    }
+    [ObservableProperty]
+    public partial bool HasKeepDataPointCommand { get; set; }
 
     public void RefreshDeviceState()
     {
-        HasOperatingModeSelection = Workflow.HasOperatingModeSelection;
-        IsCalibrationCommandEnabled = CurrentDevice.CanCalibrate;
+        HasOperatingModeSelection = MeasurementSettings.HasOperatingModeSelection;
+        HasKeepDataPointCommand = MeasurementSettings.CanKeepDataPoint;
+        IsCalibrationEnabled = CurrentDevice.CanCalibrate;
 
         if (DeviceViewModel is SpectroVisMeasurementViewModel spectroVisViewModel)
         {
@@ -89,6 +94,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         RefreshDiagnostics();
 
         ToggleMeasurementCommand.NotifyCanExecuteChanged();
+        KeepDataPointCommand.NotifyCanExecuteChanged();
     }
 
     public void RefreshDiagnostics()
@@ -109,6 +115,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         }
 
         _disposed = true;
+
+        MeasurementSettings.AutoStopRequested -= OnAutoStopRequested;
 
         if (DeviceViewModel is IDisposable disposable)
         {
@@ -204,20 +212,19 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanChangeMeasurementConfiguration))]
     private async Task OpenOperatingMode()
     {
-        if (!Workflow.HasOperatingModeSelection)
+        if (!MeasurementSettings.HasOperatingModeSelection)
         {
             return;
         }
 
-        await Workflow.OpenOperatingMode();
+        await MeasurementSettings.RequestOperatingModeDialog();
         RefreshDeviceState();
-        RefreshDiagnostics();
     }
 
     [RelayCommand(CanExecute = nameof(CanChangeMeasurementConfiguration))]
     private async Task OpenAcquisitionMode()
     {
-        await Workflow.OpenAcquisitionMode();
+        await MeasurementSettings.RequestAcquisitionModeDialog();
         RefreshDeviceState();
     }
 
@@ -231,7 +238,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
             return;
         }
 
-        CalibrationDialogResult? result = await Workflow.ShowCalibrationDialog();
+        CalibrationDialogResult? result = await MeasurementSettings.RequestCalibrationDialog();
 
         if (result is null)
         {
@@ -240,15 +247,27 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         await CurrentDevice.Calibrate(result.SkipWarmup);
         RefreshDeviceState();
-        RefreshDiagnostics();
     }
 
     [RelayCommand(CanExecute = nameof(CanToggleMeasurement))]
     private void ToggleMeasurement()
     {
         IsMeasurementRunning = !IsMeasurementRunning;
-
         RecordingIcon = IsMeasurementRunning ? StopIcon : StartIcon;
+
+        RefreshDeviceState();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanKeepDataPoint))]
+    private async Task KeepDataPoint()
+    {
+        if (!MeasurementSettings.CanKeepDataPoint)
+        {
+            await Shell.Current.DisplayAlertAsync(AppResources.Device_KeepDataPoint, AppResources.Dialog_CannotKeepDataPoint, AppResources.Dialog_Ok);
+            return;
+        }
+
+        await MeasurementSettings.RequestKeepDataPointDialog();
 
         RefreshDeviceState();
     }
@@ -273,6 +292,19 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         else
         {
             return true;
+        }
+    }
+
+    private bool CanKeepDataPoint()
+    {
+        return IsMeasurementRunning;
+    }
+
+    private void OnAutoStopRequested()
+    {
+        if (IsMeasurementRunning)
+        {
+            ToggleMeasurement();
         }
     }
 
@@ -308,27 +340,35 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         return modalStack is { Count: > 0 } ? modalStack[^1] : root;
     }
 
-    private sealed class NoOpMeasurementWorkflow : IMeasurementWorkflow
+    private sealed class NoOpMeasurementWorkflow : IMeasurementSettings
     {
         public bool HasOperatingModeSelection => false;
         public bool HasZeroCommand => false;
+        public bool CanKeepDataPoint => false;
 
-        public Task OpenOperatingMode(CancellationToken ct = default)
+        public event Action? AutoStopRequested;
+
+        public Task RequestOperatingModeDialog(CancellationToken ct = default)
         {
             return Task.CompletedTask;
         }
 
-        public Task OpenAcquisitionMode(CancellationToken ct = default)
+        public Task RequestAcquisitionModeDialog(CancellationToken ct = default)
         {
             return Task.CompletedTask;
         }
 
-        public Task<CalibrationDialogResult?> ShowCalibrationDialog(CancellationToken ct = default)
+        public Task<CalibrationDialogResult?> RequestCalibrationDialog(CancellationToken ct = default)
         {
             return Task.FromResult<CalibrationDialogResult?>(new CalibrationDialogResult(SkipWarmup: null));
         }
 
         public Task SetToZero(CancellationToken ct = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task RequestKeepDataPointDialog(CancellationToken ct = default)
         {
             return Task.CompletedTask;
         }

@@ -785,8 +785,7 @@ namespace Backend.Devices.GoDirect
                     await _exclusive.WaitAsync(ct).ConfigureAwait(false);
                     try
                     {
-                        ct = CancellationToken.None;
-                        ushort[] raw = await _proto.AcquireRawCounts(ct).ConfigureAwait(false);
+                        ushort[] raw = await _proto.AcquireRawCounts(CancellationToken.None).ConfigureAwait(false);
                         DateTimeOffset timeStamp = DateTimeOffset.UtcNow;
                         _processor.PushRaw(raw, timeStamp);
 

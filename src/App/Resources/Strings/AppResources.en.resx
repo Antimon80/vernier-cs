@@ -206,6 +206,10 @@
     <value>Calibration is not available for the current device state</value>
     <comment/>
   </data>
+  <data name="Dialog_CannotKeepDataPoint" xml:space="preserve">
+    <value>Capturing single data points is not available for the current device state</value>
+    <comment/>
+  </data>
 
   <!-- Status -->
   <data name="Spectrometer_NotCalibrated" xml:space="preserve">
@@ -408,8 +412,24 @@
     <value>Column name:</value>
     <comment/>
    </data>
+  <data name="AcquisitionMode_ColumnNameLong" xml:space="preserve">
+    <value>Long name:</value>
+    <comment/>
+   </data>
+  <data name="AcquisitionMode_ColumnNameShort" xml:space="preserve">
+    <value>Short name:</value>
+    <comment/>
+   </data>
   <data name="AcquisitionMode_Unit" xml:space="preserve">
     <value>Unit:</value>
+    <comment/>
+   </data>
+   <data name="AcquisitionMode_Concentration" xml:space="preserve">
+    <value>Concentration</value>
+    <comment/>
+   </data>
+  <data name="AcquisitionMode_OtherUnit" xml:space="preserve">
+    <value>Other</value>
     <comment/>
    </data>
   <data name="AcquisitionMode_Wavelength" xml:space="preserve">
