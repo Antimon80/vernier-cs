@@ -27,8 +27,6 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject
         CanEditIntegrationTime = _measurementViewModel.CanEditIntegrationTime;
     }
 
-    public ObservableCollection<SpectroVisOperatingModeOption> OperatingModeOptions => _measurementViewModel.OperatingModeOptions;
-
     [ObservableProperty]
     public partial int IntegrationTimeMs { get; set; }
 

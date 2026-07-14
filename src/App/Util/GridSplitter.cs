@@ -29,6 +29,9 @@ public sealed partial class GridSplitter : ContentView
     /// </summary>
     private double _startX;
 
+    private Point? _startPointInParent;
+
+
     /// <summary>
     /// Indicates whether a splitter drag operation is currently active.
     /// </summary>

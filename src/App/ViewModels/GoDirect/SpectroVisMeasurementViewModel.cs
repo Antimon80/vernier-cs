@@ -109,6 +109,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         _spectrometer.Session.StateChanged += OnSessionStateChanged;
 
         BuildOperatingModeOptions();
+        BuildAcquisitionModeOptions();
         RefreshAll();
     }
 
@@ -143,6 +144,8 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     public ObservableCollection<SpectroVisOperatingModeOption> OperatingModeOptions { get; } = [];
 
+    public ObservableCollection<AcquisitionModeOption> AcquisitionModeOptions { get; } = [];
+
     /// <summary>
     /// Indicates that SpectroVis devices expose selectable operating modes.
     /// </summary>
@@ -176,9 +179,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public partial AcquisitionMode AcquisitionMode { get; set; } = AcquisitionMode.FullSpectrum;
 
     [ObservableProperty]
-    public partial ConcentrationUnits ConcentrationUnits { get; set; } = ConcentrationUnits.MolPerLiter;
-
-    [ObservableProperty]
     public partial string ChartTitle { get; set; } = "";
 
     [ObservableProperty]
@@ -203,7 +203,10 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// Gets or sets the wavelength sampled for time-resolved and event-triggered measurements.
     /// </summary>
     [ObservableProperty]
-    public partial double SelectedWavelengthNm { get; set; } = 500.0;
+    public partial int SelectedWavelengthNm { get; set; } = 500;
+
+    [ObservableProperty]
+    public partial int TimeResolvedDuration {get; set;} = 10;
 
     /// <summary>
     /// Gets or sets whether the wavelength color strip should be displayed below the chart.
@@ -228,6 +231,12 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
     [ObservableProperty]
     public partial bool CanEditIntegrationTime { get; set; }
+
+    [ObservableProperty]
+    public partial bool CanEditTimeResolvedSettings { get; set; }
+
+    [ObservableProperty]
+    public partial bool CanEditEventTriggeredSettings { get; set; }
 
     /// <summary>
     /// Gets or sets the most recent spectrum accepted for display.
@@ -392,7 +401,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
         double y = GetYValueAtSelectedWavelength(DisplayedSpectrum);
 
-        AppendLiveRow(FormatConcentration(concentration), FormatYValue(y, DisplayedSpectrum.Mode));
+        AppendLiveRow(FormatXValue(concentration), FormatYValue(y, DisplayedSpectrum.Mode));
     }
 
     /// <summary>
@@ -699,16 +708,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
                 _liveXHeader = "t [s]";
                 break;
             case AcquisitionMode.EventTriggered:
-                _liveXHeader = ConcentrationUnits switch
-                {
-                    ConcentrationUnits.MolPerLiter => "c [mol/l]",
-                    ConcentrationUnits.MilliMolPerLiter => "c [mmol/l]",
-                    ConcentrationUnits.MicroMolPerLiter => "c [µmol/l]",
-                    ConcentrationUnits.GramsPerLiter => "c [g/l]",
-                    ConcentrationUnits.MilliGramsPerLiter => "c [mg/l]",
-                    ConcentrationUnits.MilliGramsPerMilliLiter => "c [mg/ml]",
-                    _ => "c [mol]",
-                };
+                _liveXHeader = "c [mol/l]";
                 break;
             default:
                 _liveXHeader = "x";
@@ -893,6 +893,13 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         AddOperatingModeOption(OperatingMode.Fluorescence500, AppResources.OperatingMode_Fluorescence500, isSupported: _spectrometer.Model.HasLed500);
     }
 
+    private void BuildAcquisitionModeOptions()
+    {
+        AddAcquisitionModeOption(AcquisitionMode.FullSpectrum, AppResources.Spectrometer_FullSpectrum);
+        AddAcquisitionModeOption(AcquisitionMode.TimeResolved, AppResources.Device_TimeResolved);
+        AddAcquisitionModeOption(AcquisitionMode.EventTriggered, AppResources.Device_EventTriggered);
+    }
+
     /// <summary>
     /// Adds one operating-mode option with its localized label, hardware support state and initial selection state.
     /// </summary>
@@ -903,6 +910,15 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
             displayName,
             isSupported,
             isSelected: Session.Mode == mode));
+    }
+
+    private void AddAcquisitionModeOption(AcquisitionMode mode, string displayName)
+    {
+        AcquisitionModeOptions.Add(new AcquisitionModeOption(
+            mode,
+            displayName,
+            isSelected: AcquisitionMode == mode
+        ));
     }
 
     /// <summary>
@@ -928,6 +944,18 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     {
         return !IsMeasurementRunning && Session.Mode is not OperatingMode.Absorbance
             and not OperatingMode.Transmission;
+    }
+
+    private bool CanEditTimeResolvedSettingsForCurrentMode()
+    {
+        return !IsMeasurementRunning && AcquisitionMode is not AcquisitionMode.FullSpectrum
+            and not AcquisitionMode.EventTriggered;
+    }
+
+    private bool CanEditEventTriggeredSettingsForCurrentMode()
+    {
+        return !IsMeasurementRunning && AcquisitionMode is not AcquisitionMode.FullSpectrum
+            and not AcquisitionMode.TimeResolved;
     }
 
     /// <summary>
@@ -965,7 +993,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     }
 
     /// <summary>
-    /// Formats a wavelength value with one decimal place.
+    /// Formats a numeric value with one decimal place.
     /// </summary>
     private static string FormatXValue(double value)
     {
@@ -985,20 +1013,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
             OperatingMode.Intensity => value.ToString("F4"),
             OperatingMode.Fluorescence405 => value.ToString("F4"),
             OperatingMode.Fluorescence500 => value.ToString("F4"),
-            _ => value.ToString("G4")
-        };
-    }
-
-    private string FormatConcentration(double value)
-    {
-        return ConcentrationUnits switch
-        {
-            ConcentrationUnits.MolPerLiter => value.ToString("G4"),
-            ConcentrationUnits.MilliMolPerLiter => value.ToString("G4"),
-            ConcentrationUnits.MicroMolPerLiter => value.ToString("G4"),
-            ConcentrationUnits.GramsPerLiter => value.ToString("G4"),
-            ConcentrationUnits.MilliGramsPerLiter => value.ToString("G4"),
-            ConcentrationUnits.MilliGramsPerMilliLiter => value.ToString("G4"),
             _ => value.ToString("G4")
         };
     }

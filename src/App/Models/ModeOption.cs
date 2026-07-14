@@ -12,3 +12,12 @@ public sealed partial class SpectroVisOperatingModeOption(OperatingMode mode, st
     [ObservableProperty]
     public partial bool IsSelected { get; set; } = isSelected;
 }
+
+public sealed partial class AcquisitionModeOption(AcquisitionMode mode, string displayName, bool isSelected) : ObservableObject
+{
+    public AcquisitionMode Mode { get; } = mode;
+    public string DisplayNme { get; } = displayName;
+
+    [ObservableProperty]
+    public partial bool IsSelected { get; set; } = isSelected;
+}
