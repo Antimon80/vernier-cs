@@ -391,6 +391,32 @@
     <comment/>
    </data>
 
+  <!-- Spectrometer Acquisition Mode -->
+  <data name="AcquisitionMode_DialogTitle" xml:space="preserve">
+    <value>Erfassungsmodus</value>
+    <comment/>
+   </data>
+  <data name="AcquisitionMode_Duration" xml:space="preserve">
+    <value>Dauer:</value>
+    <comment/>
+   </data>
+  <data name="AcquisitionMode_ContinuousCollection" xml:space="preserve">
+    <value>fortlaufende Datenerfassung</value>
+    <comment/>
+   </data>
+  <data name="AcquisitionMode_ColumnName" xml:space="preserve">
+    <value>Spaltenname:</value>
+    <comment/>
+   </data>
+  <data name="AcquisitionMode_Unit" xml:space="preserve">
+    <value>Einheit:</value>
+    <comment/>
+   </data>
+  <data name="AcquisitionMode_Wavelength" xml:space="preserve">
+    <value>Wellenlänge:</value>
+    <comment/>
+   </data>
+
   <!-- Diagnostics -->
   <data name="Diagnostics_NoEntries" xml:space="preserve">
     <value>Keine Diagnosemeldungen vorhanden</value>

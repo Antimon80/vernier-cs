@@ -5,6 +5,7 @@
              xmlns:res="clr-namespace:App.Resources.Strings"
              BackgroundColor="#80000000">
        <Grid>
+              <ScrollView>
               <Border WidthRequest="560"
                       Padding="22"
                       HorizontalOptions="Center"
@@ -110,5 +111,6 @@
                             </Grid>
                      </VerticalStackLayout>
               </Border>
+              </ScrollView>
        </Grid>
 </ContentPage>

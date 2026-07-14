@@ -22,16 +22,9 @@ public partial class SpectroVisAcquisitionModeDialog : ContentPage
         try
         {
             ViewModel.TimeResolvedSettingsChangedCommand.Execute(null);
-            await Navigation.PopModalAsync();
-        }
-        catch (Exception ex)
-        {
-            await DisplayAlertAsync(AppResources.Dialog_ErrorTitle, ex.Message, AppResources.Dialog_Ok);
-        }
+            await ViewModel.EventTriggeredSettingsChangedCommand.ExecuteAsync(null);
 
-        try
-        {
-            ViewModel.EventTriggeredSettingsChangedCommand.Execute(null);
+            await Navigation.PopModalAsync();
         }
         catch (Exception ex)
         {
@@ -42,5 +35,12 @@ public partial class SpectroVisAcquisitionModeDialog : ContentPage
     private async void HelpClicked(object? sender, EventArgs e)
     {
         await DisplayAlertAsync(AppResources.App_Help, "Hier kommt später die Hilfeseite für Datenerfassungsmodi hin.", AppResources.Dialog_Ok);
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        ViewModel.Dispose();
     }
 }

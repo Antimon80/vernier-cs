@@ -59,29 +59,10 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     private DateTimeOffset? _acquisitionStartedAt;
 
     /// <summary>
-    /// Maximum number of completed measurement series retained in the table.
+    /// Owns the wide-table column/row/archive layout. Device-agnostic; this view model only
+    /// decides what the live headers should say and when to archive.
     /// </summary>
-    private const int MaxArchivedSeries = 10;
-
-    /// <summary>
-    /// Repeating color palette used for live and archived table series.
-    /// </summary>
-    private static readonly Color[] SeriesColors = [Colors.Green, Colors.Red, Colors.Blue, Colors.DarkOrange, Colors.Purple, Colors.Teal];
-
-    /// <summary>
-    /// Header of the current live series' x-value column.
-    /// </summary>
-    private string _liveXHeader = "";
-
-    /// <summary>
-    /// Header of the current live series' y-value column.
-    /// </summary>
-    private string _liveYHeader = "";
-
-    /// <summary>
-    /// Number of rows currently occupied by the live measurement series.
-    /// </summary>
-    private int _liveRowCount;
+    private readonly WideMeasurementTable _table = new();
 
     /// <summary>
     /// Indicates whether event subscriptions have already been removed.
@@ -126,17 +107,17 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <summary>
     /// Gets the column definitions displayed by the wide measurement table.
     /// </summary>
-    public ObservableCollection<TableColumn> Columns { get; } = [];
+    public ObservableCollection<TableColumn> Columns => _table.Columns;
 
     /// <summary>
     /// Gets the rows containing the live series and all retained archived measurement series.
     /// </summary>
-    public ObservableCollection<WideTableRow> WideRows { get; } = [];
+    public ObservableCollection<WideTableRow> WideRows => _table.WideRows;
 
     /// <summary>
     /// Gets previously completed measurement series retained for comparison.
     /// </summary>
-    public ObservableCollection<MeasurementSeries> ArchivedSeries { get; } = [];
+    public ObservableCollection<MeasurementSeries> ArchivedSeries => _table.ArchivedSeries;
 
     /// <summary>
     /// Gets the operating modes presented by the operating-mode dialog, 
@@ -239,6 +220,31 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public partial bool CanEditEventTriggeredSettings { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the sampled wavelength may be edited.
+    /// Relevant for both time-resolved and event-triggered acquisition, but not full-spectrum.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool CanEditWavelength { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether time-resolved sampling records continuously instead of for a fixed duration.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool ContinuousDataCollection { get; set; }
+
+    /// <summary>
+    /// Gets or sets the column name used for the x-axis of event-triggered measurement series.
+    /// </summary>
+    [ObservableProperty]
+    public partial string ColumnName { get; set; } = "Konzentration";
+
+    /// <summary>
+    /// Gets or sets the unit shown alongside <see cref="ColumnName"/> in the event-triggered table header.
+    /// </summary>
+    [ObservableProperty]
+    public partial string Unit { get; set; } = "mol/l";
+
+    /// <summary>
     /// Gets or sets the most recent spectrum accepted for display.
     /// </summary>
     [ObservableProperty]
@@ -260,8 +266,12 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
         RefreshChartConfiguration();
         RefreshTableHeaders();
+        RefreshAcquisitionModeEditFlags();
 
-        if (DisplayedSpectrum is not null && value == AcquisitionMode.FullSpectrum)
+        // The live preview (DisplayedSpectrum) updates continuously regardless of recording state.
+        // Only write into the table if recording is actually running - otherwise a mode change while
+        // stopped would re-populate the just-cleared live columns with a stale one-off snapshot.
+        if (IsMeasurementRunning && DisplayedSpectrum is not null && value == AcquisitionMode.FullSpectrum)
         {
             UpdateTable(DisplayedSpectrum);
         }
@@ -401,7 +411,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
         double y = GetYValueAtSelectedWavelength(DisplayedSpectrum);
 
-        AppendLiveRow(FormatXValue(concentration), FormatYValue(y, DisplayedSpectrum.Mode));
+        _table.AppendLiveRow(FormatXValue(concentration), FormatYValue(y, DisplayedSpectrum.Mode));
     }
 
     /// <summary>
@@ -412,13 +422,16 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     {
         IntegrationTimeMs = _spectrometer.Session.IntegrationTime;
         CanEditIntegrationTime = CanEditIntegrationTimeForCurrentMode();
+        RefreshAcquisitionModeEditFlags();
 
         RefreshChartConfiguration();
         RefreshTableHeaders();
         RefreshCurrentOperatingMode();
         RefreshStatusIndicators();
 
-        if (DisplayedSpectrum is not null && AcquisitionMode == AcquisitionMode.FullSpectrum)
+        // Same reasoning as in OnAcquisitionModeChanged: DisplayedSpectrum is now always live,
+        // independent of recording state, so writing into the table must stay gated separately.
+        if (IsMeasurementRunning && DisplayedSpectrum is not null && AcquisitionMode == AcquisitionMode.FullSpectrum)
         {
             UpdateFullSpectrumTable(DisplayedSpectrum);
         }
@@ -432,50 +445,23 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public void ArchiveLiveSeries()
     {
         DisplayedSpectrum = null;
-
-        if (_liveRowCount == 0)
-        {
-            return;
-        }
-
-        List<TableRow> rows = new(_liveRowCount);
-
-        for (int i = 0; i < _liveRowCount; i++)
-        {
-            WideTableRow row = WideRows[i];
-            rows.Add(new TableRow(row.Cells[0].Value ?? "", row.Cells[1].Value ?? ""));
-        }
-
-        ArchivedSeries.Add(new MeasurementSeries(
-            Guid.NewGuid(), Session.Mode, AcquisitionMode, DateTimeOffset.Now,
-            _liveXHeader, _liveYHeader, rows
-        ));
-
-        if (ArchivedSeries.Count > MaxArchivedSeries)
-        {
-            ArchivedSeries.RemoveAt(0);
-        }
-
-        WideRows.Clear();
-        _liveRowCount = 0;
         _acquisitionStartedAt = null;
-        RebuildColumns();
+
+        _table.ArchiveLiveSeries();
     }
 
     /// <summary>
     /// Receives processed spectra from the backend session.
     ///
-    /// Incoming spectra are ignored while recording is stopped. While an update is already scheduled, 
-    /// the pending spectrum is replaced with the newest one instead of scheduling additional UI work.
+    /// The device measures continuously regardless of recording state, so incoming spectra are always
+    /// transferred to the live preview (<see cref="DisplayedSpectrum"/>). Whether they are also captured
+    /// into the recorded table/series data is decided separately in <see cref="UpdateSpectrumOnUiThread"/>.
+    /// While an update is already scheduled, the pending spectrum is replaced with the newest one instead
+    /// of scheduling additional UI work.
     /// </summary>
     /// <param name="spectrum">Newest processed spectrum.</param>
     private void OnCurrentSpectrumChanged(Spectrum spectrum)
     {
-        if (!_isMeasurementRunningProvider())
-        {
-            return;
-        }
-
         lock (_uiUpdateLock)
         {
             _latestSpectrumForUi = spectrum;
@@ -514,15 +500,21 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
                 _uiUpdateScheduled = false;
             }
 
-            if (spectrum is null || !_isMeasurementRunningProvider())
+            if (spectrum is null)
             {
                 return;
             }
 
             _latestUiUpdateAt = DateTimeOffset.UtcNow;
 
+            // The live preview always reflects the newest spectrum, independent of recording state.
             DisplayedSpectrum = spectrum;
-            UpdateTable(spectrum);
+
+            // Only capture into the recorded table/series while recording is actually running.
+            if (_isMeasurementRunningProvider())
+            {
+                UpdateTable(spectrum);
+            }
         }
         catch (Exception ex)
         {
@@ -615,107 +607,19 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     }
 
     /// <summary>
-    /// Rebuilds the wide-table column structure for the current live series and all archived series.
-    ///
-    /// Existing rows are expanded or reduced to match the resulting column count before archived 
-    /// values are written.
-    /// </summary>
-    private void RebuildColumns()
-    {
-        Columns.Clear();
-        Columns.Add(new TableColumn(_liveXHeader, Colors.Black));
-        Columns.Add(new TableColumn(_liveYHeader, SeriesColors[0]));
-
-        for (int i = 0; i < ArchivedSeries.Count; i++)
-        {
-            MeasurementSeries series = ArchivedSeries[i];
-            Color color = SeriesColors[(i + 1) % SeriesColors.Length];
-
-            Columns.Add(new TableColumn(series.XColumnHeader, Colors.Black));
-            Columns.Add(new TableColumn(series.YColumnHeader, color));
-        }
-
-        int columnCount = Columns.Count;
-
-        foreach (WideTableRow row in WideRows)
-        {
-            while (row.Cells.Count < columnCount)
-            {
-                row.Cells.Add(new TableCell { Color = Columns[row.Cells.Count].Color });
-            }
-
-            while (row.Cells.Count > columnCount)
-            {
-                row.Cells.RemoveAt(row.Cells.Count - 1);
-            }
-        }
-
-        WriteArchivedCells();
-    }
-
-    /// <summary>
-    /// Ensures that the wide table contains at least the requested number of rows and initializes 
-    /// each new row with one cell per current column.
-    /// </summary>
-    /// <param name="minimumCount">Required minimum row count.</param>
-    private void EnsureRowCount(int minimumCount)
-    {
-        while (WideRows.Count < minimumCount)
-        {
-            WideTableRow row = new();
-
-            for (int i = 0; i < Columns.Count; i++)
-            {
-                row.Cells.Add(new TableCell { Color = Columns[i].Color });
-            }
-
-            WideRows.Add(row);
-        }
-    }
-
-    /// <summary>
-    /// Writes all retained archived series into their corresponding pairs of wide-table columns.
-    /// </summary>
-    private void WriteArchivedCells()
-    {
-        for (int s = 0; s < ArchivedSeries.Count; s++)
-        {
-            MeasurementSeries series = ArchivedSeries[s];
-            int xColumn = 2 + s * 2;
-            int yColumn = xColumn + 1;
-
-            EnsureRowCount(series.Rows.Count);
-
-            for (int r = 0; r < series.Rows.Count; r++)
-            {
-                WideRows[r].Cells[xColumn].Value = series.Rows[r].XValue;
-                WideRows[r].Cells[yColumn].Value = series.Rows[r].YValue;
-            }
-        }
-    }
-
-    /// <summary>
     /// Updates the live table headers from the current acquisition mode, concentration unit and spectrometer operating mode.
     /// </summary>
     private void RefreshTableHeaders()
     {
-        switch (AcquisitionMode)
+        string xHeader = AcquisitionMode switch
         {
-            case AcquisitionMode.FullSpectrum:
-                _liveXHeader = "λ [nm]";
-                break;
-            case AcquisitionMode.TimeResolved:
-                _liveXHeader = "t [s]";
-                break;
-            case AcquisitionMode.EventTriggered:
-                _liveXHeader = "c [mol/l]";
-                break;
-            default:
-                _liveXHeader = "x";
-                break;
-        }
+            AcquisitionMode.FullSpectrum => "λ [nm]",
+            AcquisitionMode.TimeResolved => "t [s]",
+            AcquisitionMode.EventTriggered => $"{ColumnName} [{Unit}]",
+            _ => "x"
+        };
 
-        _liveYHeader = Session.Mode switch
+        string yHeader = Session.Mode switch
         {
             OperatingMode.RawCounts => "ADC [counts]",
             OperatingMode.Intensity => "I [rel.]",
@@ -726,7 +630,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
             _ => "y"
         };
 
-        RebuildColumns();
+        _table.SetLiveHeaders(xHeader, yHeader);
     }
 
     /// <summary>
@@ -757,29 +661,14 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     private void UpdateFullSpectrumTable(Spectrum spectrum)
     {
         int count = Math.Min(spectrum.WavelengthNm.Length, spectrum.YAxis.Length);
-        EnsureRowCount(count);
-        _liveRowCount = count;
+        _table.EnsureRowCount(count);
 
         for (int i = 0; i < count; i++)
         {
-            WideRows[i].Cells[0].Value = FormatXValue(spectrum.WavelengthNm[i]);
-            WideRows[i].Cells[1].Value = FormatYValue(spectrum.YAxis[i], spectrum.Mode);
+            _table.WriteLiveCell(i, FormatXValue(spectrum.WavelengthNm[i]), FormatYValue(spectrum.YAxis[i], spectrum.Mode));
         }
-    }
 
-    /// <summary>
-    /// Appends one formatted x/y pair to the live table series.
-    /// </summary>
-    /// <param name="xValue">Formatted x-axis value.</param>
-    /// <param name="yValue">Formatted y-axis value.</param>
-    private void AppendLiveRow(string xValue, string yValue)
-    {
-        int rowIndex = WideRows.Count;
-        EnsureRowCount(rowIndex + 1);
-
-        WideRows[rowIndex].Cells[0].Value = xValue;
-        WideRows[rowIndex].Cells[1].Value = yValue;
-        _liveRowCount++;
+        _table.SetLiveRowCount(count);
     }
 
     /// <summary>
@@ -793,7 +682,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         double elapsedSeconds = (DateTimeOffset.UtcNow - _acquisitionStartedAt.Value).TotalSeconds;
         double y = GetYValueAtSelectedWavelength(spectrum);
 
-        AppendLiveRow(elapsedSeconds.ToString("F2"), FormatYValue(y, spectrum.Mode));
+        _table.AppendLiveRow(elapsedSeconds.ToString("F2"), FormatYValue(y, spectrum.Mode));
     }
 
     /// <summary>
@@ -923,8 +812,11 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
     /// <summary>
     /// Synchronizes the selected option with the operating mode currently stored in the spectrometer session.
+    ///
+    /// Public so callers can resynchronize the radio-button selection after a failed mode switch,
+    /// where the UI-bound option was already marked selected before the backend call failed.
     /// </summary>
-    private void RefreshOperatingModeSelection()
+    public void RefreshOperatingModeSelection()
     {
         foreach (SpectroVisOperatingModeOption option in OperatingModeOptions)
         {
@@ -956,6 +848,27 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     {
         return !IsMeasurementRunning && AcquisitionMode is not AcquisitionMode.FullSpectrum
             and not AcquisitionMode.TimeResolved;
+    }
+
+    /// <summary>
+    /// Determines whether the sampled wavelength may be edited in the current
+    /// acquisition and recording state. Relevant for time-resolved and event-triggered
+    /// acquisition, but not for full-spectrum acquisition.
+    /// </summary>
+    private bool CanEditWavelengthForCurrentMode()
+    {
+        return !IsMeasurementRunning && AcquisitionMode is not AcquisitionMode.FullSpectrum;
+    }
+
+    /// <summary>
+    /// Recomputes all acquisition-mode-dependent field edit flags from the current
+    /// acquisition mode and recording state.
+    /// </summary>
+    private void RefreshAcquisitionModeEditFlags()
+    {
+        CanEditTimeResolvedSettings = CanEditTimeResolvedSettingsForCurrentMode();
+        CanEditEventTriggeredSettings = CanEditEventTriggeredSettingsForCurrentMode();
+        CanEditWavelength = CanEditWavelengthForCurrentMode();
     }
 
     /// <summary>

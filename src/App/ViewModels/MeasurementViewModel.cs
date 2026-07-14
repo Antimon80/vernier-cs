@@ -3,6 +3,7 @@ using App.Models;
 using App.Resources.Strings;
 using App.ViewModels.GoDirect;
 using Backend.Devices;
+using Backend.Devices.GoDirect;
 using Backend.Discovery;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -41,6 +42,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(OpenOperatingModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenAcquisitionModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(CalibrateCommand))]
+    
     public partial bool IsMeasurementRunning { get; set; }
 
     [ObservableProperty]
@@ -85,6 +87,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         }
 
         RefreshDiagnostics();
+
+        ToggleMeasurementCommand.NotifyCanExecuteChanged();
     }
 
     public void RefreshDiagnostics()
@@ -239,7 +243,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         RefreshDiagnostics();
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanToggleMeasurement))]
     private void ToggleMeasurement()
     {
         IsMeasurementRunning = !IsMeasurementRunning;
@@ -259,9 +263,22 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         return !IsMeasurementRunning && CurrentDevice.CanCalibrate;
     }
 
+    private bool CanToggleMeasurement()
+    {
+        if (_deviceManager.CurrentSpectrometer is not null
+            && (_deviceManager.CurrentSpectrometer.Session.Mode is OperatingMode.Absorbance or OperatingMode.Transmission))
+        {
+            return _deviceManager.CurrentSpectrometer.IsCalibrated;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
     private static Task ShowNotImplementedAsync(string feature)
     {
-        Page? page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        Page? page = GetCurrentPage();
 
         if (page is null)
         {
@@ -269,6 +286,26 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         }
 
         return page.DisplayAlertAsync(feature, "not implemented yet", AppResources.Dialog_Ok);
+    }
+
+    /// <summary>
+    /// Resolves the topmost currently presented page (modal dialog if one is pushed, otherwise the
+    /// root page). Application.Current.Windows[0].Page alone always returns the root page, so an
+    /// alert raised while a modal dialog is open would be requested on a page that isn't the one
+    /// actually visible to the user.
+    /// </summary>
+    private static Page? GetCurrentPage()
+    {
+        Page? root = Application.Current?.Windows.FirstOrDefault()?.Page;
+
+        if (root is null)
+        {
+            return null;
+        }
+
+        IReadOnlyList<Page>? modalStack = root.Navigation?.ModalStack;
+
+        return modalStack is { Count: > 0 } ? modalStack[^1] : root;
     }
 
     private sealed class NoOpMeasurementWorkflow : IMeasurementWorkflow

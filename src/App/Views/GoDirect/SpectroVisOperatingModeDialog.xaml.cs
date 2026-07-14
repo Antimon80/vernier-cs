@@ -35,4 +35,11 @@ public partial class SpectroVisOperatingModeDialog : ContentPage
     {
         await DisplayAlertAsync(AppResources.App_Help, "Hier kommt später die Hilfeseite für die Betriebsmodi hin.", AppResources.Dialog_Ok);
     }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        ViewModel.Dispose();
+    }
 }

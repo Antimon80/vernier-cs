@@ -63,11 +63,14 @@ public partial class MeasurementPage : ContentPage
         await Navigation.PushModalAsync(dialog);
     }
 
-    private Task ShowAcquisitionModeDialog(SpectroVisMeasurementViewModel measurmentViewModel, CancellationToken ct)
+    private async Task ShowAcquisitionModeDialog(SpectroVisMeasurementViewModel measurementViewModel, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        return DisplayAlertAsync(AppResources.Device_AcquisitionMode, "not implemented yet", AppResources.Dialog_Ok);
+        SpectroVisAcquisitionModeViewModel dialogViewModel = new(measurementViewModel);
+        SpectroVisAcquisitionModeDialog dialog = new(dialogViewModel);
+
+        await Navigation.PushModalAsync(dialog);
     }
 
     private async Task<CalibrationDialogResult?> ShowCalibrationDialog(SpectroVisMeasurementViewModel measurmentViewModel, CancellationToken ct)

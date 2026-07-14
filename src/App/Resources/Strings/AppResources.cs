@@ -92,6 +92,14 @@ public static class AppResources
     public static string OperatingMode_IntegrationTime => GetString(nameof(OperatingMode_IntegrationTime));
     public static string OperatingMode_DialogTitle => GetString(nameof(OperatingMode_DialogTitle));
 
+    // spectrometer acquisition mode
+    public static string AcquisitionMode_DialogTitle => GetString(nameof(AcquisitionMode_DialogTitle));
+    public static string AcquisitionMode_Duration => GetString(nameof(AcquisitionMode_Duration));
+    public static string AcquisitionMode_ContinuousCollection => GetString(nameof(AcquisitionMode_ContinuousCollection));
+    public static string AcquisitionMode_ColumnName => GetString(nameof(AcquisitionMode_ColumnName));
+    public static string AcquisitionMode_Unit => GetString(nameof(AcquisitionMode_Unit));
+    public static string AcquisitionMode_Wavelength => GetString(nameof(AcquisitionMode_Wavelength));
+
     // diagnostics dialog
     public static string Diagnostics_DialogTitle => GetString(nameof(Diagnostics_DialogTitle));
     public static string Diagnostics_NoEntries => GetString(nameof(Diagnostics_NoEntries));
