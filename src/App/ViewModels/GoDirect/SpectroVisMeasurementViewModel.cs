@@ -188,6 +188,12 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     [ObservableProperty]
     public partial double YMaximum { get; set; }
 
+    [ObservableProperty]
+    public partial IReadOnlyList<double> XValues { get; set; } = [];
+
+    [ObservableProperty]
+    public partial IReadOnlyList<double> YValues { get; set; } = [];
+
     /// <summary>
     /// Gets or sets the wavelength sampled for time-resolved and event-triggered measurements.
     /// </summary>
@@ -480,6 +486,17 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         _table.ArchiveLiveSeries();
     }
 
+    public void Autoscale()
+    {
+        if (XValues.Count == 0 || YValues.Count == 0)
+        {
+            return;
+        }
+
+        (XMinimum, XMaximum) = GetRangeWithPadding(XValues);
+        (YMinimum, YMaximum) = GetRangeWithPadding(YValues);
+    }
+
     /// <summary>
     /// Receives processed spectra from the backend session.
     ///
@@ -550,6 +567,28 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         {
             System.Diagnostics.Debug.WriteLine(ex);
         }
+    }
+
+    /// <summary>
+    /// Pushes the current spectrum to the UI if data recording is running.
+    /// </summary>
+    /// <param name="value"></param>
+    partial void OnDisplayedSpectrumChanged(Spectrum? value)
+    {
+        if (AcquisitionMode != AcquisitionMode.FullSpectrum)
+        {
+            return;
+        }
+
+        if (!IsMeasurementRunning)
+        {
+            XValues = [];
+            YValues = [];
+            return;
+        }
+
+        XValues = value?.WavelengthNm ?? [];
+        YValues = value?.YAxis ?? [];
     }
 
     /// <summary>
@@ -714,7 +753,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
         _table.AppendLiveRow(elapsedSeconds.ToString("F2"), FormatYValue(y, spectrum.Mode));
 
-        if(!ContinuousDataCollection && elapsedSeconds >= TimeResolvedDuration)
+        if (!ContinuousDataCollection && elapsedSeconds >= TimeResolvedDuration)
         {
             AutoStopRequested?.Invoke();
         }
@@ -966,6 +1005,22 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
             OperatingMode.Fluorescence500 => value.ToString("F4"),
             _ => value.ToString("G4")
         };
+    }
+
+    private static (double Minimum, double Maximum) GetRangeWithPadding(IReadOnlyList<double> values, double paddingFraction = 0.05)
+    {
+        double min = values.Min();
+        double max = values.Max();
+        double range = max - min;
+
+        if (range <= 0)
+        {
+            double fallback = min != 0 ? Math.Abs(min) * 0.1 : 1;
+            return (min - fallback, max + fallback);
+        }
+
+        double padding = range * paddingFraction;
+        return (min - padding, max + padding);
     }
 
     /// <summary>

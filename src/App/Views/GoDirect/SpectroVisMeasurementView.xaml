@@ -5,6 +5,7 @@
              xmlns:strings="clr-namespace:App.Resources.Strings"
              xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
              xmlns:util="clr-namespace:App.Util"
+             xmlns:controls="clr-namespace:App.Views.Controls"
              BackgroundColor="Transparent">
     <ContentView.Resources>
         <util:CountToWidthConverter x:Key="CountToWidthConverter"/>
@@ -16,7 +17,7 @@
         <Grid Grid.Row="0"
               ColumnDefinitions="*,20,260"
               ColumnSpacing="0">
-            <!-- Chart area placeholder -->
+            <!-- Chart area -->
             <Border Grid.Column="0"
                     Stroke="Black"
                     StrokeThickness="1"
@@ -40,15 +41,13 @@
                                VerticalOptions="Center"/>
                         <Grid Grid.Column="1"
                               RowDefinitions="*,Auto,Auto">
-                            <Border Grid.Row="0"
-                                    Stroke="Black"
-                                    StrokeThickness="1"
-                                    BackgroundColor="White">
-                                <Label Text="Diagramm"
-                                       TextColor="Gray"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"/>
-                            </Border>
+                            <controls:MeasurementChart Grid.Row="0"
+                                                       XMinimum="{Binding XMinimum}"
+                                                       XMaximum="{Binding XMaximum}"
+                                                       YMinimum="{Binding YMinimum}"
+                                                       YMaximum="{Binding YMaximum}"
+                                                       XValues="{Binding XValues}"
+                                                       YValues="{Binding YValues}"/>
                             <BoxView Grid.Row="1"
                                      HeightRequest="18"
                                      Margin="0,4,0,0"
@@ -64,11 +63,11 @@
                     </Grid>
                 </Grid>
             </Border>
-            <util:GridSplitter Grid.Column="1"
-                               WidthRequest="20"
-                               MinimumLeftWidth="300"
-                               HorizontalOptions="Fill"
-                               VerticalOptions="Fill"/>
+            <controls:GridSplitter Grid.Column="1"
+                                   WidthRequest="20"
+                                   MinimumLeftWidth="300"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill"/>
             <!-- Table area -->
             <Border Grid.Column="2"
                     Stroke="Black"

@@ -1,36 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ContentPage x:Class="App.Views.DeviceSelectionPage"
- xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
- xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
- xmlns:converters="clr-namespace:App.Util"
- Title="Antimon">
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:util="clr-namespace:App.Util"
+             Title="Messwerk">
     <ContentPage.Resources>
-        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+        <util:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
     </ContentPage.Resources>
-    <Grid Padding="40" RowDefinitions="Auto,Auto,*,Auto" RowSpacing="18">
-        <Label Grid.Row="0" Text="Angeschlossenes Gerät wählen (es kann nur eine Verbindung hergestellt werden):" FontSize="22" FontAttributes="Bold"/>
-        <HorizontalStackLayout Grid.Row="1" Spacing="12">
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" WidthRequest="24" HeightRequest="24"/>
-            <Label Text="{Binding StatusText}" VerticalTextAlignment="Center" FontSize="14" TextColor="Gray"/>
+    <Grid Padding="40"
+          RowDefinitions="Auto,Auto,*,Auto"
+          RowSpacing="18">
+        <Label Grid.Row="0"
+               Text="Angeschlossenes Gerät wählen (es kann nur eine Verbindung hergestellt werden):"
+               FontSize="22"
+               FontAttributes="Bold"/>
+        <HorizontalStackLayout Grid.Row="1"
+                               Spacing="12">
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               WidthRequest="24"
+                               HeightRequest="24"/>
+            <Label Text="{Binding StatusText}"
+                   VerticalTextAlignment="Center"
+                   FontSize="14"
+                   TextColor="Gray"/>
         </HorizontalStackLayout>
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Devices}" SelectionMode="None">
+        <CollectionView Grid.Row="2"
+                ItemsSource="{Binding Devices}"
+                SelectionMode="None">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Button Margin="0,0,0,12" Padding="18" FontSize="18" HorizontalOptions="Fill" Text="{Binding DisplayName}" Clicked="OnDeviceButtonClicked" IsEnabled="{Binding BindingContext.IsBusy, Source={RelativeSource AncestorType={x:Type ContentPage}}, Converter={StaticResource InvertedBoolConverter}}"/>
+                    <Button Margin="0,0,0,12"
+                            Padding="18"
+                            FontSize="18"
+                            HorizontalOptions="Fill"
+                            Text="{Binding DisplayName}"
+                            Clicked="OnDeviceButtonClicked"
+                            IsEnabled="{Binding BindingContext.IsBusy, Source={RelativeSource AncestorType={x:Type ContentPage}}, Converter={StaticResource InvertedBoolConverter}}"/>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-        <Border Grid.Row="3" Stroke="DarkGray" StrokeThickness="1" Padding="10" IsVisible="{Binding HasDiagnostics}">
-            <Grid RowDefinitions="Auto,*" RowSpacing="8">
-                <Label Grid.Row="0" Text="Fehlermeldungen" FontAttributes="Bold" FontSize="14"/>
-                <CollectionView Grid.Row="1" ItemsSource="{Binding Diagnostics}" HeightRequest="180" SelectionMode="None">
+        <Border Grid.Row="3"
+                Stroke="DarkGray"
+                StrokeThickness="1"
+                Padding="10"
+                IsVisible="{Binding HasDiagnostics}">
+            <Grid RowDefinitions="Auto,*"
+                  RowSpacing="8">
+                <Label Grid.Row="0"
+                       Text="Fehlermeldungen"
+                       FontAttributes="Bold"
+                       FontSize="14"/>
+                <CollectionView Grid.Row="1"
+                                ItemsSource="{Binding Diagnostics}"
+                                HeightRequest="180"
+                                SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid Padding="0,6" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="110,*">
-                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding Severity}" FontAttributes="Bold"/>
-                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding Category}" FontAttributes="Bold"/>
-                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding Message}"/>
-                                <Label Grid.Row="2" Grid.Column="1" Text="{Binding TechnicalDetails}" FontSize="11" TextColor="Gray" LineBreakMode="WordWrap"/>
+                            <Grid Padding="0,6"
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="110,*">
+                                <Label Grid.Row="0"
+                                       Grid.Column="0"
+                                       Text="{Binding Severity}"
+                                       FontAttributes="Bold"/>
+                                <Label Grid.Row="0"
+                                       Grid.Column="1"
+                                       Text="{Binding Category}"
+                                       FontAttributes="Bold"/>
+                                <Label Grid.Row="1"
+                                       Grid.Column="1"
+                                       Text="{Binding Message}"/>
+                                <Label Grid.Row="2"
+                                       Grid.Column="1"
+                                       Text="{Binding TechnicalDetails}"
+                                       FontSize="11"
+                                       TextColor="Gray"
+                                       LineBreakMode="WordWrap"/>
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>

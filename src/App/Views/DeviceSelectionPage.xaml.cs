@@ -1,22 +1,18 @@
 using App.ViewModels;
 using App.Resources.Strings;
-using Backend.Discovery;
 
 namespace App.Views;
 
 public partial class DeviceSelectionPage : ContentPage
 {
     private readonly DeviceSelectionViewModel _viewModel;
-    private readonly IDeviceManager _deviceManager;
     private bool _hasSearched;
 
-    public DeviceSelectionPage(DeviceSelectionViewModel viewModel, IDeviceManager deviceManager)
+    public DeviceSelectionPage(DeviceSelectionViewModel viewModel)
     {
         InitializeComponent();
 
         _viewModel = viewModel;
-        _deviceManager = deviceManager;
-
         BindingContext = viewModel;
     }
 

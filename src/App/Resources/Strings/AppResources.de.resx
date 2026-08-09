@@ -278,6 +278,10 @@
     <value>Datenerfassungsmodus wählen</value>
     <comment/>
   </data>
+  <data name="App_Autoscale" xml:space="preserve">
+    <value>automatische Achsenskalierung</value>
+    <comment/>
+  </data>
   <data name="App_CrossHairs" xml:space="preserve">
     <value>Fadenkreuzanzeige</value>
     <comment/>
@@ -424,7 +428,7 @@
     <value>Einheit:</value>
     <comment/>
    </data>
-   <data name="AcquisitionMode_Concentration" xml:space="preserve">
+  <data name="AcquisitionMode_Concentration" xml:space="preserve">
     <value>Konzentration</value>
     <comment/>
    </data>
@@ -449,7 +453,7 @@
 
   <!-- Miscellaneous -->
   <data name="App_AppName" xml:space="preserve">
-    <value>Antimon</value>
+    <value>Messwerk</value>
     <comment/>
    </data>
 </root>

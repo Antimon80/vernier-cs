@@ -3,8 +3,8 @@ using Microsoft.Maui.LifecycleEvents;
 using Backend.Discovery;
 using App.ViewModels;
 using App.Views;
-using App.Views.GoDirect;
 using App.Services;
+using SkiaSharp.Views.Maui.Controls.Hosting;
 
 namespace App
 {
@@ -12,7 +12,7 @@ namespace App
     {
         public static MauiApp CreateMauiApp()
         {
-            IDeviceManager? deviceManager = null;
+            DeviceManager? deviceManager = null;
 
             var builder = MauiApp.CreateBuilder();
 
@@ -63,13 +63,15 @@ namespace App
 #endif
 });
 
+            builder.UseSkiaSharp();
+
 #if DEBUG
             builder.Logging.SetMinimumLevel(LogLevel.Trace);
             builder.Logging.AddDebug();
             builder.Logging.AddConsole();
 #endif
 
-            builder.Services.AddSingleton<IDeviceManager>(sp => new DeviceManager(sp.GetService<ILoggerFactory>()));
+            builder.Services.AddSingleton(sp => new DeviceManager(sp.GetService<ILoggerFactory>()));
             builder.Services.AddTransient<DeviceSelectionViewModel>();
             builder.Services.AddTransient<DeviceSelectionPage>();
 
@@ -80,7 +82,7 @@ namespace App
 
             MauiApp app = builder.Build();
 
-            deviceManager = app.Services.GetRequiredService<IDeviceManager>();
+            deviceManager = app.Services.GetRequiredService<DeviceManager>();
 
             return app;
         }

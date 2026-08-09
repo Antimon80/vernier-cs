@@ -60,6 +60,7 @@ public static class AppResources
     public static string Device_Calibrate => GetString(nameof(Device_Calibrate));
     public static string Spectrometer_OperatingMode => GetString(nameof(Spectrometer_OperatingMode));
     public static string Device_AcquisitionMode => GetString(nameof(Device_AcquisitionMode));
+    public static string App_Autoscale => GetString(nameof(App_Autoscale));
     public static string App_CrossHairs => GetString(nameof(App_CrossHairs));
     public static string App_DataManagement => GetString(nameof(App_DataManagement));
     public static string App_DataAnalysis => GetString(nameof(App_DataAnalysis));

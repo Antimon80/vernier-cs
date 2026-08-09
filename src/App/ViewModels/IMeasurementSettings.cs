@@ -53,6 +53,11 @@ public interface IMeasurementSettings
     /// Performs or opens a device-specific zero/tare workflow.
     /// </summary>
     Task SetToZero(CancellationToken ct = default);
+
+    /// <summary>
+    /// Scale the chart axes so that the currently displayed data fills the chart without being cut off.
+    /// </summary>
+    void Autoscale();
 }
 
 /// <summary>

@@ -12,7 +12,7 @@ namespace App.ViewModels;
 
 public sealed partial class DeviceSelectionViewModel : ObservableObject, IDisposable
 {
-    private readonly IDeviceManager _deviceManager;
+    private readonly DeviceManager _deviceManager;
     private bool _disposed;
     private readonly LocalizationService _localization;
 
@@ -28,7 +28,7 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
 
     public bool HasDiagnostics => Diagnostics.Count > 0;
 
-    public DeviceSelectionViewModel(IDeviceManager deviceManager, LocalizationService localization)
+    public DeviceSelectionViewModel(DeviceManager deviceManager, LocalizationService localization)
     {
         _deviceManager = deviceManager;
         _localization = localization;
@@ -101,19 +101,6 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
             }
 
             await device.Initialize();
-
-            System.Diagnostics.Debug.WriteLine(
-    $"[Connect] Device={device.GetHashCode()}, " +
-    $"Initialized={device.IsInitialized}");
-
-            if (device is ISpectrometer spectrometer)
-            {
-                System.Diagnostics.Debug.WriteLine(
-                    $"[Connect] Spectrometer={spectrometer.GetHashCode()}, " +
-                    $"SessionInitialized={spectrometer.Session.IsInitialized}, " +
-                    $"LampCheck={spectrometer.Session.WhiteLampCheckPassed}, " +
-                    $"LampOn={spectrometer.Session.WhiteLampIsOn}");
-            }
 
             if (!device.IsInitialized)
             {

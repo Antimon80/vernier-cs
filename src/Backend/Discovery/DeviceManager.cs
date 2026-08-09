@@ -22,7 +22,7 @@ namespace Backend.Discovery;
 /// Device-specific initialization and hardware diagnostics are the
 /// responsibility of the concrete device implementation.
 /// </summary>
-public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDeviceManager {
+public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDisposable {
     private readonly ILoggerFactory? _loggerFactory = loggerFactory;
     private readonly ILogger<DeviceManager>? _log = loggerFactory?.CreateLogger<DeviceManager>();
 
@@ -223,7 +223,7 @@ public sealed class DeviceManager(ILoggerFactory? loggerFactory = null) : IDevic
         }
 
         if (devices.Count > 1) {
-            string message2 = $"Multiple supported Vernier devices wer found " +
+            string message2 = $"Multiple supported Vernier devices were found " +
                 $"({devices.Count}). Select one explicitily.";
             string details = string.Join(Environment.NewLine, devices.Select((device, index) =>
                 $"[{index}] {device.Name}; " + $"VID=0x{device.Vid:X4}; " +

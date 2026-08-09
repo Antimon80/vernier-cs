@@ -6,7 +6,7 @@ using GridLength = Microsoft.Maui.GridLength;
 using GridUnitType = Microsoft.Maui.GridUnitType;
 #endif
 
-namespace App.Util;
+namespace App.Views.Controls;
 
 /// <summary>
 /// Provides a draggable vertical splitter for resizing tow adjacent columns inside a parent <see cref="Grid"/>.

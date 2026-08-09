@@ -14,10 +14,10 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 {
     private const string StartIcon = "start.png";
     private const string StopIcon = "stop.png";
-    private readonly IDeviceManager _deviceManager;
+    private readonly DeviceManager _deviceManager;
     private bool _disposed;
 
-    public MeasurementViewModel(IDeviceManager deviceManager)
+    public MeasurementViewModel(DeviceManager deviceManager)
     {
         _deviceManager = deviceManager ?? throw new ArgumentNullException(nameof(deviceManager));
 
@@ -64,7 +64,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(OpenOperatingModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenAcquisitionModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(CalibrateCommand))]
-
+    [NotifyCanExecuteChangedFor(nameof(AutoscaleCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ShowCrosshairsCommand))]
     public partial bool IsMeasurementRunning { get; set; }
 
     [ObservableProperty]
@@ -140,12 +141,6 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     private Task SaveFileAs()
     {
         return ShowNotImplementedAsync(AppResources.App_SaveFileAs);
-    }
-
-    [RelayCommand]
-    private Task Print()
-    {
-        return ShowNotImplementedAsync(AppResources.App_Print);
     }
 
     [RelayCommand]
@@ -272,9 +267,26 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         RefreshDeviceState();
     }
 
+    [RelayCommand(CanExecute = nameof(CanUseChartTools))]
+    private void Autoscale()
+    {
+        MeasurementSettings.Autoscale();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUseChartTools))]
+    private Task ShowCrosshairs()
+    {
+        return ShowNotImplementedAsync(AppResources.App_CrossHairs);
+    }
+
     private bool CanChangeMeasurementConfiguration()
     {
         return !IsMeasurementRunning;
+    }
+
+    private bool CanUseChartTools()
+    {
+        return IsMeasurementRunning;
     }
 
     private bool CanCalibrate()
@@ -371,6 +383,11 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         public Task RequestKeepDataPointDialog(CancellationToken ct = default)
         {
             return Task.CompletedTask;
+        }
+
+        public void Autoscale()
+        {
+
         }
     }
 }
