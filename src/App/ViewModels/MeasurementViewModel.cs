@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using App.Models;
 using App.Resources.Strings;
+using App.Util;
 using App.ViewModels.GoDirect;
 using Backend.Devices;
 using Backend.Devices.GoDirect;
@@ -76,16 +77,12 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     public partial bool HasOperatingModeSelection { get; set; }
 
     [ObservableProperty]
-    public partial bool IsCalibrationEnabled { get; set; }
-
-    [ObservableProperty]
     public partial bool HasKeepDataPointCommand { get; set; }
 
     public void RefreshDeviceState()
     {
         HasOperatingModeSelection = MeasurementSettings.HasOperatingModeSelection;
         HasKeepDataPointCommand = MeasurementSettings.CanKeepDataPoint;
-        IsCalibrationEnabled = CurrentDevice.CanCalibrate;
 
         if (DeviceViewModel is SpectroVisMeasurementViewModel spectroVisViewModel)
         {
@@ -96,6 +93,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         ToggleMeasurementCommand.NotifyCanExecuteChanged();
         KeepDataPointCommand.NotifyCanExecuteChanged();
+        CalibrateCommand.NotifyCanExecuteChanged();
     }
 
     public void RefreshDiagnostics()
@@ -128,49 +126,49 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private Task OpenFile()
     {
-        return ShowNotImplementedAsync(AppResources.App_OpenFile);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_OpenFile);
     }
 
     [RelayCommand]
     private Task SaveFile()
     {
-        return ShowNotImplementedAsync(AppResources.App_SaveFile);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_SaveFile);
     }
 
     [RelayCommand]
     private Task SaveFileAs()
     {
-        return ShowNotImplementedAsync(AppResources.App_SaveFileAs);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_SaveFileAs);
     }
 
     [RelayCommand]
     private Task ExportData()
     {
-        return ShowNotImplementedAsync(AppResources.App_ExportData);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_ExportData);
     }
 
     [RelayCommand]
     private Task ImportData()
     {
-        return ShowNotImplementedAsync(AppResources.App_ImportData);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_ImportData);
     }
 
     [RelayCommand]
     private Task OpenCursor()
     {
-        return ShowNotImplementedAsync(AppResources.App_CrossHairs);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_CrossHairs);
     }
 
     [RelayCommand]
     private Task OpenDataManager()
     {
-        return ShowNotImplementedAsync(AppResources.App_DataManagement);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_DataManagement);
     }
 
     [RelayCommand]
     private Task OpenAnalysis()
     {
-        return ShowNotImplementedAsync(AppResources.App_DataAnalysis);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_DataAnalysis);
     }
 
     [RelayCommand]
@@ -189,19 +187,19 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private Task OpenSettings()
     {
-        return ShowNotImplementedAsync(AppResources.App_Settings);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Settings);
     }
 
     [RelayCommand]
     private Task OpenAbout()
     {
-        return ShowNotImplementedAsync(AppResources.App_About);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_About);
     }
 
     [RelayCommand]
     private Task OpenHelp()
     {
-        return ShowNotImplementedAsync(AppResources.App_Help);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Help);
     }
 
     [RelayCommand(CanExecute = nameof(CanChangeMeasurementConfiguration))]
@@ -240,7 +238,6 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
             return;
         }
 
-        await CurrentDevice.Calibrate(result.SkipWarmup);
         RefreshDeviceState();
     }
 
@@ -276,7 +273,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
     private Task ShowCrosshairs()
     {
-        return ShowNotImplementedAsync(AppResources.App_CrossHairs);
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_CrossHairs);
     }
 
     private bool CanChangeMeasurementConfiguration()
@@ -318,38 +315,6 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         {
             ToggleMeasurement();
         }
-    }
-
-    private static Task ShowNotImplementedAsync(string feature)
-    {
-        Page? page = GetCurrentPage();
-
-        if (page is null)
-        {
-            return Task.CompletedTask;
-        }
-
-        return page.DisplayAlertAsync(feature, "not implemented yet", AppResources.Dialog_Ok);
-    }
-
-    /// <summary>
-    /// Resolves the topmost currently presented page (modal dialog if one is pushed, otherwise the
-    /// root page). Application.Current.Windows[0].Page alone always returns the root page, so an
-    /// alert raised while a modal dialog is open would be requested on a page that isn't the one
-    /// actually visible to the user.
-    /// </summary>
-    private static Page? GetCurrentPage()
-    {
-        Page? root = Application.Current?.Windows.FirstOrDefault()?.Page;
-
-        if (root is null)
-        {
-            return null;
-        }
-
-        IReadOnlyList<Page>? modalStack = root.Navigation?.ModalStack;
-
-        return modalStack is { Count: > 0 } ? modalStack[^1] : root;
     }
 
     private sealed class NoOpMeasurementWorkflow : IMeasurementSettings

@@ -85,13 +85,16 @@ public partial class MeasurementPage : ContentPage
     /// <summary>
     /// Handles <see cref="SpectroVisMeasurementViewModel.CalibrationDialogRequested"/>.
     /// </summary>
-    private async Task<CalibrationDialogResult?> PresentCalibrationDialog(SpectroVisMeasurementViewModel measurmentViewModel, CancellationToken ct)
+    private async Task<CalibrationDialogResult?> PresentCalibrationDialog(SpectroVisMeasurementViewModel measurementViewModel, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        await DisplayAlertAsync(AppResources.Device_Calibrate, "not implemented yet", AppResources.Dialog_Ok);
+        SpectroVisCalibrationViewModel dialogViewModel = new(measurementViewModel);
+        SpectroVisCalibrationDialog dialog = new(dialogViewModel);
 
-        return null;
+        await Navigation.PushModalAsync(dialog);
+
+        return await dialogViewModel.ResultTask;
     }
 
     /// <summary>

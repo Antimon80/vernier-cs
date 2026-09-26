@@ -54,7 +54,6 @@
       <ImageButton Grid.Column="9"
                    Source="calibrate.png"
                    BackgroundColor="Transparent"
-                   IsEnabled="{Binding IsCalibrationEnabled}"
                    Command="{Binding CalibrateCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.Device_Calibrate}"/>
       <ImageButton Grid.Column="10"

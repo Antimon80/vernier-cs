@@ -357,6 +357,16 @@
     <comment/>
   </data>
 
+  <!-- Common Device Settings -->
+  <data name="Device_DeviceType" xml:space="preserve">
+    <value>Typ:</value>
+    <comment/>
+   </data>
+  <data name="Device_MeasurementRange" xml:space="preserve">
+    <value>Messbereich:</value>
+    <comment/>
+   </data>
+
   <!-- Spectrometer Operating Mode-->
   <data name="OperatingMode_Absorbance" xml:space="preserve">
     <value>Absorption</value>
@@ -380,14 +390,6 @@
    </data>
   <data name="OperatingMode_RawCounts" xml:space="preserve">
     <value>unkalibrierte Messwerte</value>
-    <comment/>
-   </data>
-  <data name="OperatingMode_DeviceType" xml:space="preserve">
-    <value>Typ:</value>
-    <comment/>
-   </data>
-  <data name="OperatingMode_MeasurementRange" xml:space="preserve">
-    <value>Messbereich:</value>
     <comment/>
    </data>
   <data name="OperatingMode_IntegrationTime" xml:space="preserve">
@@ -428,7 +430,7 @@
     <value>Einheit:</value>
     <comment/>
    </data>
-   <data name="AcquisitionMode_Concentration" xml:space="preserve">
+  <data name="AcquisitionMode_Concentration" xml:space="preserve">
     <value>Konzentration</value>
     <comment/>
    </data>
@@ -440,6 +442,28 @@
     <value>Wellenlänge:</value>
     <comment/>
    </data>
+
+  <!-- Spectrometer Calibration Dialog -->
+  <data name="CalibrationDialog_DialogTitle" xml:space="preserve">
+      <value>Gerät kalibrieren</value>
+      <comment/>
+    </data>
+  <data name="CalibrationDialog_SkipWarmup" xml:space="preserve">
+      <value>Vorwärmen übergehen</value>
+      <comment/>
+    </data>
+  <data name="CalibrationDialog_FinishCalibration" xml:space="preserve">
+      <value>Kalibrierung abschliessen</value>
+      <comment/>
+    </data>
+  <data name="Spectrometer_WarmupTimeElapsed" xml:space="preserve">
+      <value>Sekunden Wartezeit zum Vorwärmen der Lampe ...</value>
+      <comment/>
+    </data>
+  <data name="Spectrometer_InsertBlank" xml:space="preserve">
+      <value>Küvette mit reinem Lösemittel einsetzen:</value>
+      <comment/>
+    </data>
 
   <!-- Diagnostics -->
   <data name="Diagnostics_NoEntries" xml:space="preserve">

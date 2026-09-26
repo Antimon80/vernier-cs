@@ -104,6 +104,8 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     public SpectrometerModel Model => _spectrometer.Model;
 
+    public Spectrometer Spectrometer => (Spectrometer)_spectrometer;
+
     /// <summary>
     /// Gets the column definitions displayed by the wide measurement table.
     /// </summary>
@@ -479,16 +481,32 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     }
 
     /// <summary>
-    /// Refreshes all chart metadata, table headers, operating-mode text and status indicators from 
+    /// Refreshes all chart metadata, table headers, operating-mode text and status indicators from
     /// the current spectrometer session.
+    ///
+    /// This resets the chart's axis configuration (<see cref="RefreshChartConfiguration"/>), which
+    /// discards any Autoscale or manually entered axis range in favour of the mode's default.
+    /// For incidental backend pings that don't change what the chart should look like (calibration
+    /// status, lamp/warmup status, ...), use <see cref="RefreshStatusOnly"/> instead.
     /// </summary>
     public void RefreshAll()
+    {
+        RefreshStatusOnly();
+        RefreshChartConfiguration();
+    }
+
+    /// <summary>
+    /// Refreshes everything RefreshAll() does except the chart's axis configuration.
+    ///
+    /// Used for backend state changes that carry no mode change - most importantly the white-lamp
+    /// warmup status, which ticks roughly once a second while warming up.
+    /// </summary>
+    private void RefreshStatusOnly()
     {
         IntegrationTimeMs = _spectrometer.Session.IntegrationTime;
         CanEditIntegrationTime = CanEditIntegrationTimeForCurrentMode();
         RefreshAcquisitionModeEditFlags();
 
-        RefreshChartConfiguration();
         RefreshTableHeaders();
         RefreshCurrentOperatingMode();
         RefreshStatusIndicators();
@@ -620,11 +638,15 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     }
 
     /// <summary>
-    /// Schedules a complete UI refresh after the backend session reports a state change.
+    /// Schedules a status refresh after the backend session reports a state change.
+    ///
+    /// Deliberately uses RefreshStatusOnly(), not RefreshAll(): this fires on every StateChanged,
+    /// including the roughly-once-a-second white-lamp warmup countdown tick, and must not reset the
+    /// chart's axis configuration on every one of those.
     /// </summary>
     private void OnSessionStateChanged()
     {
-        MainThread.BeginInvokeOnMainThread(RefreshAll);
+        MainThread.BeginInvokeOnMainThread(RefreshStatusOnly);
     }
 
     /// <summary>
@@ -725,8 +747,8 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
         YMinimum = yMinimum;
         YMaximum = yMaximum;
-        YAxisLowerLimit = yMinimum;
-        YAxisUpperLimit = yMaximum;
+
+        (YAxisLowerLimit, YAxisUpperLimit) = GetYAxisLimit(Session.Mode);
     }
 
     /// <summary>
@@ -1033,6 +1055,27 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
             OperatingMode.Fluorescence405 => (0, 1),
             OperatingMode.Fluorescence500 => (0, 1),
             _ => (0, 1)
+        };
+    }
+
+    /// <summary>
+    /// Returns the hard axis-entry/autoscale clamp for the selected operating mode, or null where
+    /// there is no real physical bound.
+    ///
+    /// Only raw ADC counts have a genuine hardware limit (a 16-bit sensor cannot report outside
+    /// 0..65535). Intensity, transmission, absorbance and fluorescence are all derived/computed
+    /// values that can legitimately fall outside their "nominal" range - e.g. sensor noise near
+    /// zero can dip slightly negative, or a highly concentrated sample can exceed absorbance of 3.
+    /// Using the same numbers here as the default *display* range (as this used to do) meant
+    /// Autoscale (and the manual axis-entry fields) could never show those values: the chart would
+    /// briefly reflect the autoscaled range and then immediately clamp back to the default.
+    /// </summary>
+    private static (double? Lower, double? Upper) GetYAxisLimit(OperatingMode mode)
+    {
+        return mode switch
+        {
+            OperatingMode.RawCounts => (0, 65535),
+            _ => (null, null)
         };
     }
 

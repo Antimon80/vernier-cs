@@ -451,11 +451,9 @@ public sealed partial class MeasurementChart : ContentView
     private static double AxisGap(double? lower, double? upper, double currentRange)
     {
         double referenceRange = lower.HasValue && upper.HasValue
-            ? upper.Value - lower.Value
-            : Math.Abs(currentRange);
+            ? upper.Value - lower.Value : Math.Abs(currentRange);
 
         return referenceRange > 0
-            ? referenceRange * MinimumAxisGapFraction
-            : MinimumAxisGapFraction;
+            ? referenceRange * MinimumAxisGapFraction : MinimumAxisGapFraction;
     }
 }

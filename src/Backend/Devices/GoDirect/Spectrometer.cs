@@ -506,6 +506,16 @@ namespace Backend.Devices.GoDirect
         {
             ct.ThrowIfCancellationRequested();
 
+            // Already in the requested mode: nothing to do. Without this guard, every call - even a
+            // redundant "ensure white" while the lamp is already white and warmed up - would still run
+            // the "turn everything off first" step below, which resets the white-lamp warmup stopwatch
+            // to zero (see SetWhiteLamp(false, countWarmupTime: true, ...)) and immediately restarts it.
+            // That silently threw away the accumulated warmup time on every Calibrate() call.
+            if (_lampMode == mode)
+            {
+                return;
+            }
+
             // Turn all lamps off first (prevents mixed states).
             if (_model.HasWhiteLamp)
             {

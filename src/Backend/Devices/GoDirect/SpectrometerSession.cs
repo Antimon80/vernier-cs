@@ -241,8 +241,7 @@ public sealed class SpectrometerSession(ILogger<SpectrometerSession>? log = null
     }
 
     /// <summary>
-    /// Clears the current live spectrum without deleting captured
-    /// spectra.
+    /// Clears the current live spectrum without deleting captured spectra.
     /// </summary>
     internal void ClearCurrentSpectrum()
     {

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using App.Models;
 using App.Resources.Strings;
+using App.Util;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -142,9 +143,6 @@ public sealed partial class SpectroVisAcquisitionModeViewModel : ObservableObjec
     [ObservableProperty]
     public partial string MeasurementRangeText { get; set; } = "";
 
-    [ObservableProperty]
-    public partial string DeviceTypeText { get; set; } = "";
-
     /// <summary>
     /// Recalculates duration-field editability when continuous collection changes.
     /// </summary>
@@ -271,39 +269,7 @@ public sealed partial class SpectroVisAcquisitionModeViewModel : ObservableObjec
     [RelayCommand]
     private Task OpenHelp()
     {
-        return ShowNotImplementedAsync(AppResources.App_Help);
-    }
-
-    private static Task ShowNotImplementedAsync(string feature)
-    {
-        Page? page = GetCurrentPage();
-
-        if (page is null)
-        {
-            return Task.CompletedTask;
-        }
-
-        return page.DisplayAlertAsync(feature, "not implemented yet", AppResources.Dialog_Ok);
-    }
-
-    /// <summary>
-    /// Resolves the topmost currently presented page (modal dialog if one is pushed, otherwise the
-    /// root page). Application.Current.Windows[0].Page alone always returns the root page, so an
-    /// alert raised while a modal dialog (like this one) is open would be requested on a page that
-    /// isn't the one actually visible to the user.
-    /// </summary>
-    private static Page? GetCurrentPage()
-    {
-        Page? root = Application.Current?.Windows.FirstOrDefault()?.Page;
-
-        if (root is null)
-        {
-            return null;
-        }
-
-        IReadOnlyList<Page>? modalStack = root.Navigation?.ModalStack;
-
-        return modalStack is { Count: > 0 } ? modalStack[^1] : root;
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Help);
     }
 
     /// <summary>

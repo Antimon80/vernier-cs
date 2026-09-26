@@ -82,6 +82,10 @@ public static class AppResources
     public static string Spectrometer_Absorbance => GetString(nameof(Spectrometer_Absorbance));
     public static string Device_NoDataYet => GetString(nameof(Device_NoDataYet));
 
+    // common device settings
+    public static string Device_DeviceType => GetString(nameof(Device_DeviceType));
+    public static string Device_MeasurementRange => GetString(nameof(Device_MeasurementRange));
+
     // spectrometer operating mode
     public static string OperatingMode_Absorbance => GetString(nameof(OperatingMode_Absorbance));
     public static string OperatingMode_Transmittance => GetString(nameof(OperatingMode_Transmittance));
@@ -89,8 +93,6 @@ public static class AppResources
     public static string OperatingMode_Fluorescence500 => GetString(nameof(OperatingMode_Fluorescence500));
     public static string OperatingMode_Emission => GetString(nameof(OperatingMode_Emission));
     public static string OperatingMode_RawCounts => GetString(nameof(OperatingMode_RawCounts));
-    public static string OperatingMode_DeviceType => GetString(nameof(OperatingMode_DeviceType));
-    public static string OperatingMode_MeasurementRange => GetString(nameof(OperatingMode_MeasurementRange));
     public static string OperatingMode_IntegrationTime => GetString(nameof(OperatingMode_IntegrationTime));
     public static string OperatingMode_DialogTitle => GetString(nameof(OperatingMode_DialogTitle));
 
@@ -105,6 +107,13 @@ public static class AppResources
     public static string AcquisitionMode_Concentration => GetString(nameof(AcquisitionMode_Concentration));
     public static string AcquisitionMode_OtherUnit => GetString(nameof(AcquisitionMode_OtherUnit));
     public static string AcquisitionMode_Wavelength => GetString(nameof(AcquisitionMode_Wavelength));
+
+    // spectrometer calibration dialog
+    public static string CalibrationDialog_DialogTitle => GetString(nameof(CalibrationDialog_DialogTitle));
+    public static string CalibrationDialog_SkipWarmup => GetString(nameof(CalibrationDialog_SkipWarmup));
+    public static string CalibrationDialog_FinishCalibration => GetString(nameof(CalibrationDialog_FinishCalibration));
+    public static string Spectrometer_WarmupTimeElapsed => GetString(nameof(Spectrometer_WarmupTimeElapsed));
+    public static string Spectrometer_InsertBlank => GetString(nameof(Spectrometer_InsertBlank));
 
     // diagnostics dialog
     public static string Diagnostics_DialogTitle => GetString(nameof(Diagnostics_DialogTitle));

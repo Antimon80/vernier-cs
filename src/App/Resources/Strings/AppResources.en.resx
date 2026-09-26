@@ -357,6 +357,16 @@
     <comment/>
   </data>
 
+  <!-- Common Device Settings -->
+  <data name="Device_DeviceType" xml:space="preserve">
+    <value>Type:</value>
+    <comment/>
+   </data>
+  <data name="Device_MeasurementRange" xml:space="preserve">
+    <value>Measurement range:</value>
+    <comment/>
+   </data>
+
   <!-- Spectrometer Operating Mode-->
   <data name="OperatingMode_Absorbance" xml:space="preserve">
     <value>Absorbance</value>
@@ -380,14 +390,6 @@
    </data>
   <data name="OperatingMode_RawCounts" xml:space="preserve">
     <value>Raw Counts</value>
-    <comment/>
-   </data>
-  <data name="OperatingMode_DeviceType" xml:space="preserve">
-    <value>Type:</value>
-    <comment/>
-   </data>
-  <data name="OperatingMode_MeasurementRange" xml:space="preserve">
-    <value>Measurement range:</value>
     <comment/>
    </data>
   <data name="OperatingMode_IntegrationTime" xml:space="preserve">
@@ -428,7 +430,7 @@
     <value>Unit:</value>
     <comment/>
    </data>
-   <data name="AcquisitionMode_Concentration" xml:space="preserve">
+  <data name="AcquisitionMode_Concentration" xml:space="preserve">
     <value>Concentration</value>
     <comment/>
    </data>
@@ -440,6 +442,28 @@
     <value>Wavelength:</value>
     <comment/>
    </data>
+
+  <!-- Spectrometer Calibration Dialog -->
+  <data name="CalibrationDialog_DialogTitle" xml:space="preserve">
+      <value>Calibrate device</value>
+      <comment/>
+    </data>
+  <data name="CalibrationDialog_SkipWarmup" xml:space="preserve">
+      <value>Skip warmup</value>
+      <comment/>
+    </data>
+  <data name="CalibrationDialog_FinishCalibration" xml:space="preserve">
+      <value>Finish calibration</value>
+      <comment/>
+    </data>
+  <data name="Spectrometer_WarmupTimeElapsed" xml:space="preserve">
+      <value>seconds remaining until the white light source has warmed up ...</value>
+      <comment/>
+    </data>
+  <data name="Spectrometer_InsertBlank" xml:space="preserve">
+      <value>Insert a cuvette containing pure solvent:</value>
+      <comment/>
+    </data>
 
   <!-- Diagnostics -->
   <data name="Diagnostics_NoEntries" xml:space="preserve">
