@@ -122,7 +122,15 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public ObservableCollection<MeasurementSeries> ArchivedSeries => _table.ArchivedSeries;
 
     /// <summary>
-    /// Gets the operating modes presented by the operating-mode dialog, 
+    /// Gets or sets the row currently selected (clicked) by the user in the wide measurement table.
+    /// Bound two-way to the table's <c>SelectedItem</c> so a click both marks the row visually and
+    /// makes the selected wavelength/value pair available to the view model.
+    /// </summary>
+    [ObservableProperty]
+    public partial WideTableRow? SelectedWideRow { get; set; }
+
+    /// <summary>
+    /// Gets the operating modes presented by the operating-mode dialog,
     /// including their support and selection state.
     /// </summary>
     public ObservableCollection<SpectroVisOperatingModeOption> OperatingModeOptions { get; } = [];
