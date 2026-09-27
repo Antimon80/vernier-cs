@@ -278,8 +278,12 @@
     <value>Datenerfassungsmodus wählen</value>
     <comment/>
   </data>
-  <data name="App_Autoscale" xml:space="preserve">
-    <value>automatische Achsenskalierung</value>
+  <data name="App_AutoscaleY" xml:space="preserve">
+    <value>Skalierung y-Achse</value>
+    <comment/>
+  </data>
+  <data name="App_AutoscaleFull" xml:space="preserve">
+    <value>Skalierung x- und y-Achse</value>
     <comment/>
   </data>
   <data name="App_CrossHairs" xml:space="preserve">

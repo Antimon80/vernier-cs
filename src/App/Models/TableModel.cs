@@ -42,14 +42,14 @@ public sealed record MeasurementSeries(
 /// measures, which acquisition mode is active, or what the header text should say - callers decide
 /// that and pass it in via <see cref="SetLiveHeaders"/>.
 /// </summary>
-public sealed class WideMeasurementTable
+public sealed partial class WideMeasurementTable : ObservableObject
 {
     private const int MaxArchivedSeries = 10;
 
     /// <summary>
     /// Repeating color palette used for the live series and archived series columns.
     /// </summary>
-    private static readonly Color[] SeriesColors = [Colors.Green, Colors.Red, Colors.Blue, Colors.DarkOrange, Colors.Purple, Colors.Teal];
+    private static readonly Color[] SeriesColors = [Colors.Red, Colors.Green, Colors.Blue, Colors.DarkOrange, Colors.Purple, Colors.Teal];
 
     private string _liveXHeader = "";
     private string _liveYHeader = "";
@@ -63,6 +63,14 @@ public sealed class WideMeasurementTable
     /// Gets the rows containing the live series and all retained archived series.
     /// </summary>
     public ObservableCollection<WideTableRow> WideRows { get; } = [];
+
+    /// <summary>
+    /// Gets or sets the row currently selected (clicked) by the user in the wide measurement table.
+    /// Bound two-way to the table's <c>SelectedItem</c> so a click both marks the row visually and
+    /// makes the selected wavelength/value pair available to the view model.
+    /// </summary>
+    [ObservableProperty]
+    public partial WideTableRow? SelectedWideRow { get; set; }
 
     /// <summary>
     /// Gets previously archived measurement series retained for comparison.

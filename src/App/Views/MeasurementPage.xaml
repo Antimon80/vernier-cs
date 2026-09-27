@@ -3,6 +3,7 @@
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:App.Resources.Strings"
+             xmlns:controls="clr-namespace:App.Views.Controls"
              Title="{Binding PageTitle}"
              BackgroundColor="White">
   <Grid RowDefinitions="Auto,*"
@@ -10,7 +11,7 @@
         RowSpacing="8">
     <!-- Generic toolbar -->
     <Grid Grid.Row="0"
-          ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,30,Auto,Auto,30,Auto,Auto,Auto,30,Auto,Auto,30,Auto,Auto,30,*,Auto,Auto,Auto,Auto"
+          ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,30,Auto,Auto,30,Auto,Auto,Auto,30,Auto,Auto,Auto,30,Auto,Auto,30,*,Auto,Auto,Auto,Auto"
           ColumnSpacing="8"
           VerticalOptions="Center">
       <ImageButton Grid.Column="0"
@@ -68,48 +69,67 @@
                    Command="{Binding KeepDataPointCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.Device_KeepDataPoint}"/>
       <ImageButton Grid.Column="13"
-                   Source="autoscale.png"
+                   Source="autoscale_y.png"
                    BackgroundColor="Transparent"
-                   Command="{Binding AutoscaleCommand}"
-                   ToolTipProperties.Text="{x:Static strings:AppResources.App_Autoscale}"/>
+                   Command="{Binding AutoscaleYAxisCommand}"
+                   ToolTipProperties.Text="{x:Static strings:AppResources.App_AutoscaleY}"/>
       <ImageButton Grid.Column="14"
+                   Source="autoscale_full.png"
+                   BackgroundColor="Transparent"
+                   Command="{Binding AutoscaleFullCommand}"
+                   ToolTipProperties.Text="{x:Static strings:AppResources.App_AutoscaleFull}"/>
+      <ImageButton Grid.Column="15"
                    Source="crosshairs.png"
                    BackgroundColor="Transparent"
                    Command="{Binding OpenCursorCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.App_CrossHairs}"/>
-      <ImageButton Grid.Column="16"
+      <ImageButton Grid.Column="17"
                    Source="data.png"
                    BackgroundColor="Transparent"
                    Command="{Binding OpenDataManagerCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.App_DataManagement}"/>
-      <ImageButton Grid.Column="17"
+      <ImageButton Grid.Column="18"
                    Source="analyze.png"
                    BackgroundColor="Transparent"
                    Command="{Binding OpenAnalysisCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.App_DataAnalysis}"/>
-      <ImageButton Grid.Column="20"
+      <ImageButton Grid.Column="21"
                    Source="diagnostics.png"
                    BackgroundColor="Transparent"
                    Command="{Binding OpenDiagnosticsCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.Device_Diagnostics}"/>
-      <ImageButton Grid.Column="21"
+      <ImageButton Grid.Column="22"
                    Source="settings.png"
                    BackgroundColor="Transparent"
                    Command="{Binding OpenSettingsCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.App_Settings}"/>
-      <ImageButton Grid.Column="22"
+      <ImageButton Grid.Column="23"
                    Source="help.png"
                    BackgroundColor="Transparent"
                    Command="{Binding OpenHelpCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.App_Help}"/>
-      <ImageButton Grid.Column="23"
+      <ImageButton Grid.Column="24"
                    Source="about.png"
                    BackgroundColor="Transparent"
                    Command="{Binding OpenAboutCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.App_About}"/>
     </Grid>
-    <!-- Device-specific measurement content -->
-    <ContentView x:Name="DeviceContentHost"
-                 Grid.Row="1"/>
+    <!-- Measurement area: device-specific content | splitter | generic table -->
+    <Grid Grid.Row="1"
+          ColumnDefinitions="*,20,260"
+          ColumnSpacing="0">
+      <!-- Device-specific measurement content -->
+      <ContentView x:Name="DeviceContentHost"
+                   Grid.Column="0"/>
+      <!-- Must share a parent Grid with the host and the table: it resizes its neighbouring columns -->
+      <controls:GridSplitter Grid.Column="1"
+                             WidthRequest="20"
+                             MinimumLeftWidth="300"
+                             HorizontalOptions="Fill"
+                             VerticalOptions="Fill"/>
+      <!-- Generic measurement table, present for every device type -->
+      <controls:MeasurementTableView Grid.Column="2"
+                                     BindingContext="{Binding Table}"/>
+    </Grid>
   </Grid>
 </ContentPage>

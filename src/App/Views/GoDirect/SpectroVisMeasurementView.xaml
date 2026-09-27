@@ -4,219 +4,65 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:strings="clr-namespace:App.Resources.Strings"
              xmlns:shapes="clr-namespace:Microsoft.Maui.Controls.Shapes;assembly=Microsoft.Maui.Controls"
-             xmlns:util="clr-namespace:App.Util"
              xmlns:controls="clr-namespace:App.Views.Controls"
              BackgroundColor="Transparent">
-    <ContentView.Resources>
-        <util:CountToWidthConverter x:Key="CountToWidthConverter"/>
-    </ContentView.Resources>
     <Grid RowDefinitions="*,Auto"
           Padding="8"
           RowSpacing="8">
-        <!-- Main measurement area -->
-        <Grid Grid.Row="0"
-              ColumnDefinitions="*,20,260"
-              ColumnSpacing="0">
-            <!-- Chart area -->
-            <Border Grid.Column="0"
-                    Stroke="Black"
-                    StrokeThickness="1"
-                    BackgroundColor="White"
-                    Padding="8">
-                <Grid RowDefinitions="Auto,*">
-                    <Label Grid.Row="0"
-                           Text="{Binding ChartTitle}"
+        <!-- Chart area (table is generic and lives in MeasurementPage) -->
+        <Border Grid.Row="0"
+                Stroke="Black"
+                StrokeThickness="1"
+                BackgroundColor="White"
+                Padding="8">
+            <Grid RowDefinitions="Auto,*">
+                <Label Grid.Row="0"
+                       Text="{Binding ChartTitle}"
+                       FontAttributes="Bold"
+                       FontSize="20"
+                       HorizontalOptions="Center"/>
+                <Grid Grid.Row="1"
+                      ColumnDefinitions="Auto,*"
+                      Padding="4">
+                    <Label Grid.Column="0"
+                           Text="{Binding YAxisTitle}"
+                           Rotation="-90"
                            FontAttributes="Bold"
-                           FontSize="20"
-                           HorizontalOptions="Center"/>
-                    <Grid Grid.Row="1"
-                          ColumnDefinitions="Auto,*"
-                          Padding="4">
-                        <Label Grid.Column="0"
-                               Text="{Binding YAxisTitle}"
-                               Rotation="-90"
+                           FontSize="18"
+                           HorizontalOptions="Center"
+                           VerticalOptions="Center"/>
+                    <Grid Grid.Column="1"
+                          RowDefinitions="*,Auto,Auto">
+                        <controls:MeasurementChart x:Name="Chart"
+                                                   Grid.Row="0"
+                                                   XMinimum="{Binding XMinimum, Mode=TwoWay}"
+                                                   XMaximum="{Binding XMaximum, Mode=TwoWay}"
+                                                   YMinimum="{Binding YMinimum, Mode=TwoWay}"
+                                                   YMaximum="{Binding YMaximum, Mode=TwoWay}"
+                                                   XAxisLowerLimit="{Binding XAxisLowerLimit}"
+                                                   XAxisUpperLimit="{Binding XAxisUpperLimit}"
+                                                   YAxisLowerLimit="{Binding YAxisLowerLimit}"
+                                                   YAxisUpperLimit="{Binding YAxisUpperLimit}"
+                                                   XValues="{Binding XValues}"
+                                                   YValues="{Binding YValues}"/>
+                        <controls:SpectrumStripView Grid.Row="1"
+                                                    HeightRequest="18"
+                                                    Margin="0,4,0,0"
+                                                    IsVisible="{Binding ShowSpectrumStrip}"
+                                                    XMinimum="{Binding XMinimum}"
+                                                    XMaximum="{Binding XMaximum}"
+                                                    PlotLeftFraction="{Binding Source={x:Reference Chart}, Path=PlotLeftFraction}"
+                                                    PlotRightFraction="{Binding Source={x:Reference Chart}, Path=PlotRightFraction}"/>
+                        <Label Grid.Row="2"
+                               Text="{Binding XAxisTitle}"
                                FontAttributes="Bold"
                                FontSize="18"
                                HorizontalOptions="Center"
-                               VerticalOptions="Center"/>
-                        <Grid Grid.Column="1"
-                              RowDefinitions="*,Auto,Auto">
-                            <controls:MeasurementChart x:Name="Chart"
-                                                       Grid.Row="0"
-                                                       XMinimum="{Binding XMinimum, Mode=TwoWay}"
-                                                       XMaximum="{Binding XMaximum, Mode=TwoWay}"
-                                                       YMinimum="{Binding YMinimum, Mode=TwoWay}"
-                                                       YMaximum="{Binding YMaximum, Mode=TwoWay}"
-                                                       XAxisLowerLimit="{Binding XAxisLowerLimit}"
-                                                       XAxisUpperLimit="{Binding XAxisUpperLimit}"
-                                                       YAxisLowerLimit="{Binding YAxisLowerLimit}"
-                                                       YAxisUpperLimit="{Binding YAxisUpperLimit}"
-                                                       XValues="{Binding XValues}"
-                                                       YValues="{Binding YValues}"/>
-                            <controls:SpectrumStripView Grid.Row="1"
-                                                        HeightRequest="18"
-                                                        Margin="0,4,0,0"
-                                                        IsVisible="{Binding ShowSpectrumStrip}"
-                                                        XMinimum="{Binding XMinimum}"
-                                                        XMaximum="{Binding XMaximum}"
-                                                        PlotLeftFraction="{Binding Source={x:Reference Chart}, Path=PlotLeftFraction}"
-                                                        PlotRightFraction="{Binding Source={x:Reference Chart}, Path=PlotRightFraction}"/>
-                            <Label Grid.Row="2"
-                                   Text="{Binding XAxisTitle}"
-                                   FontAttributes="Bold"
-                                   FontSize="18"
-                                   HorizontalOptions="Center"
-                                   Margin="0,4,0,0"/>
-                        </Grid>
+                               Margin="0,4,0,0"/>
                     </Grid>
                 </Grid>
-            </Border>
-            <controls:GridSplitter Grid.Column="1"
-                                   WidthRequest="20"
-                                   MinimumLeftWidth="300"
-                                   HorizontalOptions="Fill"
-                                   VerticalOptions="Fill"/>
-            <!-- Table area -->
-            <Grid Grid.Column="2"
-                  ColumnDefinitions="*,16"
-                  RowDefinitions="*,16"
-                  ColumnSpacing="0"
-                  RowSpacing="0">
-                <Border Grid.Row="0"
-                        Grid.Column="0"
-                        Stroke="Black"
-                        StrokeThickness="1"
-                        BackgroundColor="#eeeeee">
-                    <ScrollView x:Name="TableScrollView"
-                                Orientation="Horizontal"
-                                HorizontalScrollBarVisibility="Never"
-                                Scrolled="OnTableScrollViewScrolled">
-                        <Grid x:Name="TableContentGrid"
-                              RowDefinitions="Auto,*"
-                              HorizontalOptions="Start"
-                              WidthRequest="{Binding Columns.Count, Converter={StaticResource CountToWidthConverter}}">
-                            <HorizontalStackLayout Grid.Row="0"
-                                                   BackgroundColor="#dddddd"
-                                                   Padding="4,2,24,2"
-                                                   BindableLayout.ItemsSource="{Binding Columns}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate>
-                                        <Label Text="{Binding Header}"
-                                               TextColor="{Binding Color}"
-                                               FontAttributes="Bold"
-                                               WidthRequest="120"
-                                               HorizontalTextAlignment="Center"/>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </HorizontalStackLayout>
-
-                            <CollectionView Grid.Row="1"
-                                            x:Name="RowsCollectionView"
-                                            ItemsSource="{Binding WideRows}"
-                                            VerticalScrollBarVisibility="Never"
-                                            SelectionMode="Single"
-                                            SelectedItem="{Binding SelectedWideRow, Mode=TwoWay}"
-                                            Scrolled="OnRowsScrolled">
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate>
-                                        <HorizontalStackLayout Padding="4,2,24,2"
-                                                               BindableLayout.ItemsSource="{Binding Cells}">
-                                            <VisualStateManager.VisualStateGroups>
-                                                <VisualStateGroup x:Name="CommonStates">
-                                                    <VisualState x:Name="Normal">
-                                                        <VisualState.Setters>
-                                                            <Setter Property="BackgroundColor"
-                                                                    Value="Transparent"/>
-                                                        </VisualState.Setters>
-                                                    </VisualState>
-                                                    <VisualState x:Name="Selected">
-                                                        <VisualState.Setters>
-                                                            <Setter Property="BackgroundColor"
-                                                                    Value="#CCE4FF"/>
-                                                        </VisualState.Setters>
-                                                    </VisualState>
-                                                </VisualStateGroup>
-                                            </VisualStateManager.VisualStateGroups>
-                                            <BindableLayout.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Label Text="{Binding Value}"
-                                                           TextColor="{Binding Color}"
-                                                           WidthRequest="120"
-                                                           HorizontalTextAlignment="End"/>
-                                                </DataTemplate>
-                                            </BindableLayout.ItemTemplate>
-                                        </HorizontalStackLayout>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                        </Grid>
-                    </ScrollView>
-                </Border>
-
-                <!--
-                    Custom, always-visible vertical scroll handle for the row list, living entirely
-                    outside the horizontally-scrolling area (its own Grid column), so its position
-                    never depends on horizontal scroll state - unlike the CollectionView's own native
-                    scrollbar (see the two earlier, reverted attempts: it's anchored to the
-                    CollectionView's own, horizontally-oversized bounds). A transform-based fix
-                    (shifting cell content in sync via TranslationX so the CollectionView itself could
-                    stay viewport-width) was ruled out too: it runs into a documented, unfixed MAUI
-                    clipping bug for translated/rotated content (github.com/dotnet/maui/issues/15138).
-                    This track is built from pure layout (Grid + Margin), no transforms, so it isn't
-                    exposed to that bug. Drag anywhere on the track to scroll; OnRowsScrolled keeps the
-                    thumb in sync when scrolling via mouse wheel/touch instead.
-                -->
-                <Grid Grid.Row="0"
-                      Grid.Column="1"
-                      x:Name="ScrollTrack"
-                      BackgroundColor="#dddddd"
-                      SizeChanged="OnScrollTrackSizeChanged">
-                    <Grid.GestureRecognizers>
-                        <PanGestureRecognizer PanUpdated="OnScrollThumbPanUpdated"/>
-                    </Grid.GestureRecognizers>
-                    <BoxView x:Name="ScrollThumb"
-                             BackgroundColor="Gray"
-                             CornerRadius="5"
-                             WidthRequest="10"
-                             HeightRequest="40"
-                             VerticalOptions="Start"
-                             HorizontalOptions="Center"
-                             InputTransparent="True"/>
-                </Grid>
-
-                <!--
-                    Custom, always-visible horizontal scroll handle for the table, built the same way
-                    as the vertical one above (pure layout via Margin, no transforms - see the comment
-                    on ScrollTrack for why) and living in its own row below the scrollable area, so it
-                    stays fixed regardless of vertical scroll position. The outer ScrollView's native
-                    horizontal scrollbar chrome is hidden (HorizontalScrollBarVisibility="Never");
-                    mouse wheel/touch/keyboard scrolling still works and is mirrored here via
-                    OnTableScrollViewScrolled.
-                -->
-                <Grid Grid.Row="1"
-                      Grid.Column="0"
-                      x:Name="HScrollTrack"
-                      BackgroundColor="#dddddd"
-                      SizeChanged="OnHScrollTrackSizeChanged">
-                    <Grid.GestureRecognizers>
-                        <PanGestureRecognizer PanUpdated="OnHScrollThumbPanUpdated"/>
-                    </Grid.GestureRecognizers>
-                    <BoxView x:Name="HScrollThumb"
-                             BackgroundColor="Gray"
-                             CornerRadius="5"
-                             WidthRequest="40"
-                             HeightRequest="10"
-                             VerticalOptions="Center"
-                             HorizontalOptions="Start"
-                             InputTransparent="True"/>
-                </Grid>
-
-                <!-- Corner cell, purely for visual symmetry with the two scroll tracks meeting here -->
-                <BoxView Grid.Row="1"
-                         Grid.Column="1"
-                         BackgroundColor="#dddddd"/>
             </Grid>
-        </Grid>
+        </Border>
         <!-- Status bar -->
         <Grid Grid.Row="1"
               ColumnDefinitions="Auto,Auto,40,Auto,Auto,40,Auto,Auto,40,Auto,Auto,*"

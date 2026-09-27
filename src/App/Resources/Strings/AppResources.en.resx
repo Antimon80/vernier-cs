@@ -278,8 +278,12 @@
     <value>Select acquisition mode</value>
     <comment/>
   </data>
-  <data name="App_Autoscale" xml:space="preserve">
-    <value>automatic axis scaling</value>
+  <data name="App_AutoscaleY" xml:space="preserve">
+    <value>y-axis scaling</value>
+    <comment/>
+  </data>
+  <data name="App_AutoscaleFull" xml:space="preserve">
+    <value>full axis scaling</value>
     <comment/>
   </data>
   <data name="App_CrossHairs" xml:space="preserve">

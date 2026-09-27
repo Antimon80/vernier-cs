@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentView x:Class="App.Views.Controls.MeasurementTableView"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:util="clr-namespace:App.Util"
+             BackgroundColor="Transparent">
+    <ContentView.Resources>
+        <util:CountToWidthConverter x:Key="CountToWidthConverter"/>
+    </ContentView.Resources>
+    <Grid ColumnDefinitions="*,16"
+          RowDefinitions="*,16"
+          ColumnSpacing="0"
+          RowSpacing="0">
+        <Border Grid.Row="0"
+                Grid.Column="0"
+                Stroke="Black"
+                StrokeThickness="1"
+                BackgroundColor="#eeeeee">
+            <ScrollView x:Name="TableScrollView"
+                        Orientation="Horizontal"
+                        HorizontalScrollBarVisibility="Never"
+                        Scrolled="OnTableScrollViewScrolled">
+                <Grid x:Name="TableContentGrid"
+                      RowDefinitions="Auto,*"
+                      HorizontalOptions="Start"
+                      WidthRequest="{Binding Columns.Count, Converter={StaticResource CountToWidthConverter}}">
+                    <HorizontalStackLayout Grid.Row="0"
+                                           BackgroundColor="#dddddd"
+                                           Padding="4,2,24,2"
+                                           BindableLayout.ItemsSource="{Binding Columns}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Label Text="{Binding Header}"
+                                       TextColor="{Binding Color}"
+                                       FontAttributes="Bold"
+                                       WidthRequest="120"
+                                       HorizontalTextAlignment="Center"/>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+
+                    <CollectionView Grid.Row="1"
+                                    x:Name="RowsCollectionView"
+                                    ItemsSource="{Binding WideRows}"
+                                    VerticalScrollBarVisibility="Never"
+                                    SelectionMode="Single"
+                                    SelectedItem="{Binding SelectedWideRow, Mode=TwoWay}"
+                                    Scrolled="OnRowsScrolled">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <HorizontalStackLayout Padding="4,2,24,2"
+                                                       BindableLayout.ItemsSource="{Binding Cells}">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroup x:Name="CommonStates">
+                                            <VisualState x:Name="Normal">
+                                                <VisualState.Setters>
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="Transparent"/>
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState x:Name="Selected">
+                                                <VisualState.Setters>
+                                                    <Setter Property="BackgroundColor"
+                                                            Value="#CCE4FF"/>
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                        </VisualStateGroup>
+                                    </VisualStateManager.VisualStateGroups>
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate>
+                                            <Label Text="{Binding Value}"
+                                                   TextColor="{Binding Color}"
+                                                   WidthRequest="120"
+                                                   HorizontalTextAlignment="End"/>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </HorizontalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Grid>
+            </ScrollView>
+        </Border>
+
+        <!-- Custom, always-visible vertical scroll handle for the row list. -->
+        <Grid Grid.Row="0"
+              Grid.Column="1"
+              x:Name="ScrollTrack"
+              BackgroundColor="#dddddd"
+              SizeChanged="OnScrollTrackSizeChanged">
+            <Grid.GestureRecognizers>
+                <PanGestureRecognizer PanUpdated="OnScrollThumbPanUpdated"/>
+            </Grid.GestureRecognizers>
+            <BoxView x:Name="ScrollThumb"
+                     BackgroundColor="Gray"
+                     CornerRadius="5"
+                     WidthRequest="10"
+                     HeightRequest="40"
+                     VerticalOptions="Start"
+                     HorizontalOptions="Center"
+                     InputTransparent="True"/>
+        </Grid>
+
+        <!-- Custom, always-visible horizontal scroll handle for the table. -->
+        <Grid Grid.Row="1"
+              Grid.Column="0"
+              x:Name="HScrollTrack"
+              BackgroundColor="#dddddd"
+              SizeChanged="OnHScrollTrackSizeChanged">
+            <Grid.GestureRecognizers>
+                <PanGestureRecognizer PanUpdated="OnHScrollThumbPanUpdated"/>
+            </Grid.GestureRecognizers>
+            <BoxView x:Name="HScrollThumb"
+                     BackgroundColor="Gray"
+                     CornerRadius="5"
+                     WidthRequest="40"
+                     HeightRequest="10"
+                     VerticalOptions="Center"
+                     HorizontalOptions="Start"
+                     InputTransparent="True"/>
+        </Grid>
+
+        <!-- Corner cell, purely for visual symmetry with the two scroll tracks meeting here -->
+        <BoxView Grid.Row="1"
+                 Grid.Column="1"
+                 BackgroundColor="#dddddd"/>
+    </Grid>
+</ContentView>

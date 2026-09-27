@@ -57,7 +57,11 @@ public interface IMeasurementSettings
     /// <summary>
     /// Scale the chart axes so that the currently displayed data fills the chart without being cut off.
     /// </summary>
-    void Autoscale();
+    void AutoscaleFull();
+
+    void AutoscaleYAxis();
+
+    void OnMeasurementStopped();
 }
 
 /// <summary>

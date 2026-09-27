@@ -62,7 +62,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// Owns the wide-table column/row/archive layout. Device-agnostic; this view model only
     /// decides what the live headers should say and when to archive.
     /// </summary>
-    private readonly WideMeasurementTable _table = new();
+    private readonly WideMeasurementTable _table;
 
     /// <summary>
     /// Indicates whether event subscriptions have already been removed.
@@ -79,10 +79,11 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <param name="isMeasurementRunningProvider">
     /// Callback that returns whether incoming spectra should currently be transferred to the display.
     /// </param>
-    public SpectroVisMeasurementViewModel(ISpectrometer spectrometer, Func<bool> isMeasurementRunningProvider)
+    public SpectroVisMeasurementViewModel(ISpectrometer spectrometer, Func<bool> isMeasurementRunningProvider, WideMeasurementTable table)
     {
         _spectrometer = spectrometer ?? throw new ArgumentNullException(nameof(spectrometer));
         _isMeasurementRunningProvider = isMeasurementRunningProvider ?? throw new ArgumentNullException(nameof(isMeasurementRunningProvider));
+        _table = table ?? throw new ArgumentNullException(nameof(table));
 
         IntegrationTimeMs = _spectrometer.Session.IntegrationTime;
 
@@ -105,29 +106,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public SpectrometerModel Model => _spectrometer.Model;
 
     public Spectrometer Spectrometer => (Spectrometer)_spectrometer;
-
-    /// <summary>
-    /// Gets the column definitions displayed by the wide measurement table.
-    /// </summary>
-    public ObservableCollection<TableColumn> Columns => _table.Columns;
-
-    /// <summary>
-    /// Gets the rows containing the live series and all retained archived measurement series.
-    /// </summary>
-    public ObservableCollection<WideTableRow> WideRows => _table.WideRows;
-
-    /// <summary>
-    /// Gets previously completed measurement series retained for comparison.
-    /// </summary>
-    public ObservableCollection<MeasurementSeries> ArchivedSeries => _table.ArchivedSeries;
-
-    /// <summary>
-    /// Gets or sets the row currently selected (clicked) by the user in the wide measurement table.
-    /// Bound two-way to the table's <c>SelectedItem</c> so a click both marks the row visually and
-    /// makes the selected wavelength/value pair available to the view model.
-    /// </summary>
-    [ObservableProperty]
-    public partial WideTableRow? SelectedWideRow { get; set; }
 
     /// <summary>
     /// Gets the operating modes presented by the operating-mode dialog,
@@ -414,7 +392,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
             return;
         }
 
-        ArchiveLiveSeries();
         await _spectrometer.SetOperatingMode(mode, ct).ConfigureAwait(false);
 
         await MainThread.InvokeOnMainThreadAsync(() =>
@@ -432,8 +409,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public void SelectAcquisitionMode(AcquisitionMode mode)
     {
         AcquisitionMode = mode;
-
-        ArchiveLiveSeries();
 
         RefreshChartConfiguration();
         RefreshTableHeaders();
@@ -532,7 +507,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     ///
     /// Empty live series are ignored. When the archive limit is exceeded, the oldest retained series is removed.
     /// </summary>
-    public void ArchiveLiveSeries()
+    public void OnMeasurementStopped()
     {
         DisplayedSpectrum = null;
         _acquisitionStartedAt = null;
@@ -540,7 +515,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         _table.ArchiveLiveSeries();
     }
 
-    public void Autoscale()
+    public void AutoscaleFull()
     {
         if (XValues.Count == 0 || YValues.Count == 0)
         {
@@ -548,6 +523,16 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         }
 
         (XMinimum, XMaximum) = GetRangeWithPadding(XValues);
+        (YMinimum, YMaximum) = GetRangeWithPadding(YValues);
+    }
+
+    public void AutoscaleYAxis()
+    {
+        if(XValues.Count == 0 || YValues.Count == 0)
+        {
+            return;
+        }
+
         (YMinimum, YMaximum) = GetRangeWithPadding(YValues);
     }
 

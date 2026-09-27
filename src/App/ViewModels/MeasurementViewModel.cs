@@ -26,7 +26,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         if (_deviceManager.CurrentSpectrometer is not null)
         {
-            SpectroVisMeasurementViewModel spectroVisViewModel = new(_deviceManager.CurrentSpectrometer, isMeasurementRunningProvider: () => IsMeasurementRunning);
+            SpectroVisMeasurementViewModel spectroVisViewModel = new(_deviceManager.CurrentSpectrometer, isMeasurementRunningProvider: () => IsMeasurementRunning, Table);
             DeviceViewModel = spectroVisViewModel;
             MeasurementSettings = spectroVisViewModel as IMeasurementSettings ?? new NoOpMeasurementWorkflow();
             MeasurementSettings.AutoStopRequested += OnAutoStopRequested;
@@ -53,6 +53,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     /// </summary>
     public IMeasurementSettings MeasurementSettings { get; }
 
+    public WideMeasurementTable Table { get; } = new();
+
     public ObservableCollection<UiDiagnostics> Diagnostics { get; } = [];
     public bool HasDiagnostics => Diagnostics.Count > 0;
 
@@ -65,7 +67,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(OpenOperatingModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenAcquisitionModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(CalibrateCommand))]
-    [NotifyCanExecuteChangedFor(nameof(AutoscaleCommand))]
+    [NotifyCanExecuteChangedFor(nameof(AutoscaleYAxisCommand))]
+    [NotifyCanExecuteChangedFor(nameof(AutoscaleFullCommand))]
     [NotifyCanExecuteChangedFor(nameof(ShowCrosshairsCommand))]
     public partial bool IsMeasurementRunning { get; set; }
 
@@ -247,6 +250,11 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         IsMeasurementRunning = !IsMeasurementRunning;
         RecordingIcon = IsMeasurementRunning ? StopIcon : StartIcon;
 
+        if (!IsMeasurementRunning)
+        {
+            MeasurementSettings.OnMeasurementStopped();
+        }
+
         RefreshDeviceState();
     }
 
@@ -265,9 +273,15 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
-    private void Autoscale()
+    private void AutoscaleYAxis()
     {
-        MeasurementSettings.Autoscale();
+        MeasurementSettings.AutoscaleYAxis();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanUseChartTools))]
+    private void AutoscaleFull()
+    {
+        MeasurementSettings.AutoscaleFull();
     }
 
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
@@ -350,7 +364,17 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
             return Task.CompletedTask;
         }
 
-        public void Autoscale()
+        public void AutoscaleYAxis()
+        {
+
+        }
+
+        public void AutoscaleFull()
+        {
+            
+        }
+
+        public void OnMeasurementStopped()
         {
 
         }
