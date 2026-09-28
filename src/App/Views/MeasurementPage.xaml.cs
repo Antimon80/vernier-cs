@@ -1,4 +1,3 @@
-using App.Resources.Strings;
 using App.ViewModels;
 using App.ViewModels.GoDirect;
 using App.Views.GoDirect;

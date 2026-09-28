@@ -15,7 +15,7 @@ namespace App.ViewModels.GoDirect;
 /// It also coordinates operating-mode changes, integration-time updates, calibration dialogs and 
 /// acquisition-mode-specific table handling.
 /// </summary>
-public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, IDisposable, IMeasurementSettings
+public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, IDisposable, IDeviceMeasurementViewModel
 {
     /// <summary>
     /// Spectrometer controlled by this view model.
@@ -92,7 +92,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
         BuildOperatingModeOptions();
         BuildAcquisitionModeOptions();
-        RefreshAll();
+        Refresh();
     }
 
     /// <summary>
@@ -114,6 +114,9 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public ObservableCollection<SpectroVisOperatingModeOption> OperatingModeOptions { get; } = [];
 
     public ObservableCollection<AcquisitionModeOption> AcquisitionModeOptions { get; } = [];
+
+    public bool CanStartMeasurement => _spectrometer is not null
+        && (_spectrometer.Session.Mode is not (OperatingMode.Absorbance or OperatingMode.Transmission) || _spectrometer.IsCalibrated);
 
     /// <summary>
     /// Indicates that SpectroVis devices expose selectable operating modes.
@@ -397,7 +400,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
             RefreshOperatingModeSelection();
-            RefreshAll();
+            Refresh();
         });
     }
 
@@ -439,7 +442,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
             IntegrationTimeMs = _spectrometer.Session.IntegrationTime;
-            RefreshAll();
+            Refresh();
         });
     }
 
@@ -472,14 +475,14 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// For incidental backend pings that don't change what the chart should look like (calibration
     /// status, lamp/warmup status, ...), use <see cref="RefreshStatusOnly"/> instead.
     /// </summary>
-    public void RefreshAll()
+    public void Refresh()
     {
         RefreshStatusOnly();
         RefreshChartConfiguration();
     }
 
     /// <summary>
-    /// Refreshes everything RefreshAll() does except the chart's axis configuration.
+    /// Refreshes everything Refresh() does except the chart's axis configuration.
     ///
     /// Used for backend state changes that carry no mode change - most importantly the white-lamp
     /// warmup status, which ticks roughly once a second while warming up.
@@ -528,7 +531,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
     public void AutoscaleYAxis()
     {
-        if(XValues.Count == 0 || YValues.Count == 0)
+        if (XValues.Count == 0 || YValues.Count == 0)
         {
             return;
         }
@@ -633,7 +636,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <summary>
     /// Schedules a status refresh after the backend session reports a state change.
     ///
-    /// Deliberately uses RefreshStatusOnly(), not RefreshAll(): this fires on every StateChanged,
+    /// Deliberately uses RefreshStatusOnly(), not Refresh(): this fires on every StateChanged,
     /// including the roughly-once-a-second white-lamp warmup countdown tick, and must not reset the
     /// chart's axis configuration on every one of those.
     /// </summary>

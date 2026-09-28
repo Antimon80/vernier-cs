@@ -6,7 +6,6 @@ using Backend.Discovery;
 using App.Services;
 using Backend.Devices;
 using Backend.Util;
-using Backend.Devices.GoDirect;
 
 namespace App.ViewModels;
 

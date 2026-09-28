@@ -2,9 +2,7 @@ using System.Collections.ObjectModel;
 using App.Models;
 using App.Resources.Strings;
 using App.Util;
-using App.ViewModels.GoDirect;
 using Backend.Devices;
-using Backend.Devices.GoDirect;
 using Backend.Discovery;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -26,10 +24,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         if (_deviceManager.CurrentSpectrometer is not null)
         {
-            SpectroVisMeasurementViewModel spectroVisViewModel = new(_deviceManager.CurrentSpectrometer, isMeasurementRunningProvider: () => IsMeasurementRunning, Table);
-            DeviceViewModel = spectroVisViewModel;
-            MeasurementSettings = spectroVisViewModel as IMeasurementSettings ?? new NoOpMeasurementWorkflow();
-            MeasurementSettings.AutoStopRequested += OnAutoStopRequested;
+            DeviceViewModel = DeviceModelFactory.Create(_deviceManager, () => IsMeasurementRunning, Table);
+            DeviceViewModel.AutoStopRequested += OnAutoStopRequested;
 
             RefreshDeviceState();
 
@@ -46,12 +42,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     /// Device-specific view model used by the content area.
     /// The generic page does not inspect this object directly.
     /// </summary>
-    public object DeviceViewModel { get; }
-
-    /// <summary>
-    /// Device-specific dialog/workflow adapter used by generic toolbar commands.
-    /// </summary>
-    public IMeasurementSettings MeasurementSettings { get; }
+    public IDeviceMeasurementViewModel DeviceViewModel { get; }
 
     public WideMeasurementTable Table { get; } = new();
 
@@ -84,13 +75,10 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
     public void RefreshDeviceState()
     {
-        HasOperatingModeSelection = MeasurementSettings.HasOperatingModeSelection;
-        HasKeepDataPointCommand = MeasurementSettings.CanKeepDataPoint;
+        HasOperatingModeSelection = DeviceViewModel.HasOperatingModeSelection;
+        HasKeepDataPointCommand = DeviceViewModel.CanKeepDataPoint;
 
-        if (DeviceViewModel is SpectroVisMeasurementViewModel spectroVisViewModel)
-        {
-            spectroVisViewModel.RefreshAll();
-        }
+        DeviceViewModel.Refresh();
 
         RefreshDiagnostics();
 
@@ -118,7 +106,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         _disposed = true;
 
-        MeasurementSettings.AutoStopRequested -= OnAutoStopRequested;
+        DeviceViewModel.AutoStopRequested -= OnAutoStopRequested;
 
         if (DeviceViewModel is IDisposable disposable)
         {
@@ -208,19 +196,19 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanChangeMeasurementConfiguration))]
     private async Task OpenOperatingMode()
     {
-        if (!MeasurementSettings.HasOperatingModeSelection)
+        if (!DeviceViewModel.HasOperatingModeSelection)
         {
             return;
         }
 
-        await MeasurementSettings.RequestOperatingModeDialog();
+        await DeviceViewModel.RequestOperatingModeDialog();
         RefreshDeviceState();
     }
 
     [RelayCommand(CanExecute = nameof(CanChangeMeasurementConfiguration))]
     private async Task OpenAcquisitionMode()
     {
-        await MeasurementSettings.RequestAcquisitionModeDialog();
+        await DeviceViewModel.RequestAcquisitionModeDialog();
         RefreshDeviceState();
     }
 
@@ -234,7 +222,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
             return;
         }
 
-        CalibrationDialogResult? result = await MeasurementSettings.RequestCalibrationDialog();
+        CalibrationDialogResult? result = await DeviceViewModel.RequestCalibrationDialog();
 
         if (result is null)
         {
@@ -252,7 +240,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         if (!IsMeasurementRunning)
         {
-            MeasurementSettings.OnMeasurementStopped();
+            DeviceViewModel.OnMeasurementStopped();
         }
 
         RefreshDeviceState();
@@ -261,13 +249,13 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanKeepDataPoint))]
     private async Task KeepDataPoint()
     {
-        if (!MeasurementSettings.CanKeepDataPoint)
+        if (!DeviceViewModel.CanKeepDataPoint)
         {
             await Shell.Current.DisplayAlertAsync(AppResources.Device_KeepDataPoint, AppResources.Dialog_CannotKeepDataPoint, AppResources.Dialog_Ok);
             return;
         }
 
-        await MeasurementSettings.RequestKeepDataPointDialog();
+        await DeviceViewModel.RequestKeepDataPointDialog();
 
         RefreshDeviceState();
     }
@@ -275,13 +263,13 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
     private void AutoscaleYAxis()
     {
-        MeasurementSettings.AutoscaleYAxis();
+        DeviceViewModel.AutoscaleYAxis();
     }
 
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
     private void AutoscaleFull()
     {
-        MeasurementSettings.AutoscaleFull();
+        DeviceViewModel.AutoscaleFull();
     }
 
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
@@ -307,15 +295,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
     private bool CanToggleMeasurement()
     {
-        if (_deviceManager.CurrentSpectrometer is not null
-            && (_deviceManager.CurrentSpectrometer.Session.Mode is OperatingMode.Absorbance or OperatingMode.Transmission))
-        {
-            return _deviceManager.CurrentSpectrometer.IsCalibrated;
-        }
-        else
-        {
-            return true;
-        }
+        return DeviceViewModel.CanStartMeasurement;
     }
 
     private bool CanKeepDataPoint()
@@ -328,55 +308,6 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         if (IsMeasurementRunning)
         {
             ToggleMeasurement();
-        }
-    }
-
-    private sealed class NoOpMeasurementWorkflow : IMeasurementSettings
-    {
-        public bool HasOperatingModeSelection => false;
-        public bool HasZeroCommand => false;
-        public bool CanKeepDataPoint => false;
-
-        public event Action? AutoStopRequested;
-
-        public Task RequestOperatingModeDialog(CancellationToken ct = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task RequestAcquisitionModeDialog(CancellationToken ct = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task<CalibrationDialogResult?> RequestCalibrationDialog(CancellationToken ct = default)
-        {
-            return Task.FromResult<CalibrationDialogResult?>(new CalibrationDialogResult(SkipWarmup: null));
-        }
-
-        public Task SetToZero(CancellationToken ct = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task RequestKeepDataPointDialog(CancellationToken ct = default)
-        {
-            return Task.CompletedTask;
-        }
-
-        public void AutoscaleYAxis()
-        {
-
-        }
-
-        public void AutoscaleFull()
-        {
-            
-        }
-
-        public void OnMeasurementStopped()
-        {
-
         }
     }
 }

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Security.Principal;
 using Backend.Measurements;
 using Backend.Protocol;
 using Backend.Transport;

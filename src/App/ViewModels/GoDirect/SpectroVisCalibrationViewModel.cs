@@ -91,7 +91,7 @@ public sealed partial class SpectroVisCalibrationViewModel : ObservableObject, I
             await _measurementViewModel.Spectrometer.Calibrate(SkipWarmupSelected);
 
             IsCalibrationComplete = true;
-            _measurementViewModel.RefreshAll();
+            _measurementViewModel.Refresh();
         }
         catch (Exception ex)
         {

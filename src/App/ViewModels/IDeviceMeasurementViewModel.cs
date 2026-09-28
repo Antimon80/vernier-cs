@@ -7,7 +7,7 @@ namespace App.ViewModels;
 /// The generic toolbar can call these methods without knowing whether the
 /// current device is a spectrometer, a sensor interface or something else.
 /// </summary>
-public interface IMeasurementSettings
+public interface IDeviceMeasurementViewModel
 {
     /// <summary>
     /// True if the current device exposes a selectable operating mode.
@@ -22,6 +22,8 @@ public interface IMeasurementSettings
     bool HasZeroCommand { get; }
 
     bool CanKeepDataPoint { get; }
+
+    bool CanStartMeasurement {get;}
 
     event Action? AutoStopRequested;
 
@@ -62,6 +64,8 @@ public interface IMeasurementSettings
     void AutoscaleYAxis();
 
     void OnMeasurementStopped();
+
+    void Refresh();
 }
 
 /// <summary>
