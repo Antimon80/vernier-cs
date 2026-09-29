@@ -17,7 +17,7 @@
                 Padding="8">
             <Grid RowDefinitions="Auto,*">
                 <Label Grid.Row="0"
-                       Text="{Binding ChartTitle}"
+                       Text="{Binding Chart.ChartTitle}"
                        FontAttributes="Bold"
                        FontSize="20"
                        HorizontalOptions="Center"/>
@@ -25,7 +25,7 @@
                       ColumnDefinitions="Auto,*"
                       Padding="4">
                     <Label Grid.Column="0"
-                           Text="{Binding YAxisTitle}"
+                           Text="{Binding Chart.YAxisTitle}"
                            Rotation="-90"
                            FontAttributes="Bold"
                            FontSize="18"
@@ -35,26 +35,26 @@
                           RowDefinitions="*,Auto,Auto">
                         <controls:MeasurementChart x:Name="Chart"
                                                    Grid.Row="0"
-                                                   XMinimum="{Binding XMinimum, Mode=TwoWay}"
-                                                   XMaximum="{Binding XMaximum, Mode=TwoWay}"
-                                                   YMinimum="{Binding YMinimum, Mode=TwoWay}"
-                                                   YMaximum="{Binding YMaximum, Mode=TwoWay}"
-                                                   XAxisLowerLimit="{Binding XAxisLowerLimit}"
-                                                   XAxisUpperLimit="{Binding XAxisUpperLimit}"
-                                                   YAxisLowerLimit="{Binding YAxisLowerLimit}"
-                                                   YAxisUpperLimit="{Binding YAxisUpperLimit}"
-                                                   XValues="{Binding XValues}"
-                                                   YValues="{Binding YValues}"/>
+                                                   XMinimum="{Binding Chart.XMinimum, Mode=TwoWay}"
+                                                   XMaximum="{Binding Chart.XMaximum, Mode=TwoWay}"
+                                                   YMinimum="{Binding Chart.YMinimum, Mode=TwoWay}"
+                                                   YMaximum="{Binding Chart.YMaximum, Mode=TwoWay}"
+                                                   XAxisLowerLimit="{Binding Chart.XAxisLowerLimit}"
+                                                   XAxisUpperLimit="{Binding Chart.XAxisUpperLimit}"
+                                                   YAxisLowerLimit="{Binding Chart.YAxisLowerLimit}"
+                                                   YAxisUpperLimit="{Binding Chart.YAxisUpperLimit}"
+                                                   XValues="{Binding Chart.XValues}"
+                                                   YValues="{Binding Chart.YValues}"/>
                         <controls:SpectrumStripView Grid.Row="1"
                                                     HeightRequest="18"
                                                     Margin="0,4,0,0"
                                                     IsVisible="{Binding ShowSpectrumStrip}"
-                                                    XMinimum="{Binding XMinimum}"
-                                                    XMaximum="{Binding XMaximum}"
+                                                    XMinimum="{Binding Chart.XMinimum}"
+                                                    XMaximum="{Binding Chart.XMaximum}"
                                                     PlotLeftFraction="{Binding Source={x:Reference Chart}, Path=PlotLeftFraction}"
                                                     PlotRightFraction="{Binding Source={x:Reference Chart}, Path=PlotRightFraction}"/>
                         <Label Grid.Row="2"
-                               Text="{Binding XAxisTitle}"
+                               Text="{Binding Chart.XAxisTitle}"
                                FontAttributes="Bold"
                                FontSize="18"
                                HorizontalOptions="Center"

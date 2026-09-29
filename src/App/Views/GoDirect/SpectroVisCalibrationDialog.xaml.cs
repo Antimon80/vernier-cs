@@ -22,13 +22,13 @@ public partial class SpectroVisCalibrationDialog : ContentPage
 
     private async void CancelClicked(object? sender, EventArgs e)
     {
-        ViewModel.SetResult(null);
+        ViewModel.Complete();
         await Navigation.PopModalAsync();
     }
 
     private async void OkClicked(object? sender, EventArgs e)
     {
-        ViewModel.SetResult(new CalibrationDialogResult(SkipWarmup: ViewModel.SkipWarmupSelected));
+        ViewModel.Complete();
         await Navigation.PopModalAsync();
     }
 

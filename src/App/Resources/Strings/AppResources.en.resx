@@ -270,7 +270,7 @@
     <value>Calibrate</value>
     <comment/>
   </data>
-  <data name="Spectrometer_OperatingMode" xml:space="preserve">
+  <data name="Device_OperatingMode" xml:space="preserve">
     <value>Select operating mode</value>
     <comment/>
   </data>

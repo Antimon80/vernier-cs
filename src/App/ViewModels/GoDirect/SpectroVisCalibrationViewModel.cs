@@ -9,7 +9,7 @@ namespace App.ViewModels.GoDirect;
 public sealed partial class SpectroVisCalibrationViewModel : ObservableObject, IDisposable
 {
     private readonly SpectroVisMeasurementViewModel _measurementViewModel;
-    private readonly TaskCompletionSource<CalibrationDialogResult?> _resultTcs = new();
+    private readonly TaskCompletionSource _resultTcs = new();
     private bool _disposed;
 
     public SpectroVisCalibrationViewModel(SpectroVisMeasurementViewModel measurementViewModel)
@@ -26,7 +26,7 @@ public sealed partial class SpectroVisCalibrationViewModel : ObservableObject, I
     /// <summary>
     /// Completes when the calibration dialog has produced a result.
     /// </summary>
-    public Task<CalibrationDialogResult?> ResultTask => _resultTcs.Task;
+    public Task ResultTask => _resultTcs.Task;
 
     /// <summary>
     /// Remaining white-lamp warmup time in seconds.
@@ -78,7 +78,7 @@ public sealed partial class SpectroVisCalibrationViewModel : ObservableObject, I
     [NotifyCanExecuteChangedFor(nameof(FinishCalibrationCommand))]
     public partial bool IsCalibrationComplete { get; set; }
 
-    public void SetResult(CalibrationDialogResult? result) => _resultTcs.TrySetResult(result);
+    public void Complete() => _resultTcs.TrySetResult();
 
     /// <summary>
     /// Updates the warmup state when the spectrometer session changes.

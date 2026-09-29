@@ -58,7 +58,7 @@ public static class AppResources
     public static string Device_ToggleMeasurement => GetString(nameof(Device_ToggleMeasurement));
     public static string Device_KeepDataPoint => GetString(nameof(Device_KeepDataPoint));
     public static string Device_Calibrate => GetString(nameof(Device_Calibrate));
-    public static string Spectrometer_OperatingMode => GetString(nameof(Spectrometer_OperatingMode));
+    public static string Device_OperatingMode => GetString(nameof(Device_OperatingMode));
     public static string Device_AcquisitionMode => GetString(nameof(Device_AcquisitionMode));
     public static string App_AutoscaleY => GetString(nameof(App_AutoscaleY));
     public static string App_AutoscaleFull => GetString(nameof(App_AutoscaleFull));

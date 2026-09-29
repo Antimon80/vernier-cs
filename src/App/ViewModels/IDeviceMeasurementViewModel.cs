@@ -32,24 +32,7 @@ public interface IDeviceMeasurementViewModel
     /// </summary>
     Task SetToZero(CancellationToken ct = default);
 
-    /// <summary>
-    /// Scale the chart axes so that the currently displayed data fills the chart without being cut off.
-    /// </summary>
-    void AutoscaleFull();
-
-    void AutoscaleYAxis();
-
     void OnMeasurementStopped();
 
     void Refresh();
 }
-
-/// <summary>
-/// Result returned by a device-specific calibration dialog.
-/// </summary>
-/// <param name="SkipWarmup">
-/// null  = no explicit UI choice; backend/device decides.
-/// true  = explicitly skip warmup.
-/// false = explicitly wait for required warmup.
-/// </param>
-public sealed record CalibrationDialogResult(bool? SkipWarmup);

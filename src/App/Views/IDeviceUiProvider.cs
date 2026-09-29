@@ -25,7 +25,7 @@ public interface IDeviceUiProvider
     /// <summary>
     /// Shows the calibration dialog and returns the result.
     /// </summary>
-    Task<CalibrationDialogResult?> ShowCalibrationDialog(INavigation navigation, CancellationToken ct);
+    Task ShowCalibrationDialog(INavigation navigation, CancellationToken ct);
 
     /// <summary>
     /// Shows the dialog for capturing a measurement data point.

@@ -1,6 +1,4 @@
 using App.ViewModels;
-using App.ViewModels.GoDirect;
-using App.Views.GoDirect;
 
 namespace App.Views;
 
@@ -61,11 +59,5 @@ public partial class MeasurementPage : ContentPage
         base.OnAppearing();
 
         _viewModel.RefreshDeviceState();
-        _viewModel.RefreshDiagnostics();
-    }
-
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
     }
 }

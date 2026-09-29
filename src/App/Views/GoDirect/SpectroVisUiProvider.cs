@@ -32,7 +32,7 @@ public sealed class SpectroVisUiProvider(SpectroVisMeasurementViewModel viewMode
         await navigation.PushModalAsync(dialog);
     }
 
-    public async Task<CalibrationDialogResult?> ShowCalibrationDialog(INavigation navigation, CancellationToken ct)
+    public async Task ShowCalibrationDialog(INavigation navigation, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -41,7 +41,7 @@ public sealed class SpectroVisUiProvider(SpectroVisMeasurementViewModel viewMode
 
         await navigation.PushModalAsync(dialog);
 
-        return await dialogViewModel.ResultTask;
+        await dialogViewModel.ResultTask;
     }
 
     public async Task ShowKeepDataPointDialog(INavigation navigation, CancellationToken ct)

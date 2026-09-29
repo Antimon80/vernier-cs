@@ -46,7 +46,7 @@
                    BackgroundColor="Transparent"
                    IsVisible="{Binding HasOperatingModeSelection}"
                    Command="{Binding OpenOperatingModeCommand}"
-                   ToolTipProperties.Text="{x:Static strings:AppResources.Spectrometer_OperatingMode}"/>
+                   ToolTipProperties.Text="{x:Static strings:AppResources.Device_OperatingMode}"/>
       <ImageButton Grid.Column="7"
                    Source="acquisition_mode.png"
                    BackgroundColor="Transparent"
@@ -81,7 +81,7 @@
       <ImageButton Grid.Column="15"
                    Source="crosshairs.png"
                    BackgroundColor="Transparent"
-                   Command="{Binding OpenCursorCommand}"
+                   Command="{Binding ShowCrosshairsCommand}"
                    ToolTipProperties.Text="{x:Static strings:AppResources.App_CrossHairs}"/>
       <ImageButton Grid.Column="17"
                    Source="data.png"

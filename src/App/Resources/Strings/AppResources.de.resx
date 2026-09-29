@@ -270,7 +270,7 @@
     <value>Kalibrieren</value>
     <comment/>
   </data>
-  <data name="Spectrometer_OperatingMode" xml:space="preserve">
+  <data name="Device_OperatingMode" xml:space="preserve">
     <value>Betriebsmodus wählen</value>
     <comment/>
   </data>

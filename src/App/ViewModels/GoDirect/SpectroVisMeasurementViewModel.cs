@@ -64,6 +64,8 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     private readonly WideMeasurementTable _table;
 
+    private readonly ChartModel _chart;
+
     /// <summary>
     /// Indicates whether event subscriptions have already been removed.
     /// </summary>
@@ -79,11 +81,12 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <param name="isMeasurementRunningProvider">
     /// Callback that returns whether incoming spectra should currently be transferred to the display.
     /// </param>
-    public SpectroVisMeasurementViewModel(ISpectrometer spectrometer, Func<bool> isMeasurementRunningProvider, WideMeasurementTable table)
+    public SpectroVisMeasurementViewModel(ISpectrometer spectrometer, Func<bool> isMeasurementRunningProvider, WideMeasurementTable table, ChartModel chart)
     {
         _spectrometer = spectrometer ?? throw new ArgumentNullException(nameof(spectrometer));
         _isMeasurementRunningProvider = isMeasurementRunningProvider ?? throw new ArgumentNullException(nameof(isMeasurementRunningProvider));
         _table = table ?? throw new ArgumentNullException(nameof(table));
+        _chart = chart ?? throw new ArgumentNullException(nameof(chart));
 
         IntegrationTimeMs = _spectrometer.Session.IntegrationTime;
 
@@ -106,6 +109,8 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public SpectrometerModel Model => _spectrometer.Model;
 
     public Spectrometer Spectrometer => (Spectrometer)_spectrometer;
+
+    public ChartModel Chart => _chart;
 
     /// <summary>
     /// Gets the operating modes presented by the operating-mode dialog,
@@ -140,61 +145,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     [ObservableProperty]
     public partial AcquisitionMode AcquisitionMode { get; set; } = AcquisitionMode.FullSpectrum;
-
-    [ObservableProperty]
-    public partial string ChartTitle { get; set; } = "";
-
-    [ObservableProperty]
-    public partial string XAxisTitle { get; set; } = "";
-
-    [ObservableProperty]
-    public partial string YAxisTitle { get; set; } = "";
-
-    [ObservableProperty]
-    public partial double XMinimum { get; set; }
-
-    [ObservableProperty]
-    public partial double XMaximum { get; set; }
-
-    [ObservableProperty]
-    public partial double YMinimum { get; set; }
-
-    [ObservableProperty]
-    public partial double YMaximum { get; set; }
-
-    /// <summary>
-    /// Gets or sets the lowest value the user may enter for the x-axis range fields.
-    /// <see langword="null"/> leaves the x-axis unbounded on that side.
-    /// </summary>
-    [ObservableProperty]
-    public partial double? XAxisLowerLimit { get; set; }
-
-    /// <summary>
-    /// Gets or sets the highest value the user may enter for the x-axis range fields.
-    /// See <see cref="XAxisLowerLimit"/>.
-    /// </summary>
-    [ObservableProperty]
-    public partial double? XAxisUpperLimit { get; set; }
-
-    /// <summary>
-    /// Gets or sets the lowest value the user may enter for the y-axis range fields.
-    /// See <see cref="XAxisLowerLimit"/>.
-    /// </summary>
-    [ObservableProperty]
-    public partial double? YAxisLowerLimit { get; set; }
-
-    /// <summary>
-    /// Gets or sets the highest value the user may enter for the y-axis range fields.
-    /// See <see cref="XAxisLowerLimit"/>.
-    /// </summary>
-    [ObservableProperty]
-    public partial double? YAxisUpperLimit { get; set; }
-
-    [ObservableProperty]
-    public partial IReadOnlyList<double> XValues { get; set; } = [];
-
-    [ObservableProperty]
-    public partial IReadOnlyList<double> YValues { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the wavelength sampled for time-resolved and event-triggered measurements.
@@ -430,27 +380,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         _table.ArchiveLiveSeries();
     }
 
-    public void AutoscaleFull()
-    {
-        if (XValues.Count == 0 || YValues.Count == 0)
-        {
-            return;
-        }
-
-        (XMinimum, XMaximum) = GetRangeWithPadding(XValues);
-        (YMinimum, YMaximum) = GetRangeWithPadding(YValues);
-    }
-
-    public void AutoscaleYAxis()
-    {
-        if (XValues.Count == 0 || YValues.Count == 0)
-        {
-            return;
-        }
-
-        (YMinimum, YMaximum) = GetRangeWithPadding(YValues);
-    }
-
     /// <summary>
     /// Receives processed spectra from the backend session.
     ///
@@ -536,13 +465,13 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
 
         if (!IsMeasurementRunning)
         {
-            XValues = [];
-            YValues = [];
+            _chart.XValues = [];
+            _chart.YValues = [];
             return;
         }
 
-        XValues = value?.WavelengthNm ?? [];
-        YValues = value?.YAxis ?? [];
+        _chart.XValues = value?.WavelengthNm ?? [];
+        _chart.YValues = value?.YAxis ?? [];
     }
 
     /// <summary>
@@ -586,15 +515,15 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     private void ConfigureFullSpectrumChart()
     {
-        ChartTitle = AppResources.Spectrometer_FullSpectrum;
+        _chart.ChartTitle = AppResources.Spectrometer_FullSpectrum;
 
-        XAxisTitle = AppResources.Spectrometer_Wavelength;
-        XMinimum = _spectrometer.Model.WavelengthMinNm;
-        XMaximum = _spectrometer.Model.WavelengthMaxNm;
+        _chart.XAxisTitle = AppResources.Spectrometer_Wavelength;
+        _chart.XMinimum = _spectrometer.Model.WavelengthMinNm;
+        _chart.XMaximum = _spectrometer.Model.WavelengthMaxNm;
 
         // The wavelength axis cannot be scaled beyond what the sensor actually covers.
-        XAxisLowerLimit = _spectrometer.Model.WavelengthMinNm;
-        XAxisUpperLimit = _spectrometer.Model.WavelengthMaxNm;
+        _chart.XAxisLowerLimit = _spectrometer.Model.WavelengthMinNm;
+        _chart.XAxisUpperLimit = _spectrometer.Model.WavelengthMaxNm;
 
         ApplyYAxisRange();
 
@@ -607,15 +536,15 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     private void ConfigureTimeBasedChart()
     {
-        ChartTitle = AppResources.Device_TimeResolved;
+        _chart.ChartTitle = AppResources.Device_TimeResolved;
 
-        XAxisTitle = AppResources.App_TimeAxis;
-        XMinimum = 0;
-        XMaximum = 60;
+        _chart.XAxisTitle = AppResources.App_TimeAxis;
+        _chart.XMinimum = 0;
+        _chart.XMaximum = 60;
 
         // Elapsed time cannot be negative, but there is no natural upper bound.
-        XAxisLowerLimit = 0;
-        XAxisUpperLimit = null;
+        _chart.XAxisLowerLimit = 0;
+        _chart.XAxisUpperLimit = null;
 
         ApplyYAxisRange();
 
@@ -627,16 +556,16 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     private void ConfigureEventBasedChart()
     {
-        ChartTitle = AppResources.Device_EventTriggered;
+        _chart.ChartTitle = AppResources.Device_EventTriggered;
 
-        XAxisTitle = AppResources.Spectrometer_ConcentrationAxis;
-        XMinimum = 0;
-        XMaximum = 10;
+        _chart.XAxisTitle = AppResources.Spectrometer_ConcentrationAxis;
+        _chart.XMinimum = 0;
+        _chart.XMaximum = 10;
 
         // Concentration cannot be negative, but there is no natural upper bound
         // (it depends on the user-chosen unit).
-        XAxisLowerLimit = 0;
-        XAxisUpperLimit = null;
+        _chart.XAxisLowerLimit = 0;
+        _chart.XAxisUpperLimit = null;
 
         ApplyYAxisRange();
 
@@ -650,13 +579,13 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     private void ApplyYAxisRange()
     {
-        YAxisTitle = GetYAxisTitle(Session.Mode);
+        _chart.YAxisTitle = GetYAxisTitle(Session.Mode);
         (double yMinimum, double yMaximum) = GetYAxisRange(Session.Mode);
 
-        YMinimum = yMinimum;
-        YMaximum = yMaximum;
+        _chart.YMinimum = yMinimum;
+        _chart.YMaximum = yMaximum;
 
-        (YAxisLowerLimit, YAxisUpperLimit) = GetYAxisLimit(Session.Mode);
+        (_chart.YAxisLowerLimit, _chart.YAxisUpperLimit) = GetYAxisLimit(Session.Mode);
     }
 
     /// <summary>
@@ -1010,22 +939,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
             OperatingMode.Fluorescence500 => value.ToString("F4"),
             _ => value.ToString("G4")
         };
-    }
-
-    private static (double Minimum, double Maximum) GetRangeWithPadding(IReadOnlyList<double> values, double paddingFraction = 0.05)
-    {
-        double min = values.Min();
-        double max = values.Max();
-        double range = max - min;
-
-        if (range <= 0)
-        {
-            double fallback = min != 0 ? Math.Abs(min) * 0.1 : 1;
-            return (min - fallback, max + fallback);
-        }
-
-        double padding = range * paddingFraction;
-        return (min - padding, max + padding);
     }
 
     /// <summary>

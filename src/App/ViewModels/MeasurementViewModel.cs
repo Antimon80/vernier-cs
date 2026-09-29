@@ -22,18 +22,10 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         CurrentDevice = _deviceManager.CurrentDevice ?? throw new InvalidOperationException("No current device is selected.");
 
-        if (_deviceManager.CurrentSpectrometer is not null)
-        {
-            DeviceViewModel = DeviceModelFactory.Create(_deviceManager, () => IsMeasurementRunning, Table);
-            DeviceViewModel.AutoStopRequested += OnAutoStopRequested;
+        DeviceViewModel = DeviceViewModelFactory.Create(_deviceManager, () => IsMeasurementRunning, Table, Chart);
+        DeviceViewModel.AutoStopRequested += OnAutoStopRequested;
 
-            RefreshDeviceState();
-
-            return;
-        }
-
-        throw new InvalidOperationException($"The selected device type '{CurrentDevice.DeviceName}' is not supported by the measurement UI yet.");
-
+        RefreshDeviceState();
     }
 
     /// <summary>
@@ -52,6 +44,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     /// </summary>
     public WideMeasurementTable Table { get; } = new();
 
+    public ChartModel Chart { get; } = new();
+
     public ObservableCollection<UiDiagnostics> Diagnostics { get; } = [];
     public bool HasDiagnostics => Diagnostics.Count > 0;
 
@@ -59,7 +53,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     public event Func<CancellationToken, Task>? OperatingModeDialogRequested;
     public event Func<CancellationToken, Task>? AcquisitionModeDialogRequested;
     public event Func<CancellationToken, Task>? KeepDataPointDialogRequested;
-    public event Func<CancellationToken, Task<CalibrationDialogResult?>>? CalibrationDialogRequested;
+    public event Func<CancellationToken, Task>? CalibrationDialogRequested;
 
     [ObservableProperty]
     public partial string PageTitle { get; set; } = AppResources.App_AppName;
@@ -167,12 +161,6 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private Task OpenCursor()
-    {
-        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_CrossHairs);
-    }
-
-    [RelayCommand]
     private Task OpenDataManager()
     {
         return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_DataManagement);
@@ -271,12 +259,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
             throw new InvalidOperationException("No calibration dialog is registered.");
         }
 
-        CalibrationDialogResult? result = await CalibrationDialogRequested(ct);
-
-        if (result is null)
-        {
-            return;
-        }
+        await CalibrationDialogRequested(ct);
 
         RefreshDeviceState();
     }
@@ -327,7 +310,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
     private void AutoscaleYAxis()
     {
-        DeviceViewModel.AutoscaleYAxis();
+        Chart.AutoscaleYAxis();
     }
 
     /// <summary>
@@ -336,7 +319,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
     private void AutoscaleFull()
     {
-        DeviceViewModel.AutoscaleFull();
+        Chart.AutoscaleFull();
     }
 
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
