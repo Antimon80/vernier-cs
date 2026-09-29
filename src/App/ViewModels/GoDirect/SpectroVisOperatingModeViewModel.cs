@@ -35,9 +35,15 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject,
     /// </summary>
     public ObservableCollection<SpectroVisOperatingModeOption> OperatingModeOptions => _measurementViewModel.OperatingModeOptions;
 
+    /// <summary>
+    /// Integration time in milliseconds.
+    /// </summary>
     [ObservableProperty]
     public partial int IntegrationTimeMs { get; set; }
 
+    /// <summary>
+    /// Indicates whether the integration time can currently be changed.
+    /// </summary>
     [ObservableProperty]
     public partial bool CanEditIntegrationTime { get; set; }
 
@@ -47,6 +53,8 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject,
     [ObservableProperty]
     public partial string MeasurementRangeText { get; set; } = "";
 
+    /// Applies the new integration time to the spectrometer when it differs from the current value.
+    /// </summary>
     [RelayCommand]
     private async Task OnIntegrationTimeChanged()
     {
@@ -56,6 +64,9 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject,
         }
     }
 
+    /// <summary>
+    /// Applies a newly selected operating mode to the spectrometer.
+    /// </summary>
     private async void OnOperatingModeChanged(object? sender, PropertyChangedEventArgs e)
     {
 
@@ -89,6 +100,9 @@ public sealed partial class SpectroVisOperatingModeViewModel : ObservableObject,
         }
     }
 
+    /// <summary>
+    /// Opens the operating-mode help dialog.
+    /// </summary>
     [RelayCommand]
     private Task OpenHelp()
     {

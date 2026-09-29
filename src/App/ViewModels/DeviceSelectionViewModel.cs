@@ -134,6 +134,9 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         }
     }
 
+    /// <summary>
+    /// Updates the device list and status when the available devices change.
+    /// </summary>
     private void OnDevicesChanged(IReadOnlyList<DeviceDescriptor> devices)
     {
         MainThread.BeginInvokeOnMainThread(() =>
@@ -149,6 +152,9 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         });
     }
 
+    /// <summary>
+    /// Rebuilds the device selection items from the current device snapshot.
+    /// </summary>
     private void ApplyDevices(IReadOnlyList<DeviceDescriptor> devices)
     {
         Devices.Clear();
@@ -161,6 +167,9 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         }
     }
 
+    /// <summary>
+    /// Updates the UI diagnostics from the diagnostics reported by the device manager.
+    /// </summary>
     private void RefreshDiagnostics()
     {
         Diagnostics.Clear();
@@ -178,6 +187,9 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         OnPropertyChanged(nameof(HasDiagnostics));
     }
 
+    /// <summary>
+    /// Updates the status text based on the number of discovered devices.
+    /// </summary>
     private void UpdateStatusText(int deviceCount)
     {
         StatusText = deviceCount switch
@@ -188,6 +200,9 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         };
     }
 
+    /// <summary>
+    /// Updates localized status text when the application language changes.
+    /// </summary>
     private void OnLanguageChanged(object? sender, EventArgs e)
     {
         if (!IsBusy)
@@ -196,6 +211,9 @@ public sealed partial class DeviceSelectionViewModel : ObservableObject, IDispos
         }
     }
 
+    /// <summary>
+    /// Unsubscribes from device and localization events when the view model is no longer used.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)

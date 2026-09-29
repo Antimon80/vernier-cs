@@ -5,7 +5,7 @@ namespace App.Views.GoDirect;
 
 public sealed class SpectroVisUiProvider(SpectroVisMeasurementViewModel viewModel) : IDeviceUiProvider
 {
-    private SpectroVisMeasurementViewModel _viewModel = viewModel;
+    private SpectroVisMeasurementViewModel _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
 
     public View CreateMeasurementView()
     {

@@ -23,16 +23,28 @@ public sealed partial class SpectroVisCalibrationViewModel : ObservableObject, I
         MeasurementRangeText = $"{_measurementViewModel.Model.WavelengthMinNm:F1} - {_measurementViewModel.Model.WavelengthMaxNm:F1} nm";
     }
 
+    /// <summary>
+    /// Completes when the calibration dialog has produced a result.
+    /// </summary>
     public Task<CalibrationDialogResult?> ResultTask => _resultTcs.Task;
 
+    /// <summary>
+    /// Remaining white-lamp warmup time in seconds.
+    /// </summary>
     [ObservableProperty]
     public partial int WarmupRemainingSeconds { get; set; }
 
+    /// <summary>
+    /// Indicates whether the white lamp has completed its required warmup period.
+    /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(FinishCalibrationCommand))]
     [NotifyPropertyChangedFor(nameof(CanSkipWarmup))]
     public partial bool IsWarmedUp { get; set; }
 
+    /// <summary>
+    /// Indicates whether the user has chosen to skip the white-lamp warmup.
+    /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(FinishCalibrationCommand))]
     public partial bool SkipWarmupSelected { get; set; }
@@ -68,11 +80,17 @@ public sealed partial class SpectroVisCalibrationViewModel : ObservableObject, I
 
     public void SetResult(CalibrationDialogResult? result) => _resultTcs.TrySetResult(result);
 
+    /// <summary>
+    /// Updates the warmup state when the spectrometer session changes.
+    /// </summary>
     private void OnSessionStateChanged()
     {
         MainThread.BeginInvokeOnMainThread(RefreshWarmupState);
     }
 
+    /// <summary>
+    /// Refreshes the warmup information from the current spectrometer session.
+    /// </summary>
     private void RefreshWarmupState()
     {
         SpectrometerSession session = _measurementViewModel.Session;
@@ -81,6 +99,10 @@ public sealed partial class SpectroVisCalibrationViewModel : ObservableObject, I
         IsWarmedUp = session.IsWhiteLampWarmedUp;
     }
 
+    /// <summary>
+    /// Performs the spectrometer calibration once the warmup requirements have been met
+    /// or the user has explicitly chosen to skip the warmup.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanFinishCalibration))]
     private async Task OnFinishCalibration()
     {
@@ -103,17 +125,26 @@ public sealed partial class SpectroVisCalibrationViewModel : ObservableObject, I
         }
     }
 
+    /// <summary>
+    /// Opens the calibration help dialog.
+    /// </summary>
     [RelayCommand]
     private Task OpenHelp()
     {
         return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Help);
     }
 
+    /// <summary>
+    /// Determines whether calibration can currently be started.
+    /// </summary>
     private bool CanFinishCalibration()
     {
         return (IsWarmedUp || SkipWarmupSelected) && !IsCalibrating && !IsCalibrationComplete;
     }
 
+    /// <summary>
+    /// Unsubscribes from session events when the view model is no longer used.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)

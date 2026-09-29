@@ -131,23 +131,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     public bool HasZeroCommand => false;
 
     /// <summary>
-    /// Raised when the platform view should display the SpectroVis operating-mode dialog.
-    /// </summary>
-    public event Func<SpectroVisMeasurementViewModel, CancellationToken, Task>? OperatingModeDialogRequested;
-
-    /// <summary>
-    /// Raised when the platform view should display the acquisition-mode dialog.
-    /// </summary>
-    public event Func<SpectroVisMeasurementViewModel, CancellationToken, Task>? AcquisitionModeDialogRequested;
-
-    /// <summary>
-    /// Raised when the platform view should display the SpectroVis calibration dialog and return the selected calibration action.
-    /// </summary>
-    public event Func<SpectroVisMeasurementViewModel, CancellationToken, Task<CalibrationDialogResult?>>? CalibrationDialogRequested;
-
-    public event Func<SpectroVisMeasurementViewModel, CancellationToken, Task>? KeepDataPointDialogRequested;
-
-    /// <summary>
     /// The event is triggered to stop data recording when a fixed time interval has elapsed in time-resolved mode.
     /// </summary>
     public event Action? AutoStopRequested;
@@ -297,77 +280,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// Gets the current recording state from the generic measurement workflow.
     /// </summary>
     private bool IsMeasurementRunning => _isMeasurementRunningProvider();
-
-    /// <summary>
-    /// Requests display of the device-specific operating-mode dialog.
-    /// </summary>
-    /// <param name="ct">Cancellation token for the dialog operation.</param>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when no dialog handler has been registered by the view.
-    /// </exception>
-    public async Task RequestOperatingModeDialog(CancellationToken ct = default)
-    {
-        if (OperatingModeDialogRequested is null)
-        {
-            throw new InvalidOperationException("No SpectroVis operating mode dialog is registered.");
-        }
-
-        await OperatingModeDialogRequested(this, ct);
-    }
-
-    /// <summary>
-    /// Requests display of the acquisition-mode dialog.
-    /// </summary>
-    /// <param name="ct">Cancellation token for the dialog operation.</param>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when no dialog handler has been registered by the view.
-    /// </exception>
-    public async Task RequestAcquisitionModeDialog(CancellationToken ct = default)
-    {
-        if (AcquisitionModeDialogRequested is null)
-        {
-            throw new InvalidOperationException("No SpectroVis acquisition mode dialog is registered.");
-        }
-
-        await AcquisitionModeDialogRequested(this, ct);
-    }
-
-    /// <summary>
-    /// Requests display of the device-specific calibration dialog.
-    /// </summary>
-    /// <param name="ct">Cancellation token for the dialog operation.</param>
-    /// <returns>
-    /// The selected calibration action, or <see langword="null"/> if the dialog was dismissed without a result.
-    /// </returns>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when no dialog handler has been registered by the view.
-    /// </exception>
-    public async Task<CalibrationDialogResult?> RequestCalibrationDialog(CancellationToken ct = default)
-    {
-        if (CalibrationDialogRequested is null)
-        {
-            throw new InvalidOperationException("No SpectroVis calibration dialog is registered.");
-        }
-
-        return await CalibrationDialogRequested(this, ct);
-    }
-
-    /// <summary>
-    /// Requests display of the device-specific "keep data point" dialog.
-    /// </summary>
-    /// <param name="ct">Cancellation token for the dialog operation.</param>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when no dialog handler has been registered by the view.
-    /// </exception>
-    public async Task RequestKeepDataPointDialog(CancellationToken ct = default)
-    {
-        if (KeepDataPointDialogRequested is null)
-        {
-            throw new InvalidOperationException("No keep data point dialog is registered.");
-        }
-
-        await KeepDataPointDialogRequested(this, ct);
-    }
 
     public Task SetToZero(CancellationToken ct = default)
     {

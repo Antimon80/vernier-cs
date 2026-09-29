@@ -36,6 +36,9 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
     }
 
+    /// <summary>
+    /// Gets the currently selected device.
+    /// </summary>
     public IDevice CurrentDevice { get; }
 
     /// <summary>
@@ -44,16 +47,26 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     /// </summary>
     public IDeviceMeasurementViewModel DeviceViewModel { get; }
 
+    /// <summary>
+    /// Measurement data shared between the generic measurement page and the device-specific view model.
+    /// </summary>
     public WideMeasurementTable Table { get; } = new();
 
     public ObservableCollection<UiDiagnostics> Diagnostics { get; } = [];
     public bool HasDiagnostics => Diagnostics.Count > 0;
 
     public event Func<CancellationToken, Task>? DiagnosticsRequested;
+    public event Func<CancellationToken, Task>? OperatingModeDialogRequested;
+    public event Func<CancellationToken, Task>? AcquisitionModeDialogRequested;
+    public event Func<CancellationToken, Task>? KeepDataPointDialogRequested;
+    public event Func<CancellationToken, Task<CalibrationDialogResult?>>? CalibrationDialogRequested;
 
     [ObservableProperty]
     public partial string PageTitle { get; set; } = AppResources.App_AppName;
 
+    /// <summary>
+    /// Indicates whether measurement is currently active in the measurement UI.
+    /// </summary>
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OpenOperatingModeCommand))]
     [NotifyCanExecuteChangedFor(nameof(OpenAcquisitionModeCommand))]
@@ -73,6 +86,9 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     public partial bool HasKeepDataPointCommand { get; set; }
 
+    /// <summary>
+    /// Refreshes the device-specific state and the UI state derived from it.
+    /// </summary>
     public void RefreshDeviceState()
     {
         HasOperatingModeSelection = DeviceViewModel.HasOperatingModeSelection;
@@ -87,6 +103,9 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         CalibrateCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>
+    /// Refreshes the diagnostics displayed by the measurement UI.
+    /// </summary>
     public void RefreshDiagnostics()
     {
         Diagnostics.Clear();
@@ -97,6 +116,9 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasDiagnostics));
     }
 
+    /// <summary>
+    /// Releases event subscriptions and disposes the device-specific view model.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)
@@ -162,6 +184,9 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_DataAnalysis);
     }
 
+    /// <summary>
+    /// Refreshes the diagnostics and opens the diagnostics dialog.
+    /// </summary>
     [RelayCommand]
     private async Task OpenDiagnostics(CancellationToken ct)
     {
@@ -193,27 +218,46 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Help);
     }
 
+    /// <summary>
+    /// Opens the operating-mode dialog when measurement is not running.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanChangeMeasurementConfiguration))]
-    private async Task OpenOperatingMode()
+    private async Task OpenOperatingMode(CancellationToken ct)
     {
         if (!DeviceViewModel.HasOperatingModeSelection)
         {
             return;
         }
 
-        await DeviceViewModel.RequestOperatingModeDialog();
+        if (OperatingModeDialogRequested is null)
+        {
+            throw new InvalidOperationException("No operating mode dialog is registered.");
+        }
+
+        await OperatingModeDialogRequested(ct);
         RefreshDeviceState();
     }
 
+    /// <summary>
+    /// Opens the acquisition-mode dialog when measurement is not running.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanChangeMeasurementConfiguration))]
-    private async Task OpenAcquisitionMode()
+    private async Task OpenAcquisitionMode(CancellationToken ct)
     {
-        await DeviceViewModel.RequestAcquisitionModeDialog();
+        if (AcquisitionModeDialogRequested is null)
+        {
+            throw new InvalidOperationException("No acquisition mode dialog is registered.");
+        }
+
+        await AcquisitionModeDialogRequested(ct);
         RefreshDeviceState();
     }
 
+    /// <summary>
+    /// Opens the calibration dialog when calibration is supported and measurement is not running.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanCalibrate))]
-    private async Task Calibrate()
+    private async Task Calibrate(CancellationToken ct)
     {
         if (!CurrentDevice.CanCalibrate)
         {
@@ -222,7 +266,12 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
             return;
         }
 
-        CalibrationDialogResult? result = await DeviceViewModel.RequestCalibrationDialog();
+        if (CalibrationDialogRequested is null)
+        {
+            throw new InvalidOperationException("No calibration dialog is registered.");
+        }
+
+        CalibrationDialogResult? result = await CalibrationDialogRequested(ct);
 
         if (result is null)
         {
@@ -232,6 +281,10 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         RefreshDeviceState();
     }
 
+    /// <summary>
+    /// Toggles the measurement state shown by the UI.
+    /// Stopping the measurement also notifies the device-specific view model.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanToggleMeasurement))]
     private void ToggleMeasurement()
     {
@@ -246,8 +299,11 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         RefreshDeviceState();
     }
 
+    /// <summary>
+    /// Opens the dialog for capturing the current value as a data point.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanKeepDataPoint))]
-    private async Task KeepDataPoint()
+    private async Task KeepDataPoint(CancellationToken ct)
     {
         if (!DeviceViewModel.CanKeepDataPoint)
         {
@@ -255,17 +311,28 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
             return;
         }
 
-        await DeviceViewModel.RequestKeepDataPointDialog();
+        if (KeepDataPointDialogRequested is null)
+        {
+            throw new InvalidOperationException("No keep data point dialog registered.");
+        }
+
+        await KeepDataPointDialogRequested(ct);
 
         RefreshDeviceState();
     }
 
+    /// <summary>
+    /// Automatically adjusts the Y-axis to the current measurement data.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
     private void AutoscaleYAxis()
     {
         DeviceViewModel.AutoscaleYAxis();
     }
 
+    /// <summary>
+    /// Automatically adjusts the chart axes to show the complete measurement data.
+    /// </summary>
     [RelayCommand(CanExecute = nameof(CanUseChartTools))]
     private void AutoscaleFull()
     {
@@ -278,31 +345,49 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_CrossHairs);
     }
 
+    /// <summary>
+    /// Determines whether measurement configuration can currently be changed.
+    /// </summary>
     private bool CanChangeMeasurementConfiguration()
     {
         return !IsMeasurementRunning;
     }
 
+    /// <summary>
+    /// Determines whether chart tools can currently be used.
+    /// </summary>
     private bool CanUseChartTools()
     {
         return IsMeasurementRunning;
     }
 
+    /// <summary>
+    /// Determines whether calibration can currently be started.
+    /// </summary>
     private bool CanCalibrate()
     {
         return !IsMeasurementRunning && CurrentDevice.CanCalibrate;
     }
 
+    /// <summary>
+    /// Determines whether measurement can currently be started or stopped.
+    /// </summary>
     private bool CanToggleMeasurement()
     {
         return DeviceViewModel.CanStartMeasurement;
     }
 
+    /// <summary>
+    /// Determines whether a data point can currently be captured.
+    /// </summary>
     private bool CanKeepDataPoint()
     {
         return IsMeasurementRunning;
     }
 
+    /// <summary>
+    /// Stops the measurement when the device-specific view model requests an automatic stop.
+    /// </summary>
     private void OnAutoStopRequested()
     {
         if (IsMeasurementRunning)

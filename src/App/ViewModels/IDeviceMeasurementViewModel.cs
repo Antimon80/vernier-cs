@@ -28,30 +28,6 @@ public interface IDeviceMeasurementViewModel
     event Action? AutoStopRequested;
 
     /// <summary>
-    /// Requests that the device-specific operating mode dialog be presented.
-    /// Raises the device view model's own "requested" event; the page that hosts
-    /// the toolbar is the one that actually builds and shows the dialog.
-    /// </summary>
-    Task RequestOperatingModeDialog(CancellationToken ct = default);
-
-    /// <summary>
-    /// Requests that the device-specific acquisition mode dialog be presented.
-    /// </summary>
-    Task RequestAcquisitionModeDialog(CancellationToken ct = default);
-
-    /// <summary>
-    /// Requests that the device-specific "keep data point" dialog be presented.
-    /// </summary>
-    Task RequestKeepDataPointDialog(CancellationToken ct = default);
-
-    /// <summary>
-    /// Requests that the device-specific calibration dialog be presented.
-    ///
-    /// Returns null if the user cancels the dialog.
-    /// </summary>
-    Task<CalibrationDialogResult?> RequestCalibrationDialog(CancellationToken ct = default);
-
-    /// <summary>
     /// Performs or opens a device-specific zero/tare workflow.
     /// </summary>
     Task SetToZero(CancellationToken ct = default);

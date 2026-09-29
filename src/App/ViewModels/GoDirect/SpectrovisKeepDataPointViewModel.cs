@@ -17,13 +17,25 @@ public sealed partial class SpectroVisKeepDataPointViewModel : ObservableObject,
         Unit = _measurementViewModel.Unit;
     }
 
+    /// <summary>
+    /// Short name of the measurement column displayed in the dialog.
+    /// </summary>
     public string ColumnNameShort { get; set; }
 
+    /// <summary>
+    /// Unit of the measurement value.
+    /// </summary>
     public string Unit { get; set; }
 
+    /// <summary>
+    /// Measurement value to be captured as an event point.
+    /// </summary>
     [ObservableProperty]
-    public partial double DataPointValue {get; set;}
+    public partial double DataPointValue { get; set; }
 
+    /// <summary>
+    /// Captures the entered value as an event point in the measurement.
+    /// </summary>
     [RelayCommand]
     private async Task OnValueSet(CancellationToken ct = default)
     {
@@ -32,10 +44,7 @@ public sealed partial class SpectroVisKeepDataPointViewModel : ObservableObject,
     }
 
     /// <summary>
-    /// This dialog view model doesn't subscribe to anything on the long-lived measurement
-    /// view model (unlike the operating-mode/acquisition-mode dialogs), so there is nothing
-    /// to unsubscribe. Kept for symmetry with the other dialog view models and as a guard
-    /// against double-disposal if that ever changes.
+    /// Releases resources used by the view model.
     /// </summary>
     public void Dispose()
     {
