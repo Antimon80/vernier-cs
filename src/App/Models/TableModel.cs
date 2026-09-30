@@ -26,13 +26,6 @@ public sealed partial class TableRow(string xValue, string yValue) : ObservableO
 
 public sealed record TableColumn(string Header, Color Color);
 
-public sealed record MeasurementSeries(
-    Guid Id,
-    DateTimeOffset RecordedAt,
-    string XColumnHeader,
-    string YColumnHeader,
-    IReadOnlyList<TableRow> Rows
-);
 
 /// <summary>
 /// Owns and maintains a device-agnostic wide-table representation: one live series plus a bounded
@@ -75,7 +68,7 @@ public sealed partial class WideMeasurementTable : ObservableObject
     /// <summary>
     /// Gets previously archived measurement series retained for comparison.
     /// </summary>
-    public ObservableCollection<MeasurementSeries> ArchivedSeries { get; } = [];
+    public ObservableCollection<ArchivedTableSeries> ArchivedSeries { get; } = [];
 
     /// <summary>
     /// Gets the number of rows currently occupied by the live series.
@@ -163,7 +156,7 @@ public sealed partial class WideMeasurementTable : ObservableObject
             rows.Add(new TableRow(row.Cells[0].Value ?? "", row.Cells[1].Value ?? ""));
         }
 
-        ArchivedSeries.Add(new MeasurementSeries(Guid.NewGuid(), DateTimeOffset.Now, _liveXHeader, _liveYHeader, rows));
+        ArchivedSeries.Add(new ArchivedTableSeries(Guid.NewGuid(), DateTimeOffset.Now, _liveXHeader, _liveYHeader, rows));
 
         if (ArchivedSeries.Count > MaxArchivedSeries)
         {
@@ -189,7 +182,7 @@ public sealed partial class WideMeasurementTable : ObservableObject
 
         for (int i = 0; i < ArchivedSeries.Count; i++)
         {
-            MeasurementSeries series = ArchivedSeries[i];
+            ArchivedTableSeries series = ArchivedSeries[i];
             Color color = SeriesColors[(i + 1) % SeriesColors.Length];
 
             Columns.Add(new TableColumn(series.XColumnHeader, Colors.Black));
@@ -221,7 +214,7 @@ public sealed partial class WideMeasurementTable : ObservableObject
     {
         for (int s = 0; s < ArchivedSeries.Count; s++)
         {
-            MeasurementSeries series = ArchivedSeries[s];
+            ArchivedTableSeries series = ArchivedSeries[s];
             int xColumn = 2 + s * 2;
             int yColumn = xColumn + 1;
 
@@ -234,4 +227,11 @@ public sealed partial class WideMeasurementTable : ObservableObject
             }
         }
     }
+
+    public sealed record ArchivedTableSeries(
+    Guid Id,
+    DateTimeOffset RecordedAt,
+    string XColumnHeader,
+    string YColumnHeader,
+    IReadOnlyList<TableRow> Rows);
 }

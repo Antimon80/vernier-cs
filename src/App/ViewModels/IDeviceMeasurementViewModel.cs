@@ -15,22 +15,13 @@ public interface IDeviceMeasurementViewModel
     /// </summary>
     bool HasOperatingModeSelection { get; }
 
-    /// <summary>
-    /// True if the current device exposes a separate zero/tare action.
-    /// Example: force sensor zeroing. Not used by the current toolbar yet.
-    /// </summary>
-    bool HasZeroCommand { get; }
-
     bool CanKeepDataPoint { get; }
 
     bool CanStartMeasurement {get;}
 
     event Action? AutoStopRequested;
 
-    /// <summary>
-    /// Performs or opens a device-specific zero/tare workflow.
-    /// </summary>
-    Task SetToZero(CancellationToken ct = default);
+    void OnMeasurementStarted();
 
     void OnMeasurementStopped();
 

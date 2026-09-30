@@ -22,7 +22,7 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
 
         CurrentDevice = _deviceManager.CurrentDevice ?? throw new InvalidOperationException("No current device is selected.");
 
-        DeviceViewModel = DeviceViewModelFactory.Create(_deviceManager, () => IsMeasurementRunning, Table, Chart);
+        DeviceViewModel = DeviceViewModelFactory.Create(_deviceManager, Table, Chart, Data);
         DeviceViewModel.AutoStopRequested += OnAutoStopRequested;
 
         RefreshDeviceState();
@@ -45,6 +45,8 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     public WideMeasurementTable Table { get; } = new();
 
     public ChartModel Chart { get; } = new();
+
+    public MeasurementDataSet Data { get; } = new();
 
     public ObservableCollection<UiDiagnostics> Diagnostics { get; } = [];
     public bool HasDiagnostics => Diagnostics.Count > 0;
@@ -160,52 +162,6 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_ImportData);
     }
 
-    [RelayCommand]
-    private Task OpenDataManager()
-    {
-        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_DataManagement);
-    }
-
-    [RelayCommand]
-    private Task OpenAnalysis()
-    {
-        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_DataAnalysis);
-    }
-
-    /// <summary>
-    /// Refreshes the diagnostics and opens the diagnostics dialog.
-    /// </summary>
-    [RelayCommand]
-    private async Task OpenDiagnostics(CancellationToken ct)
-    {
-        RefreshDiagnostics();
-
-        if (DiagnosticsRequested is null)
-        {
-            throw new InvalidOperationException("No diagnostics dialog is registered.");
-        }
-
-        await DiagnosticsRequested(ct);
-    }
-
-    [RelayCommand]
-    private Task OpenSettings()
-    {
-        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Settings);
-    }
-
-    [RelayCommand]
-    private Task OpenAbout()
-    {
-        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_About);
-    }
-
-    [RelayCommand]
-    private Task OpenHelp()
-    {
-        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Help);
-    }
-
     /// <summary>
     /// Opens the operating-mode dialog when measurement is not running.
     /// </summary>
@@ -274,7 +230,11 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
         IsMeasurementRunning = !IsMeasurementRunning;
         RecordingIcon = IsMeasurementRunning ? StopIcon : StartIcon;
 
-        if (!IsMeasurementRunning)
+        if (IsMeasurementRunning)
+        {
+            DeviceViewModel.OnMeasurementStarted();
+        }
+        else
         {
             DeviceViewModel.OnMeasurementStopped();
         }
@@ -326,6 +286,52 @@ public sealed partial class MeasurementViewModel : ObservableObject, IDisposable
     private Task ShowCrosshairs()
     {
         return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_CrossHairs);
+    }
+
+    [RelayCommand]
+    private Task OpenDataManager()
+    {
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_DataManagement);
+    }
+
+    [RelayCommand]
+    private Task OpenAnalysis()
+    {
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_DataAnalysis);
+    }
+
+    /// <summary>
+    /// Refreshes the diagnostics and opens the diagnostics dialog.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenDiagnostics(CancellationToken ct)
+    {
+        RefreshDiagnostics();
+
+        if (DiagnosticsRequested is null)
+        {
+            throw new InvalidOperationException("No diagnostics dialog is registered.");
+        }
+
+        await DiagnosticsRequested(ct);
+    }
+
+    [RelayCommand]
+    private Task OpenSettings()
+    {
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Settings);
+    }
+
+    [RelayCommand]
+    private Task OpenAbout()
+    {
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_About);
+    }
+
+    [RelayCommand]
+    private Task OpenHelp()
+    {
+        return ViewModelHelpers.ShowNotImplementedAsync(AppResources.App_Help);
     }
 
     /// <summary>

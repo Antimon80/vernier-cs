@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using App.Models;
 using App.Resources.Strings;
 using Backend.Devices.GoDirect;
@@ -25,7 +26,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <summary>
     /// Provides the current recording state maintained by the generic measurement view model.
     /// </summary>
-    private readonly Func<bool> _isMeasurementRunningProvider;
+    private bool _isMeasurementRunning;
 
     /// <summary>
     /// Minimum interval between two updates of spectrum-dependent UI elements.
@@ -58,13 +59,9 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     private DateTimeOffset? _acquisitionStartedAt;
 
-    /// <summary>
-    /// Owns the wide-table column/row/archive layout. Device-agnostic; this view model only
-    /// decides what the live headers should say and when to archive.
-    /// </summary>
     private readonly WideMeasurementTable _table;
-
     private readonly ChartModel _chart;
+    private readonly MeasurementDataSet _data;
 
     /// <summary>
     /// Indicates whether event subscriptions have already been removed.
@@ -81,12 +78,12 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <param name="isMeasurementRunningProvider">
     /// Callback that returns whether incoming spectra should currently be transferred to the display.
     /// </param>
-    public SpectroVisMeasurementViewModel(ISpectrometer spectrometer, Func<bool> isMeasurementRunningProvider, WideMeasurementTable table, ChartModel chart)
+    public SpectroVisMeasurementViewModel(ISpectrometer spectrometer, WideMeasurementTable table, ChartModel chart, MeasurementDataSet data)
     {
         _spectrometer = spectrometer ?? throw new ArgumentNullException(nameof(spectrometer));
-        _isMeasurementRunningProvider = isMeasurementRunningProvider ?? throw new ArgumentNullException(nameof(isMeasurementRunningProvider));
         _table = table ?? throw new ArgumentNullException(nameof(table));
         _chart = chart ?? throw new ArgumentNullException(nameof(chart));
+        _data = data ?? throw new ArgumentNullException(nameof(data));
 
         IntegrationTimeMs = _spectrometer.Session.IntegrationTime;
 
@@ -229,7 +226,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <summary>
     /// Gets the current recording state from the generic measurement workflow.
     /// </summary>
-    private bool IsMeasurementRunning => _isMeasurementRunningProvider();
+    private bool IsMeasurementRunning => _isMeasurementRunning;
 
     public Task SetToZero(CancellationToken ct = default)
     {
@@ -276,7 +273,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         AcquisitionMode = mode;
 
         RefreshChartConfiguration();
-        RefreshTableHeaders();
+        RefreshLiveSeries();
         RefreshAcquisitionModeEditFlags();
 
         if (IsMeasurementRunning && DisplayedSpectrum is not null && mode == AcquisitionMode.FullSpectrum)
@@ -323,8 +320,11 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         }
 
         double y = GetYValueAtSelectedWavelength(DisplayedSpectrum);
-        _table.AppendLiveRow(FormatXValue(value), FormatYValue(y, DisplayedSpectrum.Mode));
 
+        (SeriesAxis xAxis, SeriesAxis yAxis) = GetLiveSeriesAxis();
+
+        _table.AppendLiveRow(xAxis.FormatValue(value), yAxis.FormatValue(y));
+        _data.Live?.Append(value, y);
 
     }
 
@@ -355,7 +355,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         CanEditIntegrationTime = CanEditIntegrationTimeForCurrentMode();
         RefreshAcquisitionModeEditFlags();
 
-        RefreshTableHeaders();
+        RefreshLiveSeries();
         RefreshCurrentOperatingMode();
         RefreshStatusIndicators();
 
@@ -367,6 +367,22 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         }
     }
 
+    public void OnMeasurementStarted()
+    {
+        _isMeasurementRunning = true;
+        _acquisitionStartedAt = DateTimeOffset.UtcNow;
+
+        (SeriesAxis xAxis, SeriesAxis yAxis) = GetLiveSeriesAxis();
+
+        _data.StartLive(GetNamePrefix(), xAxis, yAxis, AcquisitionMode == AcquisitionMode.EventTriggered ? SeriesStyle.Points : SeriesStyle.Line);
+
+        _data.Live?.Metadata["Device"] = Model.ToString();
+        _data.Live?.Metadata["OperatingMode"] = Session.Mode.ToString();
+        _data.Live?.Metadata["AcquisitionMode"] = AcquisitionMode.ToString();
+        _data.Live?.Metadata["IntegrationTimeMs"] = IntegrationTimeMs.ToString(CultureInfo.InvariantCulture);
+
+    }
+
     /// <summary>
     /// Converts the current live table values into an archived measurement series and resets the live-series state.
     ///
@@ -374,6 +390,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// </summary>
     public void OnMeasurementStopped()
     {
+        _isMeasurementRunning = false;
         DisplayedSpectrum = null;
         _acquisitionStartedAt = null;
 
@@ -441,7 +458,7 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
             DisplayedSpectrum = spectrum;
 
             // Only capture into the recorded table/series while recording is actually running.
-            if (_isMeasurementRunningProvider())
+            if (_isMeasurementRunning)
             {
                 UpdateTable(spectrum);
             }
@@ -591,28 +608,12 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <summary>
     /// Updates the live table headers from the current acquisition mode, concentration unit and spectrometer operating mode.
     /// </summary>
-    private void RefreshTableHeaders()
+    private void RefreshLiveSeries()
     {
-        string xHeader = AcquisitionMode switch
-        {
-            AcquisitionMode.FullSpectrum => "λ [nm]",
-            AcquisitionMode.TimeResolved => "t [s]",
-            AcquisitionMode.EventTriggered => $"{ColumnNameShort} [{Unit}]",
-            _ => "x"
-        };
+        (SeriesAxis xAxis, SeriesAxis yAxis) = GetLiveSeriesAxis();
 
-        string yHeader = Session.Mode switch
-        {
-            OperatingMode.RawCounts => "ADC [counts]",
-            OperatingMode.Intensity => "I [rel.]",
-            OperatingMode.Transmission => "T [%]",
-            OperatingMode.Absorbance => "A",
-            OperatingMode.Fluorescence405 => "F405 [rel.]",
-            OperatingMode.Fluorescence500 => "F500 [rel.]",
-            _ => "y"
-        };
 
-        _table.SetLiveHeaders(xHeader, yHeader);
+        _table.SetLiveHeaders(xAxis.Header, yAxis.Header);
     }
 
     /// <summary>
@@ -645,12 +646,15 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         int count = Math.Min(spectrum.WavelengthNm.Length, spectrum.YAxis.Length);
         _table.EnsureRowCount(count);
 
+        (SeriesAxis xAxis, SeriesAxis yAxis) = GetLiveSeriesAxis();
+
         for (int i = 0; i < count; i++)
         {
-            _table.WriteLiveCell(i, FormatXValue(spectrum.WavelengthNm[i]), FormatYValue(spectrum.YAxis[i], spectrum.Mode));
+            _table.WriteLiveCell(i, xAxis.FormatValue(spectrum.WavelengthNm[i]), yAxis.FormatValue(spectrum.YAxis[i]));
         }
 
         _table.SetLiveRowCount(count);
+        _data.Live?.ReplaceAll([.. spectrum.WavelengthNm.Take(count)], [.. spectrum.YAxis.Take(count)]);
     }
 
     /// <summary>
@@ -660,11 +664,15 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
     /// <param name="spectrum">Current processed spectrum.</param>
     private void AppendTimeResolvedTableRow(Spectrum spectrum)
     {
-        _acquisitionStartedAt ??= DateTimeOffset.UtcNow;
-        double elapsedSeconds = (DateTimeOffset.UtcNow - _acquisitionStartedAt.Value).TotalSeconds;
+        double elapsedSeconds = _acquisitionStartedAt.HasValue
+            ? (DateTimeOffset.UtcNow - _acquisitionStartedAt.Value).TotalSeconds : 0;
         double y = GetYValueAtSelectedWavelength(spectrum);
 
-        _table.AppendLiveRow(elapsedSeconds.ToString("F2"), FormatYValue(y, spectrum.Mode));
+        (SeriesAxis xAxis, SeriesAxis yAxis) = GetLiveSeriesAxis();
+
+        _table.AppendLiveRow(xAxis.FormatValue(elapsedSeconds), yAxis.FormatValue(y));
+        _data.Live?.Append(elapsedSeconds, y);
+
 
         if (!ContinuousDataCollection && elapsedSeconds >= TimeResolvedDuration)
         {
@@ -861,6 +869,54 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         CanEditWavelength = CanEditWavelengthForCurrentMode();
     }
 
+    private (SeriesAxis X, SeriesAxis Y) GetLiveSeriesAxis()
+    {
+        SeriesAxis xAxis = AcquisitionMode switch
+        {
+            AcquisitionMode.FullSpectrum => new("λ", "nm", "F1"),
+            AcquisitionMode.TimeResolved => new("t", "s", "F2"),
+            AcquisitionMode.EventTriggered => new(ColumnNameShort, Unit, "F1"),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        SeriesAxis yAxis = Session.Mode switch
+        {
+            OperatingMode.RawCounts => new("ADC", "counts", "F0"),
+            OperatingMode.Intensity => new("I", "rel.", "F4"),
+            OperatingMode.Transmission => new("T", "%", "F1"),
+            OperatingMode.Absorbance => new("A", "", "F3"),
+            OperatingMode.Fluorescence405 => new("F405", "rel.", "F4"),
+            OperatingMode.Fluorescence500 => new("F500", "rel.", "F4"),
+            _ => new("Y", "", "G4")
+        };
+
+        return (xAxis, yAxis);
+    }
+
+    private string GetNamePrefix()
+    {
+        string operatingMode = Session.Mode switch
+        {
+            OperatingMode.RawCounts => "raw",
+            OperatingMode.Intensity => "int",
+            OperatingMode.Transmission => "trans",
+            OperatingMode.Absorbance => "abs",
+            OperatingMode.Fluorescence405 => "f405",
+            OperatingMode.Fluorescence500 => "f500",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        string acquisitionMode = AcquisitionMode switch
+        {
+            AcquisitionMode.FullSpectrum => "full",
+            AcquisitionMode.TimeResolved => "time",
+            AcquisitionMode.EventTriggered => "event",
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        return $"{operatingMode}_{acquisitionMode}";
+    }
+
     /// <summary>
     /// Resolves the localized y-axis title for a spectrometer operating mode.
     /// </summary>
@@ -913,31 +969,6 @@ public sealed partial class SpectroVisMeasurementViewModel : ObservableObject, I
         {
             OperatingMode.RawCounts => (0, 65535),
             _ => (null, null)
-        };
-    }
-
-    /// <summary>
-    /// Formats a numeric value with one decimal place.
-    /// </summary>
-    private static string FormatXValue(double value)
-    {
-        return value.ToString("F1");
-    }
-
-    /// <summary>
-    /// Formats a measured y-value using the precision appropriate for its operating mode.
-    /// </summary>
-    private static string FormatYValue(double value, OperatingMode mode)
-    {
-        return mode switch
-        {
-            OperatingMode.RawCounts => value.ToString("F0"),
-            OperatingMode.Transmission => value.ToString("F1"),
-            OperatingMode.Absorbance => value.ToString("F3"),
-            OperatingMode.Intensity => value.ToString("F4"),
-            OperatingMode.Fluorescence405 => value.ToString("F4"),
-            OperatingMode.Fluorescence500 => value.ToString("F4"),
-            _ => value.ToString("G4")
         };
     }
 

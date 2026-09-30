@@ -9,11 +9,11 @@ namespace App.ViewModels;
 /// </summary>
 public static class DeviceViewModelFactory
 {
-    public static IDeviceMeasurementViewModel Create(DeviceManager deviceManager, Func<bool> isMeasurementRunningProvider, WideMeasurementTable table, ChartModel chart)
+    public static IDeviceMeasurementViewModel Create(DeviceManager deviceManager, WideMeasurementTable table, ChartModel chart, MeasurementDataSet data)
     {
         if (deviceManager.CurrentSpectrometer is not null)
         {
-            return new SpectroVisMeasurementViewModel(deviceManager.CurrentSpectrometer, isMeasurementRunningProvider, table, chart);
+            return new SpectroVisMeasurementViewModel(deviceManager.CurrentSpectrometer, table, chart, data);
         }
 
         throw new InvalidOperationException($"The selected device type '{deviceManager.CurrentDevice?.DeviceName}' is not supported by the measurement UI yet.");
